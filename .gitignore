@@ -1,0 +1,8 @@
+logs
+l10n.json
+l10n_en.json
+l10n_fr.json
+l10n_ar.json
+node_modules
+.wwebjs_auth
+.wwebjs_cache
