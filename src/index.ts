@@ -55,6 +55,7 @@ const userList = new UsersStorage();
 // Создаёт клиент WhatsApp
 const client = new Client({
   authStrategy: new LocalAuth(),
+  puppeteer: {headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']},
 });
 
 const API_CONSTANTS = new Constants();
