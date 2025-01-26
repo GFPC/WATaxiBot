@@ -454,7 +454,7 @@ export class Order {
       color: car.data.data.car[car_u_id.toString()].color ? this.ctx?.constants.getForDriverAndCar.car_colors[car.data.data.car[car_u_id.toString()].color.toString()].ru : this.ctx?.constants.getPrompt(localizationNames.carColorNotSpecified, this.ctx?.user.settings.lang.api_id),
       plate: car.data.data.car[car_u_id].registration_plate,
       model: this.ctx?.constants.getForDriverAndCar.car_models[car.data.data.car[car_u_id.toString()].cm_id.toString()].ru ?? this.ctx?.constants.getPrompt(localizationNames.carModelNotSpecified, this.ctx?.user.settings.lang.api_id),
-      phone: driver.data.data.user[driver_u_id].u_phone
+      phone: driver.data.data.user[driver_u_id].u_phone.startsWith('+') ? driver.data.data.user[driver_u_id].u_phone : '+' + driver.data.data.user[driver_u_id].u_phone
     }
     return data
   }
