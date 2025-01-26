@@ -6,3 +6,4 @@ l10n_ar.json
 node_modules
 .wwebjs_auth
 .wwebjs_cache
+.idea

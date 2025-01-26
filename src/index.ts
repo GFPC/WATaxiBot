@@ -207,8 +207,13 @@ async function startUp() {
   await client.initialize();
 }
 startUp().then(
-  () => {
-    logger.info('Default lang: ' + API_CONSTANTS.data.default_lang);
-    logger.info('GFP -> Bot started!');
-  },
+    () => {
+      logger.info('Default lang: ' + API_CONSTANTS.data.default_lang);
+      logger.info('GFP -> Bot started!');
+    },
+).catch(
+    (err) => {
+      logger.error('Error: ' + err)
+      process.exit(1)
+    }
 )
