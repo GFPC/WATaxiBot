@@ -42,8 +42,7 @@ export async function RegisterHandler(ctx: Context) {
   switch (state?.state) {
     case "collectionRefCode":
       // Получаем реферальный код и зарегистрируем пользователя
-      if (ctx.message.body != "0") state.data.refCode = ctx.message.body;
-
+      state.data.refCode = ctx.message.body;
       try {
         await register(
           {

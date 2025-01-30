@@ -95,6 +95,7 @@ export const localization = {
   votingTimerExpired: "Время ожидания вышло. Чтобы создать новый заказ, напишите начальную точку",
   extendVotingTimeLower: "продлить",
   votingTimerNotActive: "Данный таймер больше не активен, активный можно найти ниже",
+  orderClosedByAPI: "Заказ закрыт по истечению времени ожидания отклика водителей. \n\n"
 }
 export const localizationNames = {
   welcome: "wab_welcome".toLowerCase(),
@@ -166,6 +167,7 @@ export const localizationNames = {
   votingTimerExpired: "wab_votingTimerExpired".toLowerCase(),
   extendVotingTimeLower: "wab_extendVotingTimeLower".toLowerCase(),
   votingTimerNotActive: "wab_votingTimerNotActive".toLowerCase(),
+  orderClosedByAPI: "wab_orderClosedByAPI".toLowerCase(),
 }
 function exportToJsonFile() {
   const file = "l10n.json";
