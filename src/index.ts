@@ -204,7 +204,9 @@ client.on('message', async (msg) => {
 
 async function startUp() {
   await API_CONSTANTS.getData();
+  console.log('Constants received')
   await client.initialize();
+  console.log('Client initialized')
 }
 
 console.log('Bot starting');
