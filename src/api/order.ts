@@ -448,13 +448,14 @@ export class Order {
     const car = await axios.post(`${baseURL}user/${driver_u_id}/car/${car_u_id}`, form,{headers: postHeaders});
     if (car.status != 200 || car.data.status != 'success') throw `API Error: ${car.data.message}`;
     console.log(car.data.data.car, car_u_id)
+    console.log(car.data.get())
 
 
     const data = {
       name: (driver.data.data.user[driver_u_id].u_family + " " + driver.data.data.user[driver_u_id].u_name).trim(),
       color: car.data.data.car[car_u_id.toString()].color ? this.ctx?.constants.getForDriverAndCar.car_colors[car.data.data.car[car_u_id.toString()].color.toString()].ru : this.ctx?.constants.getPrompt(localizationNames.carColorNotSpecified, this.ctx?.user.settings.lang.api_id),
       plate: car.data.data.car[car_u_id].registration_plate,
-      model: this.ctx?.constants.getForDriverAndCar.car_models[car.data.data.car[car_u_id.toString()].cm_id.toString()].ru ?? this.ctx?.constants.getPrompt(localizationNames.carModelNotSpecified, this.ctx?.user.settings.lang.api_id),
+      model: this.ctx?.constants.getForDriverAndCar.car_models[car.data.data.car[car_u_id?.toString()].cm_id?.toString()].ru ?? this.ctx?.constants.getPrompt(localizationNames.carModelNotSpecified, this.ctx?.user.settings.lang.api_id),
       phone: driver.data.data.user[driver_u_id].u_phone.startsWith('+') ? driver.data.data.user[driver_u_id].u_phone : '+' + driver.data.data.user[driver_u_id].u_phone
     }
     return data
