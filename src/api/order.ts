@@ -447,6 +447,7 @@ export class Order {
 
     const car = await axios.post(`${baseURL}user/${driver_u_id}/car/${car_u_id}`, form,{headers: postHeaders});
     if (car.status != 200 || car.data.status != 'success') throw `API Error: ${car.data.message}`;
+    console.log(car.data.data.car, car_u_id)
 
 
     const data = {
