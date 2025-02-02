@@ -206,6 +206,8 @@ async function startUp() {
   await API_CONSTANTS.getData();
   await client.initialize();
 }
+
+console.log('Bot starting');
 startUp().then(
     () => {
       logger.info('Default lang: ' + API_CONSTANTS.data.default_lang);
