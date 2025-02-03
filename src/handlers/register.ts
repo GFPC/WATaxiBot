@@ -49,7 +49,7 @@ export async function RegisterHandler(ctx: Context) {
             whatsappId: ctx.userID,
             name: state.data.fullName,
             phone: ctx.userID.split('@')[0],
-            lang: ctx.user.settings.lang.api_id,
+            lang: state.data.lang.api_id,
             refCode: state.data.refCode!=='0' ? state.data.refCode : undefined
           },
           ctx.auth
