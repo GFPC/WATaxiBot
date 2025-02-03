@@ -54,7 +54,7 @@ export async function OrderHandler(ctx: Context) {
         const newState = newRide(order);
         await ctx.storage.push(ctx.userID, newState);
 
-        await ctx.chat.sendMessage("DRIVE ID: " + order.id);
+        await ctx.chat.sendMessage("TEST POINT: DRIVE ID: " + order.id);
       } catch (e) {
         ctx.logger.error(`OrderHandler: Error when creating an order: ${e}`);
         await orderMsg.edit(ctx.constants.getPrompt(localizationNames.errorWhenCreatingOrder, ctx.user.settings.lang.api_id ));
@@ -88,7 +88,7 @@ export async function OrderHandler(ctx: Context) {
             ctx.chat,
             ctx
         );
-        await ctx.chat.sendMessage("DRIVE ID: " + order.id);
+        await ctx.chat.sendMessage("TEST POINT:DRIVE ID: " + order.id);
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.votingActivated, ctx.user.settings.lang.api_id ));
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.votingVerificationCode, ctx.user.settings.lang.api_id ).replace('%code%', b_driver_code));
         const newState = newVote(order);
@@ -106,7 +106,7 @@ export async function OrderHandler(ctx: Context) {
       }
 
       const timestamp = await GetTimestamp(msg_body_for_timestamp,ctx.constants.getPrompt(localizationNames.tomorrowLower, ctx.user.settings.lang.api_id ));
-      await ctx.chat.sendMessage("RECEIVED UTC TIME: " + timestamp);
+      await ctx.chat.sendMessage("TEST POINT: RECEIVED UTC TIME: " + timestamp);
 
       if (timestamp === undefined) {
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.getTimestampError, ctx.user.settings.lang.api_id ));
