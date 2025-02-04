@@ -77,7 +77,7 @@ export async function RegisterHandler(ctx: Context) {
       await ctx.storage.delete(ctx.userID);
       await ctx.storage.delete(`reg:${ctx.userID}`);
       await ctx.chat.sendMessage(
-        ctx.constants.getPrompt(localizationNames.defaultPrompt, state.data.lang.api_id )
+        ctx.constants.getPrompt(localizationNames.registrationSuccessful, state.data.lang.api_id )
       )
       break;
     case "collectionFullName":
