@@ -112,21 +112,21 @@ export interface Context {
 export type Handler = (ctx: Context) => Promise<void>;
 
 async function router(ctx: Context): Promise<Handler> {
-  if (!(await checkUserRegister(ctx.userID))) {
-    ctx.details.lang = {
-      iso:API_CONSTANTS.data.data.langs[ctx.constants.data.default_lang].iso,
-      api_id: ctx.constants.data.default_lang,
-      native:API_CONSTANTS.data.data.langs[ctx.constants.data.default_lang].native
-    }
-    // Если пользователь не зарегистрирован, то вызываем обработчик регистрации
-    return RegisterHandler;
-  }
-
   const user = await userList.pull(ctx.userID.split('@')[0]);
   if(user?.api_u_id == '-1' || !user || user?.reloadFromApi == true) {
     console.log("REQUESTING USER API_ID REQ:",{ token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]})
     const userData = await axios.post(`${baseURL}user`, { token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
     console.log("REQUESTING USER API_ID RES:",userData.data)
+    if(userData.data.status === 'error') {
+      console.log("REG TOP POINT")
+      ctx.details.lang = {
+        iso:API_CONSTANTS.data.data.langs[ctx.constants.data.default_lang].iso,
+        api_id: ctx.constants.data.default_lang,
+        native:API_CONSTANTS.data.data.langs[ctx.constants.data.default_lang].native
+      }
+      // Если пользователь не зарегистрирован, то вызываем обработчик регистрации
+      return RegisterHandler;
+    }
     await userList.push(ctx.userID.split('@')[0], {
       api_u_id: userData.data.auth_user.u_id,
       settings:{
@@ -139,6 +139,8 @@ async function router(ctx: Context): Promise<Handler> {
     });
     ctx.api_u_id = Object.keys(userData.data.data.user)[0]
   }
+
+
   ctx.user = await userList.pull(ctx.userID.split('@')[0]);
 
 
