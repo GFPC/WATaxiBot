@@ -15,7 +15,6 @@ async function createFormData(user: User, admin_auth: AuthData, data?: string): 
   return createForm(
     {
       u_phone: user.phone,
-      u_tg: user.whatsappId,
       u_role: '1',
       u_name: user.name,
       ref_code: user.refCode,
