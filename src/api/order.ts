@@ -337,6 +337,19 @@ export class Order {
 
     if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, response.data.message.error);
 
+    const confirmForm = createForm(
+        {
+            action: 'set_confirm_state',
+            u_a_phone: this.clientTg.toString(),
+            u_a_role: "1",
+        },
+        this.adminAuth
+    )
+
+    const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders});
+
+    if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
+
     this.id = Number(response.data.data.b_id);
 
     if (isNaN(this.id)) throw "Invalid id";
