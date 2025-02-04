@@ -43,6 +43,7 @@ export async function RegisterHandler(ctx: Context) {
     case "collectionRefCode":
       // Получаем реферальный код и зарегистрируем пользователя
       state.data.refCode = ctx.message.body;
+      console.log("TEST POINT: ",state.data)
       try {
         await register(
           {

@@ -40,6 +40,7 @@ export async function register(user: User, adminAuth: AuthData) {
     const lang = user.lang
   const form = await createFormData(user, adminAuth);
   const response = await axios.post(`${baseURL}/register/`, form, {headers: postHeaders});
+  console.log("REG RESPONSE: ", response)
 
   if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
 
