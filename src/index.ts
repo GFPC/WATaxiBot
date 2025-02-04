@@ -198,8 +198,8 @@ client.on('message', async (msg) => {
     await handler(ctx);
   } catch (e) {
     logger.error(`Error when calling the handler: ${e}`)
-    console.log(e.stack)
     await msg.reply(ctx.constants.getPrompt(localizationNames.error, ctx.constants.data.default_lang));
+    await storage.delete(userId);
   }
 });
 
