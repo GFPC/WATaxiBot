@@ -162,7 +162,7 @@ async function router(ctx: Context): Promise<Handler> {
 }
 
 client.on('message', async (msg) => {
-  let userId = '52352235235@c.us'; //msg.from; // Тут можно сделать замену исходного номера телефона на фейковый для тестов
+  let userId = msg.from; // Тут можно сделать замену исходного номера телефона на фейковый для тестов
   //if(userId==="79999183175@c.us" || userId==="79029403313@c.us"){ return}
   if(userId ==="status@broadcast"){
     return
