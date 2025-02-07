@@ -89,6 +89,7 @@ export async function GetTimestamp(body: string,tomorrowMarker:string = "зав�
    * Если возвращается undefined - то сообщение не распознано.
    * Если возвращается null - то сейчас. */
   const now = new Date( new Date().getTime() + 3600 * 1000).toUTCString().replace( / GMT$/, "" )
+  console.log(now);
   const trimmedBody = body.trim().toLowerCase();
 
   if (trimmedBody === "сейчас") {
