@@ -20,10 +20,10 @@ export function formatDateAPI(date: Date): string {
   const minutes = pad(date.getMinutes());
   const seconds = pad(date.getSeconds());
 
-  const offsetMinutes = date.getTimezoneOffset();
-  const offsetSign = offsetMinutes > 0 ? '-' : '+';
-  const offsetHours = pad(Math.floor(Math.abs(offsetMinutes) / 60));
-  const offsetMins = pad(Math.abs(offsetMinutes) % 60);
+  const offsetMinutes = '00'//date.getTimezoneOffset();
+  const offsetSign = '+'//offsetMinutes > 0 ? '-' : '+';
+  const offsetHours = '01'//pad(Math.floor(Math.abs(offsetMinutes) / 60));
+  const offsetMins = '00'//pad(Math.abs(offsetMinutes) % 60);
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}${offsetSign}${offsetHours}:${offsetMins}`;
 }
