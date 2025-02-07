@@ -113,7 +113,7 @@ export async function OrderHandler(ctx: Context) {
         break;
       }
       if ("getTime" in timestamp) {
-        console.log((parseInt(String(Date.parse(new Date(new Date().getTime() + 3600 * 1000).toUTCString().replace(/ GMT$/, "")) / 1000)) - (timestamp.getTime() / 1000)))
+        console.log((parseInt(String(Date.parse(new Date(new Date().getTime() + 3600 * 1000).toUTCString().replace(/ GMT$/, "")) / 1000)) - (timestamp?.getTime() / 1000)))
       }
       if (timestamp !== null && (parseInt(String(Date.parse(new Date(new Date().getTime() + 3600 * 1000).toUTCString().replace(/ GMT$/, "")) / 1000)) - (timestamp.getTime()/1000) > 0)) {
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.timestampTimeout, ctx.user.settings.lang.api_id ));
