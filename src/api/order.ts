@@ -349,7 +349,7 @@ export class Order {
     const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders});
     console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
 
-    if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
+    //if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
 
     this.id = Number(response.data.data.b_id);
 
