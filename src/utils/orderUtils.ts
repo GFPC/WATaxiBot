@@ -103,7 +103,7 @@ export async function GetTimestamp(body: string,tomorrowMarker:string = "зав�
     const minutes = parseInt(match[3]);
 
     // Создаем объект Date на основе текущего времени
-    const date = new Date(now);
+    const date = new Date(new Date( new Date().getTime() + 3600 * 1000).toUTCString().replace( / GMT$/, "" ));
     console.log(date);
     if (isTomorrow) {
       date.setDate(date.getDate() + 1);
