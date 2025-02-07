@@ -106,7 +106,7 @@ export async function OrderHandler(ctx: Context) {
       }
 
       const timestamp = await GetTimestamp(msg_body_for_timestamp,ctx.constants.getPrompt(localizationNames.tomorrowLower, ctx.user.settings.lang.api_id ));
-      await ctx.chat.sendMessage("TEST POINT: RECEIVED +01:00 TIME: " + timestamp?.toDateString().split("GMT")[0]);
+      await ctx.chat.sendMessage("TEST POINT: RECEIVED +01:00 TIME: " + new Date( new Date().getTime() + 3600 * 1000).toUTCString().replace( / GMT$/, "" ));
 
       if (timestamp === undefined) {
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.getTimestampError, ctx.user.settings.lang.api_id ));
