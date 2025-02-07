@@ -104,7 +104,7 @@ export async function GetTimestamp(body: string,tomorrowMarker:string = "зав�
 
     // Создаем объект Date на основе текущего времени
     const date = new Date();
-    date.setTime(date.getTime() + 3*3600 * 1000);
+    date.setTime(date.getTime() + 3600 * 1000);
     console.log(date);
     if (isTomorrow) {
       date.setDate(date.getDate() + 1);
