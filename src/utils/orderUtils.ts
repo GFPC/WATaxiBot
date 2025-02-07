@@ -97,6 +97,7 @@ export async function GetTimestamp(body: string,tomorrowMarker:string = "зав�
   }
 
   const match = trimmedBody.match(/^({tomorrowMarker}\s+)?(\d{1,2}):(\d{2})$/);
+  console.log(match);
   if (match) {
     const isTomorrow = Boolean(match[1]);
     const hours = parseInt(match[2]);
