@@ -235,7 +235,7 @@ export class Order {
 
     if (state !== this.state) {
       if (state === BookingState.Approved) try {
-        await this.openChat();
+        //await this.openChat();
         console.log("CHAT OPENED");
       } catch (e) {
         console.log(e);
@@ -252,7 +252,7 @@ export class Order {
     if (this.isComplete) throw "The trip was completed";
 
     const form = createForm({}, this.adminAuth);
-    const response = await axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders});
+    const response = await axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000});
 
     if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
 
@@ -329,7 +329,7 @@ export class Order {
 
     // Отправляем запрос
     console.log("CREATING DRIVE REQ: ", form);
-    const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders});
+    const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
     console.log("CREATING DRIVE RES: ", response.data);
     if(this.isVoting){
       b_driver_code = response.data.data.b_driver_code
@@ -346,7 +346,7 @@ export class Order {
         this.adminAuth
     )
 
-    const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders});
+    const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
     console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
 
     //if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
@@ -382,7 +382,7 @@ export class Order {
       },
       this.adminAuth
     );
-    const response = await axios.post(`${baseURL}drive/get/${this.id}`, form, {headers: postHeaders});
+    const response = await axios.post(`${baseURL}drive/get/${this.id}`, form, {headers: postHeaders, timeout: 10000});
 
     if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
 
@@ -409,7 +409,7 @@ export class Order {
       this.adminAuth
     );
 
-    const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders});
+    const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
 
     if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
 
@@ -456,10 +456,10 @@ export class Order {
     const driver_u_id = drive.data.booking[this.id].drivers[0]?.u_id
     const car_u_id = drive.data.booking[this.id].drivers[0]?.c_id
 
-    const driver = await axios.post(`${baseURL}user/${driver_u_id}` ,form,{headers: postHeaders});
+    const driver = await axios.post(`${baseURL}user/${driver_u_id}` ,form,{headers: postHeaders, timeout: 10000});
     if (driver.status != 200 || driver.data.status != 'success') throw `API Error: ${driver.data.message}`;
 
-    const car = await axios.post(`${baseURL}user/${driver_u_id}/car/${car_u_id}`, form,{headers: postHeaders});
+    const car = await axios.post(`${baseURL}user/${driver_u_id}/car/${car_u_id}`, form,{headers: postHeaders, timeout: 10000});
     if (car.status != 200 || car.data.status != 'success') throw `API Error: ${car.data.message}`;
     console.log(car.data.data.car, car_u_id)
 
