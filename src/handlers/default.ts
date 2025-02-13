@@ -5,7 +5,7 @@ import {newSettings} from "../states/machines/settingsMachine";
 export async function DefaultHandler(ctx: Context): Promise<void> {
     const state = await ctx.storage.pull(ctx.userID);
 
-    if (state === null) {
+    if (state === null || state === undefined || state === '') {
 
         switch (ctx.message.body) {
             case '0':
