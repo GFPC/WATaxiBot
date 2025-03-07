@@ -75,3 +75,20 @@ export async function changeLang(phone: string, lang_id: string | undefined, adm
       message:response.data.message
   };
 }
+
+export async function changeReferralCode(u_id: string, code: string, adminAuth: AuthData): Promise<{status: string, message: string}> {
+    const response = await axios.post(`${baseURL}user/${u_id}`, {
+        token: adminAuth.token,
+        u_hash: adminAuth.hash,
+        data: JSON.stringify({
+            referrer_u_id: code
+        })
+    }, {headers: postHeaders});
+
+    if (response.status != 200) throw `POINT->changeReferralCode: API Error: ${response.data.message}`;
+
+    return {
+        status:response.data.status,
+        message:response.data.message
+    };
+}

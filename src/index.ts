@@ -117,6 +117,8 @@ async function router(ctx: Context): Promise<Handler> {
     console.log("REQUESTING USER API_ID REQ:",{ token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]})
     const userData = await axios.post(`${baseURL}user`, { token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
     console.log("REQUESTING USER API_ID RES:",userData.data)
+    const userSection = userData.data.data.user[Object.keys(userData.data.data.user)[0]]
+    console.log("USER SECTION:",userSection)
     if(userData.data.status === 'error') {
       console.log("REG TOP POINT")
       ctx.details.lang = {
@@ -135,7 +137,8 @@ async function router(ctx: Context): Promise<Handler> {
           api_id: userData.data.data.user[Object.keys(userData.data.data.user)[0]].u_lang ?? ctx.constants.data.default_lang,
           native:API_CONSTANTS.data.data.langs[userData.data.data.user[Object.keys(userData.data.data.user)[0]].u_lang ?? ctx.constants.data.default_lang].native
         }
-      }
+      },
+      referrer_u_id: userSection?.referrer_u_id ?? null,
     });
     ctx.api_u_id = Object.keys(userData.data.data.user)[0]
   }

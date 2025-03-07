@@ -3,7 +3,7 @@ import {StateMachine} from "../types";
 
 export interface SettingsMachine extends StateMachine {
     id: 'settings'
-    state: 'settings' | 'changeLanguage'
+    state: 'settings' | 'changeLanguage' | 'changeReferralCode'
     data: {}
 }
 

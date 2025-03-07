@@ -48,7 +48,8 @@ export async function OrderHandler(ctx: Context) {
           state.data.peopleCount,
           constants.maxWaitingTimeSecs,
             ctx.chat,
-            ctx
+            ctx,
+            state.data.additionalOptions
         );
 
         const newState = newRide(order);
@@ -86,7 +87,8 @@ export async function OrderHandler(ctx: Context) {
             state.data.peopleCount,
             constants.maxWaitingTimeSecs,
             ctx.chat,
-            ctx
+            ctx,
+            state.data.additionalOptions
         );
         await ctx.chat.sendMessage("TEST POINT:DRIVE ID: " + order.id);
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.votingActivated, ctx.user.settings.lang.api_id ));
@@ -130,11 +132,59 @@ export async function OrderHandler(ctx: Context) {
           "from": state.data.from?.address ?? `${state.data.from.latitude} ${state.data.from.longitude}`,
           "to": state.data.to?.address ?? `${state.data.to.latitude} ${state.data.to.longitude}`,
           "peoplecount": state.data.peopleCount.toString(),
-          "when": formatDateHuman(timestamp, ctx)
+          "when": formatDateHuman(timestamp, ctx),
+          "options": state.data.additionalOptions.map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso]).join(', ')
         }
       );
       await ctx.chat.sendMessage(response);
       break;
+    case "collectionAdditionalOptions":
+      if (ctx.message.body === '00') {
+        state.state = 'collectionWhen'
+        await ctx.storage.push(ctx.userID, state);
+        break;
+      }
+      console.log(ctx.message.body,ctx.message.body.split(','));
+      let successFlag = true;
+      for(let i = 0; i < ctx.message.body.split(',').length; i++) {
+        console.log(state.data.additionalOptions,i);
+        if (ctx.message.body.split(',')[i].replace(' ', '') in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']) {
+          state.data.additionalOptions.push(Number(ctx.message.body.split(',')[i].replace(' ', '')));
+        } else {
+          successFlag = false;
+          break
+        }
+      }
+      if(!successFlag){
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionAdditionalOptionsError, ctx.user.settings.lang.api_id ));
+        state.state = 'collectionAdditionalOptions';
+        state.data.additionalOptions = [];
+        await ctx.storage.push(ctx.userID, state);
+        break;
+      }
+      state.state = 'collectionWhen'
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionWhen, ctx.user.settings.lang.api_id ));
+        break;
+    case "collectionShowAdditionalOptions":
+      if (ctx.message.body === '1') {
+        state.state = 'collectionAdditionalOptions';
+        await ctx.storage.push(ctx.userID, state);
+      } else {
+        state.state = 'collectionWhen';
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionWhen, ctx.user.settings.lang.api_id ));
+        await ctx.storage.push(ctx.userID, state);
+        break;
+      }
+
+      const MAX_BOOKING_COMMENT_ID = 20;
+      var text = ctx.constants.getPrompt(localizationNames.selectAdditionalOptions, ctx.user.settings.lang.api_id ) + '\n';
+      for(let i in ctx.constants.data.data.booking_comments) {
+        if (Number(i) < MAX_BOOKING_COMMENT_ID) {
+          text += i.toString() + '. ' + ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso] + '\n';
+        }
+      }
+      await ctx.chat.sendMessage(text)
+        break;
     case "collectionHowManyPeople":
       // Собираем информацию о кол-ве человек
 
@@ -159,10 +209,12 @@ export async function OrderHandler(ctx: Context) {
       }
 
       state.data.peopleCount = peopleCount;
-      state.state = 'collectionWhen';
+      //state.state = 'collectionWhen';
+        state.state = 'collectionShowAdditionalOptions'
       await ctx.storage.push(ctx.userID, state);
 
-      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionWhen, ctx.user.settings.lang.api_id ));
+      //await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionWhen, ctx.user.settings.lang.api_id ));
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.needAdditionalOptionsQuestion, ctx.user.settings.lang.api_id ));
       break;
     case "collectionTo":
       // Собираем информацию о конечной точке

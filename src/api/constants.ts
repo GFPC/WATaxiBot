@@ -57,3 +57,7 @@ export class Constants{
         return this.data.data.lang_vls[name]? this.data.data.lang_vls[name][lang_id] : "@@@Lang value not found@@@" + name
     }
 }
+
+export const REFCODES: { [key: string]: string } = {
+    "test": "666"
+}

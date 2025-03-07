@@ -3,14 +3,15 @@ import {Order} from "../../api/order";
 
 export interface OrderMachine extends StateMachine {
   id: 'order'
-  state: 'collectionFrom' | 'collectionTo' | 'collectionHowManyPeople' | 'collectionWhen' | 'collectionOrderConfirm' | 'collectionCarCode'
+  state: 'collectionFrom' | 'collectionTo' | 'collectionHowManyPeople' | 'collectionWhen' | 'collectionOrderConfirm' | 'collectionCarCode' | 'collectionShowAdditionalOptions' | 'collectionAdditionalOptions'
   data: {
     handbookActive: boolean
     topPlacesActive: boolean
     from: Location
     to: Location
     peopleCount: number
-    when?: Date | null // null - сейчас
+    when?: Date | null // null - сейчас,
+    additionalOptions: number[]
   }
 }
 
@@ -23,7 +24,8 @@ export function newEmptyOrder(): OrderMachine {
       topPlacesActive: false,
       from: {},
       to: {},
-      peopleCount: 0
+      peopleCount: 0,
+      additionalOptions: [],
     }
   };
 }

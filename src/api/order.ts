@@ -58,35 +58,7 @@ export class Order {
   notificationMessageSended: boolean = false;
   notificationMessage: Message | undefined;
   ctx: Context | undefined;
-
-  // TODO: Реализовать режим чата
-  private async openChat() {
-    if (this.id === undefined) throw "Order ID not defined";
-    if (this.clientId === undefined) throw "Client ID not defined";
-    if (this.driverId === undefined) throw "Driver ID not defined";
-
-    const s = String(process.env.WEBSOCKET_INSECURE).toLowerCase() === 'true' ? 'ws' : 'wss';
-    // @ts-ignore
-    this.socket = new WebSocket(`${s}://${process.env.WEBSOCKET_HOST}:${process.env.WEBSOCKET_PORT}`);
-
-    if ("onopen" in this.socket) {
-      this.socket.onopen = () => {
-        this.socket?.send(JSON.stringify({
-          from: `${this.clientId}_${this.id}`,
-          to: `${this.driverId}_${this.id}`,
-          action: 'start',
-        }))
-      }
-    }
-  }
-
-  private async closeChat() {
-
-  }
-
-  async sendToChat() {
-
-  }
+  submitPrice: number = 0;
 
   constructor(clientTg: string, adminAuth: AuthData, stateCallback: StateCallback, chatCallback: ChatCallback, isVoting: boolean = false) {
     this.clientTg = clientTg;
@@ -94,6 +66,27 @@ export class Order {
     this.stateCallback = stateCallback;
     this.chatCallback = chatCallback;
     this.isVoting = isVoting;
+  }
+
+  async extendSubmitPrice(price: number,ctx:Context) {
+    this.submitPrice += price
+    console.log('API extendSubmitPrice:',this.submitPrice)
+    const data = {
+      b_options:[
+          ['=',['submitPrice'],this.submitPrice]
+      ]
+    }
+    const form = createForm(
+        {
+          data: JSON.stringify(data),
+          u_a_phone: ctx.userID.split('@')[0],
+          u_a_role: "1",
+          action: 'edit',
+        },
+        this.adminAuth
+    );
+    const res = await axios.post(`${baseURL}drive/get/` + this.id, form, {headers: postHeaders});
+    console.log('API extendSubmitPrice:',res.data)
   }
 
   async getState(): Promise<BookingState> {
@@ -234,12 +227,6 @@ export class Order {
     }
 
     if (state !== this.state) {
-      if (state === BookingState.Approved) try {
-        //await this.openChat();
-        console.log("CHAT OPENED");
-      } catch (e) {
-        console.log(e);
-      }
       const oldState = this.state;
       this.state = state;
       await this.stateCallback(this, oldState ?? state, state);
@@ -252,11 +239,15 @@ export class Order {
     if (this.isComplete) throw "The trip was completed";
 
     const form = createForm({}, this.adminAuth);
-    const response = await axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000});
-
-    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
-
-    return response.data;
+    return axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000})
+        .then(response => {
+          if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
+          return response.data;
+        })
+        .catch(error => {
+          throw `API Error: ${error}`;
+        }
+        );
   }
 
   async startStateChecking() {
@@ -271,7 +262,7 @@ export class Order {
     clearInterval(this.intervalId);
   }
 
-  async new(startLoc: Location, endLoc: Location, startDatetime: Date | null, peopleCount: number, maxWaitingSecs: number, chat: Chat | null, ctx: Context) {
+  async new(startLoc: Location, endLoc: Location, startDatetime: Date | null, peopleCount: number, maxWaitingSecs: number, chat: Chat | null, ctx: Context,b_comments: number[]) {
     /* Создание нового заказа */
     if (this.id) throw "The order has already been created";
     if(this.isVoting){
@@ -312,6 +303,10 @@ export class Order {
     data.b_max_waiting = maxWaitingSecs;
     data.b_payment_way = 1;
     data.b_services = []
+    data.b_comments = b_comments;
+    data.b_options = {
+      submitPrice: 0,
+    }
     // data.u_id = clientId;
 
     if (this.isVoting) {
@@ -321,7 +316,7 @@ export class Order {
     const form = createForm(
       {
         data: JSON.stringify(data),
-        u_a_phone: this.clientTg.toString(),
+        u_a_phone: this.ctx.userID.split('@')[0],
         u_a_role: "1",
       },
       this.adminAuth
@@ -335,7 +330,7 @@ export class Order {
       b_driver_code = response.data.data.b_driver_code
     }
 
-    if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, response.data.message.error);
+    if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, JSON.stringify(response.data));
 
     const confirmForm = createForm(
         {
@@ -364,7 +359,6 @@ export class Order {
     this.isCanceled = isCanceled;
 
     this.stopStateChecking();
-    this.closeChat().then();
   }
 
   async cancel(reason: string) {
@@ -384,7 +378,7 @@ export class Order {
     );
     const response = await axios.post(`${baseURL}drive/get/${this.id}`, form, {headers: postHeaders, timeout: 10000});
 
-    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
+    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
 
     this.finish(true);
   }
@@ -411,7 +405,7 @@ export class Order {
 
     const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
 
-    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
+    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
 
     this.rate = value;
   }
@@ -436,7 +430,7 @@ export class Order {
 
     const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders});
 
-    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data.message}`;
+    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
   }
 
   async getDriverAndCar(): Promise<{ name: string, color: string , model: string, plate: string, phone: string}> {
@@ -457,10 +451,10 @@ export class Order {
     const car_u_id = drive.data.booking[this.id].drivers[0]?.c_id
 
     const driver = await axios.post(`${baseURL}user/${driver_u_id}` ,form,{headers: postHeaders, timeout: 10000});
-    if (driver.status != 200 || driver.data.status != 'success') throw `API Error: ${driver.data.message}`;
+    if (driver.status != 200 || driver.data.status != 'success') console.log(`API Error: ${driver}`);
 
     const car = await axios.post(`${baseURL}user/${driver_u_id}/car/${car_u_id}`, form,{headers: postHeaders, timeout: 10000});
-    if (car.status != 200 || car.data.status != 'success') throw `API Error: ${car.data.message}`;
+    if (car.status != 200 || car.data.status != 'success') console.log(`API Error: ${car}`);
     console.log(car.data.data.car, car_u_id)
 
 

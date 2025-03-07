@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 
 export const localization = {
   welcome: "Добро пожаловать в бота для заказа такси!",
-  sendFullName: "Для начала необходимо зарегистрироваться. Отправьте своё ФИО в формате Имя Отчество Фамилия.",
+  sendFullName: "Для начала необходимо зарегистрироваться. Отправьте свое имя",
   sendRefCode: "Отлично! Теперь отправьте промокод. Если его нет, то напишите *0* (ноль)",
   registrationError: "Ошибка регистрации: %error%. Попробуйте позже.",
   registrationSuccessful: "Вы успешно зарегистрировались! Выберите дейтсвие из списка ниже.\n Создать заказ - *0* \n" + "Настройки - *1* \n" + "Чтобы создать заказ просто напишите *0* и следуйте инструкциям\n" +
@@ -37,12 +37,12 @@ export const localization = {
   getTimestampError: "Не удалось распознать ваше сообщение. Попробуйте ещё раз.",
   timestampTimeout: "Переданное время уже прошло. Отправьте другое",
   collectionOrderConfirm: "*Ваш заказ:*\nНачальная точка: %from%.\nКонечная точка: %to%.\n" +
-      "Кол-во людей: %peoplecount%.\nКогда: %when%.\n\n" +
+      "Кол-во людей: %peoplecount%.\nКогда: %when%.\nДополнительные опции: %options%\n\n" +
       "Отправьте *подтвердить* ( *1* ) чтобы подтвердить заказ или *отмена* ( *0* ) чтобы его отменить.",
   confirmLower: "подтвердить",
   confirmPrompt: "Отправьте *подтвердить* чтобы подтвердить заказ или *отмена* чтобы его отменить.",
   votingActivated: "*Режим голосования активирован!* У вас есть 3 минуты.\n" +
-      "Чтобы продлить время на 3 минуты отправьте *продлить* ( *2* ). Чтобы отменить заказ отправьте *отмена* ( *0* ).",
+      "Чтобы продлить время на 3 минуты отправьте *продлить* ( *2* ). Чтобы расширить чаевые на подачу введите ( *3* ). Чтобы отменить заказ отправьте *отмена* ( *0* ).",
   error: "Произошла непредвиденная ошибка. Попробуйте повторить ещё раз или отменить заказ, написав *отмена*",
   stateProcessing: "Поиск машины...",
   stateApproved: "Машина найдена! Водитель (%driver%) уже едет к вам.\nЧтобы перейти в режим чата напишите *чат*.\n" + "Машина: %color% %model% %plate% \n" +
@@ -52,13 +52,13 @@ export const localization = {
   stateOther: "Состояние заказа изменено на %state%",
   creatingOrder: "Создаём заказ...",
   errorWhenCreatingOrder: "Произошла непредвиденная ошибка, создание заказа отменено. Попробуйте сделать заказ позже",
-  orderCreated: "Заказ создан! Ищем машину...\nВаш заказ видят сейчас N  водителей, среднее ожидание М минут. Вы можете доплатить сумму на подачу (Число-команда ) и ваш заказ смогут взять  больше водителей.\nЧтобы отменить поиск напишите *отмена* ( *0* )",
-  collectionCancelReason: "Выберите причину отмены заказа из списка ниже:\n%reasons%.\nЧтобы отказаться от выбора причины напишите *отмена* ( *0* ).\nЕсли передумали, напишите *назад* ( *1* )",
+  orderCreated: "Заказ создан! Ищем машину...\nВаш заказ видят сейчас N  водителей, среднее ожидание М минут. Вы можете доплатить сумму на подачу ( *2* ) и ваш заказ смогут взять  больше водителей.\nЧтобы отменить поиск напишите *отмена* ( *0* )",
+  collectionCancelReason: "Выберите причину отмены заказа из списка ниже:\n%reasons%.\nЧтобы отказаться от выбора причины напишите *отмена* ( *0* ).\nЕсли передумали, напишите *назад* ( *01* )",
   orderCanceled: "Заказ отменён. \nВыберите действие из списка ниже:\n" +
       "Создать заказ - напишите *0*\n" +
       "Настройки - напишите *1*\n",
   orderCompleted: "Чтобы создать новый заказ, напишите начальную точку",
-  rateSet: "Оценка успешно поставлена",
+  rateSet: "Оценка успешно поставлена. Вы можете ввести текстовый комментарий под этим сообщением, для отмены напишите *отмена* ( *0* )",
   closeReasonSpecified: "Спасибо за обратную связь. Выберите действие из списка ниже:\n" +
       "Создать заказ - напишите *0*\n" +
       "Настройки - напишите *1*\n",
@@ -72,13 +72,16 @@ export const localization = {
   cancelDigital: "0",
   defaultPrompt: "Выберите действие из списка ниже:\n" +
       "Создать заказ - напишите *0*\n" +
-      "Настройки - напишите *1*\n",
+      "Настройки - напишите *1*\n" +
+      "Помощь - напишите *9*\n",
   commandNotFound: "Команда не распознана.\nВыберите действие из списка ниже:\n" +
       "Создать заказ - напишите *0*\n" +
       "Настройки - напишите *1*\n",
   settingsMenu: "Настройки\n" +
-      "Текущий язык - %language%\n" +
+      "Текущий язык - *%language%*\n" +
+      "Текущий реферальный код - *%refCode%*\n" +
       "\n" +
+      "Сменить реферальный код - напишите *2*\n" +
       "Сменить язык - напишите *1*\n" +
       "Для выхода из меню - напишите *0*",
   selectLanguage: "Выберите язык из списка ниже:",
@@ -95,7 +98,31 @@ export const localization = {
   votingTimerExpired: "Время ожидания вышло. Чтобы создать новый заказ, напишите начальную точку",
   extendVotingTimeLower: "продлить",
   votingTimerNotActive: "Данный таймер больше не активен, активный можно найти ниже",
-  orderClosedByAPI: "Заказ закрыт по истечению времени ожидания отклика водителей. \n\n"
+  orderClosedByAPI: "Заказ закрыт по истечению времени ожидания отклика водителей. \n\n",
+  newReferralCodeCollection: "Введите реферальный код, для отмены введите *отмена* ( *0* )",
+  changeReferralCodeSuccess: "Реферальный код изменен",
+  changeReferralCodeErrorEqual: "Новый реферальный код не может быть равен старому",
+  help: "Выберите дейтсвие из списка ниже.\n Создать заказ - *0* \n" + "Настройки - *1* \n" + "Чтобы создать заказ просто напишите *0* и следуйте инструкциям\n" +
+    "В качестве начальной точки Вы можете использовать:\n" +
+    "1. Конкретный адрес в виде текста, голосового сообщения или геолокации.\n" +
+    "2. Отправить код места или фото с QR кодом.\n" +
+    "3. Отправьте *Любимые места*, чтобы показать список любимых мест и выбрать из него.\n" +
+    "4. Отправьте *Справочник*, чтобы выбрать район из справочника.",
+  needAdditionalOptionsQuestion: "Нужны дополнительные опции? Введите ( *1* ) для получения списка дополнительных опций, если они не требуются, введите ( *2* )",
+  selectAdditionalOptions: "Выберите дополнительные опции из списка ниже, укажите цифрами через запятую, если не требуются, введите ( *00* ):",
+  collectionAdditionalOptionsError: "Вы ввели некорректные значения. Попробуйте ещё раз",
+  commentReceived: "Ваш отзыв принят",
+
+  enterStartPriceSum: 'Введите сумму, на которую хотите расширить чаевые на подачу. ' +
+      'Помните, что данная сумма прибавится к предыдущей.' +
+      '\n*Важно: чаевые на подачу невозможно уменьшить, дествие необратимо*\n' +
+      ' Чтобы отменить данное действие, напишите ( *00* )',
+  enterStartPriceCommandNotFoundRide: "Команда не распознана. На данном этапе просиходит поиск машины, чтобы отменить заказ, напишите ( *0* ), чтобы расширить чаевые на подачу, напишите ( *2* )",
+  extendingStartPriceClosed: 'Расширение чаевых на подачу отменено, продолжается поиск машины...',
+  enterStartPriceSumMustBeNumber: 'Сумма должна быть числом, попробуйте еще раз. Напишите ( *00* ), чтобы отменить действие',
+  enterStartPriceSumMustBePositive: 'Сумма должна быть положительным числом, попробуйте еще раз. Напишите ( *00* ), чтобы отменить действие',
+  startPriceExtended: 'Чаевые расширены, текущая сумма: %price% ₽\n' +
+      '\nПродолжается поиск машины...'
 }
 export const localizationNames = {
   welcome: "wab_welcome".toLowerCase(),
@@ -168,6 +195,20 @@ export const localizationNames = {
   extendVotingTimeLower: "wab_extendVotingTimeLower".toLowerCase(),
   votingTimerNotActive: "wab_votingTimerNotActive".toLowerCase(),
   orderClosedByAPI: "wab_orderClosedByAPI".toLowerCase(),
+  newReferralCodeCollection: "wab_newReferralCodeCollection".toLowerCase(),
+  changeReferralCodeSuccess: "wab_changeReferralCodeSuccess".toLowerCase(),
+  changeReferralCodeErrorEqual: "wab_changeReferralCodeErrorEqual".toLowerCase(),
+  help: "wab_help".toLowerCase(),
+  needAdditionalOptionsQuestion: "wab_needAdditionalOptionsQuestion".toLowerCase(),
+  selectAdditionalOptions: "wab_selectAdditionalOptions".toLowerCase(),
+  collectionAdditionalOptionsError: "wab_collectionAdditionalOptionsError".toLowerCase(),
+  commentReceived: "wab_commentReceived".toLowerCase(),
+  enterStartPriceSum: "wab_enterStartPriceSum".toLowerCase(),
+  enterStartPriceCommandNotFoundRide: "wab_enterStartPriceCommandNotFoundRide".toLowerCase(),
+  extendingStartPriceClosed: "wab_extendingStartPriceClosed".toLowerCase(),
+  enterStartPriceSumMustBeNumber: "wab_enterStartPriceSumMustBeNumber".toLowerCase(),
+  enterStartPriceSumMustBePositive: "wab_enterStartPriceSumMustBePositive".toLowerCase(),
+  startPriceExtended: "wab_startPriceExtended".toLowerCase(),
 }
 function exportToJsonFile() {
   const file = "l10n.json";

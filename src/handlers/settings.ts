@@ -1,7 +1,8 @@
 import {localization, localizationNames} from "../l10n";
 import {Context} from "../index";
-import {changeLang} from "../api/user";
+import {changeLang, changeReferralCode} from "../api/user";
 import {UsersStorage} from "../storage/usersStorage";
+import {REFCODES} from "../api/constants";
 
 type LanguageCodeData = ({ id: string, native: string, api_id: string, iso: string });
 type LanguageCodeListData = LanguageCodeData[];
@@ -35,7 +36,9 @@ const languages: LanguageCodeListData = [
 export async function SettingsHandler(ctx: Context): Promise<void> {
     const state = await ctx.storage.pull(ctx.userID);
 
-    if(ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelDigital, ctx.user.settings.lang.api_id ) || ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelLower, ctx.user.settings.lang.api_id )){
+    if((ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelDigital, ctx.user.settings.lang.api_id )
+        || ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelLower, ctx.user.settings.lang.api_id ))
+        && (state.state === 'settings' || state.state === '' || !state.state)) {
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ))
         await ctx.storage.delete(ctx.userID);
         return;
@@ -49,7 +52,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 state.state  = 'changeLanguage';
                 await ctx.storage.push(ctx.userID, state);
                 break;
-
+            case '2':
+                // change referral code
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.newReferralCodeCollection, ctx.user.settings.lang.api_id ))
+                state.state  = 'changeReferralCode';
+                await ctx.storage.push(ctx.userID, state);
+                break;
             default:
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.commandNotFound, ctx.user.settings.lang.api_id ))
                 break;
@@ -59,6 +67,16 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
     switch (state.state) {
         case 'changeLanguage':
             console.log(ctx.message.body, languages.map( item => item.id), ctx.message.body.toString() in languages.map( item => item.id))
+            const userPreload = await ctx.usersList.pull(ctx.userID.split('@')[0]);
+            if (ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelLower, ctx.user.settings.lang.api_id ) || ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelDigital, ctx.user.settings.lang.api_id )) {
+                state.state = 'settings';
+                await ctx.storage.push(ctx.userID, state);
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                    .replace( '%language%', userPreload.settings.lang.native + '(' + userPreload.settings.lang.iso + ')')
+                    .replace( '%refCode%', userPreload.referrer_u_id ?? '---')
+                );
+                break;
+            }
             if(languages.map( item => item.id).includes(ctx.message.body)){
                 const response = await changeLang(ctx.userID.split('@')[0], languages.find( item => item.id == ctx.message.body)?.api_id ?? '-1', ctx.auth);
 
@@ -75,7 +93,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     user.settings.lang.api_id = selectedLang?.api_id ?? '2';
                     await ctx.usersList.push(ctx.userID.split('@')[0], user);
                     await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.langSelectedBakingToSettings, ctx.user.settings.lang.api_id ))
-                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id ).replace('%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')'));
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                        .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                        .replace( '%refCode%', user.referrer_u_id ?? '---')
+                    );
                     break;
                 }
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.error, ctx.user.settings.lang.api_id ));
@@ -83,6 +104,47 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
 
             } else {
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.commandNotFound, ctx.user.settings.lang.api_id ));
+            }
+            break;
+        case 'changeReferralCode':
+
+            const user = await ctx.usersList.pull(ctx.userID.split('@')[0]);
+            console.log('changeReferralCode: ', ctx.message.body,user)
+
+            if (ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelLower, ctx.user.settings.lang.api_id ) || ctx.message.body === ctx.constants.getPrompt(localizationNames.cancelDigital, ctx.user.settings.lang.api_id )) {
+                state.state = 'settings';
+                await ctx.storage.push(ctx.userID, state);
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                    .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                    .replace( '%refCode%', user.referrer_u_id ?? '---')
+                );
+                break;
+            }
+            const refCode = REFCODES[ctx.message.body] ?? ctx.message.body;
+
+            const response = await changeReferralCode(user.api_u_id, refCode, ctx.auth);
+            if(response.status === 'success'){
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.changeReferralCodeSuccess, ctx.user.settings.lang.api_id ));
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                    .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                    .replace( '%refCode%', user.referrer_u_id ?? '---')
+                );
+                state.state = 'settings';
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            }
+            else if (response.message === 'user or modified data not found'){
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.changeReferralCodeErrorEqual, ctx.user.settings.lang.api_id ));
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                    .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                    .replace( '%refCode%', user.referrer_u_id ?? '---')
+                );
+                state.state = 'changeReferralCode';
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            }
+            else {
+                await ctx.chat.sendMessage('POINT 0x01, unhandled response: ' + JSON.stringify(response));
             }
             break;
         default:

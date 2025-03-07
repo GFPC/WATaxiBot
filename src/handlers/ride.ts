@@ -27,32 +27,39 @@ export async function RideHandler(ctx: Context) {
           state.state = 'cancelReason';
           await ctx.storage.push(ctx.userID, state);
           break;
+        case '2':
+          await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterStartPriceSum, ctx.user.settings.lang.api_id ));
+          state.state = 'extendStartTips';
+          await ctx.storage.push(ctx.userID, state);
+          break;
         default:
-          if (state.data.isCollectionReason) {
-            await state.data.order.cancel(ctx.message.body);
-            await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.orderCanceled, ctx.user.settings.lang.api_id ));
-            break;
-          }
-
-          if (state.state === "rate") {
-            const rateNum = Number(ctx.message.body);
-            if (!isNaN(rateNum) && rateNum >= 1 && rateNum <= 5) {
-              await state.data.order.setRate(rateNum);
-              await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.rateSet, ctx.user.settings.lang.api_id ));
-              await new Promise(f => setTimeout(f, constants.rateMessagesDelay));
-            }
-
-            await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.orderCompleted, ctx.user.settings.lang.api_id ));
-            await ctx.storage.delete(ctx.userID);
-            break;
-          }
-
-          await ctx.chat.sendMessage("from ride handler");
+          await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterStartPriceCommandNotFoundRide, ctx.user.settings.lang.api_id ));
           break;
       }
       break;
+    case 'extendStartTips':
+      if( ctx.message.body.replace(' ', '') === '00' ){
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.extendingStartPriceClosed, ctx.user.settings.lang.api_id ));
+        state.state = 'searchCar';
+        await ctx.storage.push(ctx.userID, state);
+        break;
+      }
+      if(!ctx.message.body.match(/^[0-9]+$/)){
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterStartPriceSumMustBeNumber, ctx.user.settings.lang.api_id ));
+        break;
+      }
+      if(Number(ctx.message.body) < 0){
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterStartPriceSumMustBePositive, ctx.user.settings.lang.api_id ));
+        break;
+      }
+      await state.data.order.extendSubmitPrice(Number(ctx.message.body), ctx);
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.startPriceExtended, ctx.user.settings.lang.api_id ).replace('%price%', state.data.order.submitPrice));
+
+      state.state = 'searchCar';
+      await ctx.storage.push(ctx.userID, state);
+      break;
     case "cancelReason":
-      if(ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id ) || ctx.message.body === '1'){ //назад
+      if(ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id ) || ctx.message.body.trim() === '01'){ //назад
         if(state.data.order.isVoting){
           state.id = 'voting'
           state.state = 'voting'
@@ -88,8 +95,6 @@ export async function RideHandler(ctx: Context) {
         await ctx.storage.delete(ctx.userID);
       }
       break;
-
-
     case "rate":
       if(ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id )){ //назад
         state.state = "searchCar";
@@ -97,8 +102,19 @@ export async function RideHandler(ctx: Context) {
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.stateProcessing, ctx.user.settings.lang.api_id ));
         break;
       }
+      state.state = "comment";
+      await ctx.storage.push(ctx.userID, state);
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.rateSet, ctx.user.settings.lang.api_id ));
+      break;
+    case 'comment':
+      if (ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id )) { //назад
+        await ctx.storage.delete(ctx.userID);
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ));
+        break;
+      }
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.commentReceived, ctx.user.settings.lang.api_id ));
       await ctx.storage.delete(ctx.userID);
-      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.closeReasonSpecified, ctx.user.settings.lang.api_id ));
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ));
       break;
 
     default:

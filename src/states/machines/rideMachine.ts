@@ -8,7 +8,7 @@ export interface RideMachine extends StateMachine {
   // `carArrived` - машина прибыла, ждём пассажира.
   // `inDrive` - в пути.
   // `rate` - оценка водителя (заказ завершён).
-  state: 'searchCar' | 'orderAccepted' | 'carArrived' | 'inDrive' | 'rate' | 'cancelReason'
+  state: 'searchCar' | 'orderAccepted' | 'carArrived' | 'inDrive' | 'rate' | 'cancelReason' | 'comment' | 'extendStartTips'
   data: {
     isCollectionReason: boolean
     chatModeActive: boolean
