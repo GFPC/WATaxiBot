@@ -332,17 +332,19 @@ export class Order {
 
     if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, JSON.stringify(response.data));
 
-    const confirmForm = createForm(
-        {
+    if(this.isVoting){
+      const confirmForm = createForm(
+          {
             action: 'set_confirm_state',
             u_a_phone: this.clientTg.toString(),
             u_a_role: "1",
-        },
-        this.adminAuth
-    )
+          },
+          this.adminAuth
+      )
 
-    const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
-    console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
+      const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
+      console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
+    }
 
     //if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
 
