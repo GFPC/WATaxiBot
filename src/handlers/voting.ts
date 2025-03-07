@@ -52,8 +52,10 @@ export async function VotingHandler(ctx: Context) {
                 break;
             }
             await state.data.order.extendSubmitPrice(Number(ctx.message.body), ctx);
-            await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.startPriceExtended, ctx.user.settings.lang.api_id ).replace('%price%', state.data.order.submitPrice));
-
+            await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.startPriceExtended, ctx.user.settings.lang.api_id )
+                .replace('%price%', state.data.order.submitPrice)
+                .replace('%currency%', ctx.constants.data.default_currency)
+            );
             state.state = 'voting';
             await ctx.storage.push(ctx.userID, state);
             break;

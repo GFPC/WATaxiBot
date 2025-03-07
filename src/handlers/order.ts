@@ -144,12 +144,13 @@ export async function OrderHandler(ctx: Context) {
         await ctx.storage.push(ctx.userID, state);
         break;
       }
-      console.log(ctx.message.body,ctx.message.body.split(','));
+      console.log(ctx.message.body,ctx.message.body.split(' '));
+      const msg = ctx.message.body.replace(/\s{2,}/g, ' ');
       let successFlag = true;
-      for(let i = 0; i < ctx.message.body.split(',').length; i++) {
+      for(let i = 0; i < msg.split(' ').length; i++) {
         console.log(state.data.additionalOptions,i);
-        if (ctx.message.body.split(',')[i].replace(' ', '') in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']) {
-          state.data.additionalOptions.push(Number(ctx.message.body.split(',')[i].replace(' ', '')));
+        if (msg.split(' ')[i] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']) {
+          state.data.additionalOptions.push(Number(msg.split(' ')[i]));
         } else {
           successFlag = false;
           break

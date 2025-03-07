@@ -19,7 +19,8 @@ export class Constants{
             },
             [key: string]: any
         },
-        default_lang: string
+        default_lang: string,
+        default_currency: string
     } = {
         data: {
             car_colors: [],
@@ -27,7 +28,8 @@ export class Constants{
             langs: {},
             lang_vls: {},
         },
-        default_lang: "2"
+        default_lang: "2",
+        default_currency: "RUB"
     };
     localization_prefix = "wab_";
     constructor() {

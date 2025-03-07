@@ -53,7 +53,10 @@ export async function RideHandler(ctx: Context) {
         break;
       }
       await state.data.order.extendSubmitPrice(Number(ctx.message.body), ctx);
-      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.startPriceExtended, ctx.user.settings.lang.api_id ).replace('%price%', state.data.order.submitPrice));
+      await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.startPriceExtended, ctx.user.settings.lang.api_id )
+          .replace('%price%', state.data.order.submitPrice)
+          .replace('%currency%', ctx.constants.data.default_currency)
+      );
 
       state.state = 'searchCar';
       await ctx.storage.push(ctx.userID, state);
@@ -96,6 +99,11 @@ export async function RideHandler(ctx: Context) {
       }
       break;
     case "rate":
+      if(ctx.message.body == 'отмена'){
+        await ctx.storage.delete(ctx.userID);
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ));
+        break;
+      }
       if(ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id )){ //назад
         state.state = "searchCar";
         await ctx.storage.push(ctx.userID, state);
@@ -107,6 +115,11 @@ export async function RideHandler(ctx: Context) {
       await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.rateSet, ctx.user.settings.lang.api_id ));
       break;
     case 'comment':
+      if(ctx.message.body == 'отмена'){
+        await ctx.storage.delete(ctx.userID);
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ));
+        break;
+      }
       if (ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.answerBackLower, ctx.user.settings.lang.api_id )) { //назад
         await ctx.storage.delete(ctx.userID);
         await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id ));
