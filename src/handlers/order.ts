@@ -141,6 +141,7 @@ export async function OrderHandler(ctx: Context) {
     case "collectionAdditionalOptions":
       if (ctx.message.body === '00') {
         state.state = 'collectionWhen'
+        await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionWhen, ctx.user.settings.lang.api_id ));
         await ctx.storage.push(ctx.userID, state);
         break;
       }
