@@ -133,7 +133,7 @@ export async function OrderHandler(ctx: Context) {
           "to": state.data.to?.address ?? `${state.data.to.latitude} ${state.data.to.longitude}`,
           "peoplecount": state.data.peopleCount.toString(),
           "when": formatDateHuman(timestamp, ctx),
-          "options": state.data.additionalOptions.map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso]).join(', ')
+          "options": state.data.additionalOptions.length > 0 ? state.data.additionalOptions.map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso]).join(', ') : '---'
         }
       );
       await ctx.chat.sendMessage(response);
