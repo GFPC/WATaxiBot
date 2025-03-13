@@ -24,14 +24,14 @@ export async function GetLocation(msg: WAWebJS.Message, userId: string, storage:
 
   const codeRegex = /^\d{4,5}$/;
 
-  if (msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.topPlacesLower, ctx.user.settings.lang.api_id)) {
+  if(msg.body.toLowerCase().trim() === '01'){ //(msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.topPlacesLower, ctx.user.settings.lang.api_id)) {
     state.data.topPlacesActive = true;
     await storage.push(userId, state);
 
     // TODO: Сделать отправку любимых мест
     console.log('Любимые места');
     return "Top places";
-  } else if (msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.handbookLower, ctx.user.settings.lang.api_id)) {
+  } else if (msg.body.toLowerCase().trim() === '02'){ //(msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.handbookLower, ctx.user.settings.lang.api_id)) {
     state.data.handbookActive = true;
     await storage.push(userId, state);
 

@@ -18,6 +18,7 @@ import {VotingHandler} from "./handlers/voting";
 import {Constants} from "./api/constants";
 import {SettingsHandler} from "./handlers/settings";
 import {DefaultHandler} from "./handlers/default";
+import {HelpHandler} from "./handlers/help";
 
 // Загружаем конфиг
 const envFile = process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.dev';
@@ -139,6 +140,8 @@ async function router(ctx: Context): Promise<Handler> {
         }
       },
       referrer_u_id: userSection?.referrer_u_id ?? null,
+      u_details: userSection?.u_details ?? null,
+      ref_code: userSection?.ref_code ?? null,
     });
     ctx.api_u_id = Object.keys(userData.data.data.user)[0]
   }
@@ -149,6 +152,16 @@ async function router(ctx: Context): Promise<Handler> {
 
   const state: StateMachine | null = await ctx.storage.pull(ctx.userID);
   console.log('STATE: ', state)
+
+  // top commands handler
+
+  if(ctx.message.body == '9'){
+    if(state?.id === 'order' && state?.state === 'collectionFrom'){
+      return HelpHandler
+    } else if(state?.id === 'order' && state?.state === 'collectionTo'){
+      return HelpHandler
+    }
+  }
 
   switch (state?.id) {
     case "ride":

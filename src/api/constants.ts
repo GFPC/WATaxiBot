@@ -29,7 +29,7 @@ export class Constants{
             lang_vls: {},
         },
         default_lang: "2",
-        default_currency: "RUB"
+        default_currency: "GHS"
     };
     localization_prefix = "wab_";
     constructor() {
