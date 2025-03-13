@@ -18,7 +18,7 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
                     .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
                     .replace( '%refCode%', user.referrer_u_id ?? '---')
-                    .replace( '%prevRefCode%', user.u_details.refCodeBackup ?? '---')
+                    .replace( '%prevRefCode%', user.u_details?.refCodeBackup ?? '---')
                     .replace('%selfRefCode%', user.ref_code ?? '---')
                 );
 
