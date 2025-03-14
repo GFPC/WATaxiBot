@@ -246,8 +246,11 @@ export class Order {
           console.log("EXTRAPOINT 0x01: ", response.data);
           return response.data;
         })
-        .catch(error => {
+        .catch( async error => {
           console.log("EXTRAPOINT 0x00: ", error);
+          await this.chat?.sendMessage('TEMPORARY MSG(EXFA POINT 0x00): Не удалось соединиться с апи, откат к стартовому состоянию');
+          await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : "");
+          await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
           throw `API Error: ${error}`;
         }
         );

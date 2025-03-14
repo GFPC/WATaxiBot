@@ -3,6 +3,7 @@ import {localization, localizationNames} from "../l10n";
 import {newEmptyOrder} from "../states/machines/orderMachine";
 import {newSettings} from "../states/machines/settingsMachine";
 import {addAbortListener} from "ws";
+import searchRefCodeByREfID from "../utils/settings";
 export async function DefaultHandler(ctx: Context): Promise<void> {
     const state = await ctx.storage.pull(ctx.userID);
 
@@ -17,9 +18,12 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
                 const user = await ctx.usersList.pull(ctx.userID.split('@')[0]);
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
                     .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
-                    .replace( '%refCode%', user.referrer_u_id ?? '---')
-                    .replace( '%prevRefCode%', user.u_details?.refCodeBackup ?? '---')
+                    .replace( '%refCode%', searchRefCodeByREfID(user.referrer_u_id) ?? '---')
                     .replace('%selfRefCode%', user.ref_code ?? '---')
+                    .replace('%prevRefCodeHint%', user.referrer_u_id === '666' ?
+                        ctx.constants.getPrompt(localizationNames.settingsPreviousReferralCode, ctx.user.settings.lang.api_id ).replace('%code%',user.u_details?.refCodeBackup) + '\n': '')
+                    .replace('%testModeHint%', user.referrer_u_id === '666' ? ctx.constants.getPrompt(localizationNames.settingsTestModeActive, ctx.user.settings.lang.api_id ) :
+                        ctx.constants.getPrompt(localizationNames.settingsTestModeHint, ctx.user.settings.lang.api_id ))
                 );
 
                 await ctx.storage.push(ctx.userID, newSettings());
