@@ -241,10 +241,13 @@ export class Order {
     const form = createForm({}, this.adminAuth);
     return axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000})
         .then(response => {
+          if (response.status != 200 || response.data.status != 'success') console.log("EXTRAPOINT 0x02: ", response.data);
           if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
+          console.log("EXTRAPOINT 0x01: ", response.data);
           return response.data;
         })
         .catch(error => {
+          console.log("EXTRAPOINT 0x00: ", error);
           throw `API Error: ${error}`;
         }
         );
