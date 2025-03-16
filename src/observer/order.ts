@@ -88,7 +88,7 @@ export class OrderObserverCallback {
           await chat.sendMessage(this.constants.getPrompt(localizationNames.driverCanceled, this.lang));
           break;
         case BookingState.Canceled:
-          await chat.sendMessage(this.constants.getPrompt(localizationNames.orderClosedByAPI, this.lang) + this.constants.getPrompt(localizationNames.defaultPrompt, this.lang));
+          //await chat.sendMessage(this.constants.getPrompt(localizationNames.orderClosedByAPI, this.lang) + this.constants.getPrompt(localizationNames.defaultPrompt, this.lang));
           break;
 
         case BookingState.Completed:
