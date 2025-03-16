@@ -141,7 +141,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
 
             //detect test mode
             if(user.referrer_u_id === '666'){
-                if(refCode !== user.u_details?.refCodeBackup){
+                if(refCode != user.u_details?.refCodeBackup){
                     await ctx.chat.sendMessage("PREV CODE: " + user.u_details?.refCodeBackup + '\n' + "NEW CODE: " + refCode + '\nCUR CODE: ' + user.referrer_u_id);
                     await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsExitTestModeError, ctx.user.settings.lang.api_id ));
                     state.state = 'settings';
