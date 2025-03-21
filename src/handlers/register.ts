@@ -51,7 +51,10 @@ export async function RegisterHandler(ctx: Context) {
             name: state.data.fullName,
             phone: ctx.userID.split('@')[0],
             lang: state.data.lang.api_id,
-            refCode: state.data.refCode!=='0' ? state.data.refCode : undefined
+            refCode: state.data.refCode!=='0' ? state.data.refCode : undefined,
+            u_details: {
+              refCodeBackup: ''
+            },
           },
           ctx.auth
         );

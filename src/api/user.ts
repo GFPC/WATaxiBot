@@ -6,7 +6,8 @@ export interface User {
   whatsappId: string,
   name?: string,
   refCode?: string,
-  lang?: string
+  lang?: string,
+    u_details?: any
 }
 
 async function createFormData(user: User, admin_auth: AuthData, data?: string): Promise<FormData> {
