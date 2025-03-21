@@ -72,6 +72,9 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     const res = await changeReferralCode(user.api_u_id, '666', user.referrer_u_id, ctx.auth);
                     const actualUserData =  await axios.post(`${baseURL}user`, { token: ctx.auth.token, u_hash: ctx.auth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
                     const actualUserDataSection = actualUserData.data.data.user[Object.keys(actualUserData.data.data.user)[0]]
+                    if(!user.u_details) {
+                        user.u_details = {}
+                    }
                     user.u_details.refCodeBackup = user.referrer_u_id;
                     user.referrer_u_id = '666';
                     
@@ -88,6 +91,9 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     const actualUserData =  await axios.post(`${baseURL}user`, { token: ctx.auth.token, u_hash: ctx.auth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
                     const actualUserDataSection = actualUserData.data.data.user[Object.keys(actualUserData.data.data.user)[0]]
                     console.log(actualUserDataSection);
+                    if(!user.u_details) {
+                        user.u_details = {}
+                    }
                     user.referrer_u_id = user.u_details?.refCodeBackup;
                     user.u_details.refCodeBackup = '666';
                     await ctx.usersList.push(ctx.userID.split('@')[0], user);
