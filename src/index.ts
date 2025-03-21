@@ -118,8 +118,6 @@ async function router(ctx: Context): Promise<Handler> {
     console.log("REQUESTING USER API_ID REQ:",{ token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]})
     const userData = await axios.post(`${baseURL}user`, { token: adminAuth.token, u_hash: adminAuth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
     console.log("REQUESTING USER API_ID RES:",userData.data)
-    const userSection = userData.data.data.user[Object.keys(userData.data.data.user)[0]]
-    console.log("USER SECTION:",userSection)
     if(userData.data.status === 'error') {
       console.log("REG TOP POINT")
       ctx.details.lang = {
@@ -130,6 +128,8 @@ async function router(ctx: Context): Promise<Handler> {
       // Если пользователь не зарегистрирован, то вызываем обработчик регистрации
       return RegisterHandler;
     }
+    const userSection = userData.data.data.user[Object.keys(userData.data.data.user)[0]]
+    console.log("USER SECTION:",userSection)
     await userList.push(ctx.userID.split('@')[0], {
       api_u_id: userData.data.auth_user.u_id,
       settings:{

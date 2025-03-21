@@ -55,10 +55,52 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 state.state  = 'changeLanguage';
                 await ctx.storage.push(ctx.userID, state);
                 break;
+                /*
             case '2':
                 // change referral code
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.newReferralCodeCollection, ctx.user.settings.lang.api_id ))
                 state.state  = 'changeReferralCode';
+                await ctx.storage.push(ctx.userID, state);
+                break;*/
+            case '3':
+                const user = await ctx.usersList.pull(ctx.userID.split('@')[0]);
+                let mode = 'default';
+                if (user.referrer_u_id == '666') {
+                    mode = 'test'
+                }
+                if (mode === 'default') {
+                    const res = await changeReferralCode(user.api_u_id, '666', user.referrer_u_id, ctx.auth);
+                    const actualUserData =  await axios.post(`${baseURL}user`, { token: ctx.auth.token, u_hash: ctx.auth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
+                    const actualUserDataSection = actualUserData.data.data.user[Object.keys(actualUserData.data.data.user)[0]]
+                    user.u_details.refCodeBackup = user.referrer_u_id;
+                    user.referrer_u_id = '666';
+                    
+                    await ctx.usersList.push(ctx.userID.split('@')[0], user);
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                        .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                        .replace( '%refCode%', searchRefCodeByREfID(actualUserDataSection?.referrer_u_id) ?? '---')
+                        .replace('%selfRefCode%', user.ref_code ?? '---')
+                        .replace('%testModeHint%',  ctx.constants.getPrompt(localizationNames.settingsTestModeActive, ctx.user.settings.lang.api_id ))
+                    );
+
+                } else if (mode === 'test') {
+                    const res = await changeReferralCode(user.api_u_id, user.u_details?.refCodeBackup, '666', ctx.auth);
+                    const actualUserData =  await axios.post(`${baseURL}user`, { token: ctx.auth.token, u_hash: ctx.auth.hash,u_a_phone: ctx.userID.split('@')[0]}, {headers: postHeaders});
+                    const actualUserDataSection = actualUserData.data.data.user[Object.keys(actualUserData.data.data.user)[0]]
+                    console.log(actualUserDataSection);
+                    user.referrer_u_id = user.u_details?.refCodeBackup;
+                    user.u_details.refCodeBackup = '666';
+                    await ctx.usersList.push(ctx.userID.split('@')[0], user);
+
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                        .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                        .replace( '%refCode%', searchRefCodeByREfID(actualUserDataSection?.referrer_u_id) ?? '---')
+                        .replace('%selfRefCode%', user.ref_code ?? '---')
+                        .replace('%testModeHint%', ctx.constants.getPrompt(localizationNames.settingsTestModeHint, ctx.user.settings.lang.api_id ))
+                    );
+
+                }
+                state.state  = 'settings';
                 await ctx.storage.push(ctx.userID, state);
                 break;
             default:
@@ -141,8 +183,22 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
 
             //detect test mode
             if(user.referrer_u_id === '666'){
+                await ctx.chat.sendMessage('Смена рефкода в режиме теста нвеозможна, отключите тестовый режим в настройках');
+                state.state = 'settings';
+                await ctx.storage.push(ctx.userID, state);
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id )
+                    .replace( '%language%', user.settings.lang.native + '(' + user.settings.lang.iso + ')')
+                    .replace( '%refCode%', searchRefCodeByREfID(user.referrer_u_id) ?? '---')
+                    .replace('%selfRefCode%', user.ref_code ?? '---')
+                    .replace('%prevRefCodeHint%', user.referrer_u_id === '666' ?
+                        ctx.constants.getPrompt(localizationNames.settingsPreviousReferralCode, ctx.user.settings.lang.api_id ).replace('%code%',user.u_details?.refCodeBackup) + '\n': '')
+                    .replace('%testModeHint%', user.referrer_u_id === '666' ? ctx.constants.getPrompt(localizationNames.settingsTestModeActive, ctx.user.settings.lang.api_id ) :
+                        ctx.constants.getPrompt(localizationNames.settingsTestModeHint, ctx.user.settings.lang.api_id ))
+                );
+                break;
+                /*
                 if(refCode != user.u_details?.refCodeBackup){
-                    await ctx.chat.sendMessage("PREV CODE: " + user.u_details?.refCodeBackup + '\n' + "NEW CODE: " + refCode + '\nCUR CODE: ' + user.referrer_u_id);
+                    ///await ctx.chat.sendMessage("PREV CODE: " + user.u_details?.refCodeBackup + '\n' + "NEW CODE: " + refCode + '\nCUR CODE: ' + user.referrer_u_id);
                     await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsExitTestModeError, ctx.user.settings.lang.api_id ));
                     state.state = 'settings';
                     await ctx.storage.push(ctx.userID, state);
@@ -157,6 +213,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     );
                     break;
                 }
+                */
             }
 
             console.log(user.api_u_id, refCode, user.referrer_u_id, ctx.auth)
