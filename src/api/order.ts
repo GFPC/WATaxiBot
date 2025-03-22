@@ -34,9 +34,9 @@ type StateCallback = (order: Order, oldState: BookingState, newState: BookingSta
 // Функция, которая вызывается классом Order при получении нового сообщения в чате
 type ChatCallback = (order: Order, message: string) => Promise<void>;
 async function CriticalErrorHandler(ctx:Context | undefined,error: any) {
-  await this.ctx?.chat.sendMessage('Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: ' + error.toString());
-  await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : '');
-  await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
+  await ctx?.chat.sendMessage('Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: ' + error.toString());
+  await ctx?.storage.delete(ctx?.userID ? ctx.userID : '');
+  await ctx?.chat?.sendMessage(ctx?.constants.getPrompt(localizationNames.defaultPrompt, ctx?.user.settings.lang.api_id) ?? 'error');
 }
 export class Order {
   private readonly clientTg: string;
@@ -94,7 +94,7 @@ export class Order {
       console.log('API extendSubmitPrice:',res.data)
 
     } catch (e) {
-      await new CriticalErrorHandler(ctx,e)
+      await CriticalErrorHandler(ctx,e)
     }
   }
 
@@ -207,7 +207,7 @@ export class Order {
 
       if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, response.data.message.error);
     } catch (e) {
-      await new CriticalErrorHandler(this.ctx,e)
+      await CriticalErrorHandler(this.ctx,e)
     }
 
   }
@@ -270,7 +270,7 @@ export class Order {
               }
           );
     } catch (e) {
-      await new CriticalErrorHandler(this.ctx,e)
+      await CriticalErrorHandler(this.ctx,e)
     }
   }
 
@@ -352,7 +352,7 @@ export class Order {
     try{
       response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
     } catch (e) {
-      await new CriticalErrorHandler(this.ctx,e)
+      await CriticalErrorHandler(this.ctx,e)
       return false
     }
     console.log("CREATING DRIVE RES: ", response.data);
@@ -375,7 +375,7 @@ export class Order {
         const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
         console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
       } catch (e) {
-        await new CriticalErrorHandler(this.ctx,e)
+        await CriticalErrorHandler(this.ctx,e)
         return false
       }
 
