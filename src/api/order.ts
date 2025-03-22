@@ -214,7 +214,7 @@ export class Order {
         await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.votingTimerExpired, this.ctx?.user.settings.lang.api_id) ?? 'error');
 
         await this.cancel('Voting time expired');
-        await this.ctx?.storage.push(this.ctx?.userID ? this.ctx.userID : "", "");
+        await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : '');
         await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
         return
       }
@@ -384,9 +384,14 @@ export class Order {
       },
       this.adminAuth
     );
-    const response = await axios.post(`${baseURL}drive/get/${this.id}`, form, {headers: postHeaders, timeout: 10000});
-
-    if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
+    try{
+      const response = await axios.post(`${baseURL}drive/get/${this.id}`, form, {headers: postHeaders, timeout: 10000});
+      if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
+    } catch (e) {
+      await this.ctx?.chat.sendMessage('Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: ' + JSON.stringify(e));
+      await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : '');
+      await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
+    }
 
     this.finish(true);
   }
