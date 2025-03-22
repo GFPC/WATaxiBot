@@ -33,7 +33,11 @@ type StateCallback = (order: Order, oldState: BookingState, newState: BookingSta
 
 // Функция, которая вызывается классом Order при получении нового сообщения в чате
 type ChatCallback = (order: Order, message: string) => Promise<void>;
-
+async function CriticalErrorHandler(ctx:Context | undefined,error: Error) {
+  await this.ctx?.chat.sendMessage('Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: ' + error.toString());
+  await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : '');
+  await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
+}
 export class Order {
   private readonly clientTg: string;
   private readonly adminAuth: AuthData;
@@ -85,8 +89,13 @@ export class Order {
         },
         this.adminAuth
     );
-    const res = await axios.post(`${baseURL}drive/get/` + this.id, form, {headers: postHeaders});
-    console.log('API extendSubmitPrice:',res.data)
+    try{
+      const res = await axios.post(`${baseURL}drive/get/` + this.id, form, {headers: postHeaders});
+      console.log('API extendSubmitPrice:',res.data)
+
+    } catch (e) {
+      await new CriticalErrorHandler(ctx,e)
+    }
   }
 
   async getState(): Promise<BookingState> {
@@ -192,10 +201,15 @@ export class Order {
 
     // Отправляем запрос
     console.log("CREATING ADD TIME REQ: ", form);
-    const response = await axios.post(`${baseURL}/drive/get/`+this.id, form, {headers: postHeaders});
-    console.log("CREATING ADD TIME RES: ", response.data);
+    try{
+      const response = await axios.post(`${baseURL}/drive/get/`+this.id, form, {headers: postHeaders});
+      console.log("CREATING ADD TIME RES: ", response.data);
 
-    if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, response.data.message.error);
+      if (response.status != 200 || response.data.status != 'success') throw builderException(response.status, response.data.message.error);
+    } catch (e) {
+      await new CriticalErrorHandler(this.ctx,e)
+    }
+
   }
 
   private async stateChecking() {
@@ -239,21 +253,25 @@ export class Order {
     if (this.isComplete) throw "The trip was completed";
 
     const form = createForm({}, this.adminAuth);
-    return axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000})
-        .then(response => {
-          if (response.status != 200 || response.data.status != 'success') console.log("EXTRAPOINT 0x02: ", response.data);
-          if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
-          console.log("EXTRAPOINT 0x01: ", response.data);
-          return response.data;
-        })
-        .catch( async error => {
-          console.log("EXTRAPOINT 0x00: ", error);
-          await this.chat?.sendMessage('TEMPORARY MSG(EXFA POINT 0x00): Не удалось соединиться с апи, откат к стартовому состоянию');
-          await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : "");
-          await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
-          throw `API Error: ${error}`;
-        }
-        );
+    try{
+      return axios.post(`${baseURL}/drive/get/${this.id}`, form, {headers: postHeaders, timeout: 20000})
+          .then(response => {
+            if (response.status != 200 || response.data.status != 'success') console.log("EXTRAPOINT 0x02: ", response.data);
+            if (response.status != 200 || response.data.status != 'success') throw `API Error: ${response.data}`;
+            console.log("EXTRAPOINT 0x01: ", response.data);
+            return response.data;
+          })
+          .catch( async error => {
+                console.log("EXTRAPOINT 0x00: ", error);
+                await this.chat?.sendMessage('TEMPORARY MSG(EXFA POINT 0x00): Не удалось соединиться с апи, откат к стартовому состоянию');
+                await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : "");
+                await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
+                throw `API Error: ${error}`;
+              }
+          );
+    } catch (e) {
+      await new CriticalErrorHandler(this.ctx,e)
+    }
   }
 
   async startStateChecking() {
@@ -330,7 +348,13 @@ export class Order {
 
     // Отправляем запрос
     console.log("CREATING DRIVE REQ: ", form);
-    const response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
+    let response;
+    try{
+      response = await axios.post(`${baseURL}/drive`, form, {headers: postHeaders, timeout: 10000});
+    } catch (e) {
+      await new CriticalErrorHandler(this.ctx,e)
+      return false
+    }
     console.log("CREATING DRIVE RES: ", response.data);
     if(this.isVoting){
       b_driver_code = response.data.data.b_driver_code
@@ -347,9 +371,14 @@ export class Order {
           },
           this.adminAuth
       )
+      try{
+        const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
+        console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
+      } catch (e) {
+        await new CriticalErrorHandler(this.ctx,e)
+        return false
+      }
 
-      const confirmResponse = await axios.post(`${baseURL}/drive/get/${response.data.data.b_id}`, confirmForm, {headers: postHeaders, timeout: 10000});
-      console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
     }
 
     //if (confirmResponse.status != 200 || confirmResponse.data.status != 'success') throw builderException(confirmResponse.status, confirmResponse.data.message.error);
