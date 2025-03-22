@@ -78,15 +78,23 @@ export async function changeLang(phone: string, lang_id: string | undefined, adm
 }
 
 export async function changeReferralCode(u_id: string, code: string, prevRefCode: string, adminAuth: AuthData): Promise<{status: string, message: string}> {
-    const response = await axios.post(`${baseURL}user/${u_id}`, {
-        token: adminAuth.token,
-        u_hash: adminAuth.hash,
-        data: JSON.stringify({
+    let data;
+    if (prevRefCode && prevRefCode != '') {
+        data = {
             referrer_u_id: code,
             u_details: [
                 ['=', ['refCodeBackup'], prevRefCode]
             ]
-        })
+        }
+    } else {
+        data = {
+            referrer_u_id: code
+        }
+    }
+    const response = await axios.post(`${baseURL}user/${u_id}`, {
+        token: adminAuth.token,
+        u_hash: adminAuth.hash,
+        data: JSON.stringify(data)
     }, {headers: postHeaders});
     console.log("CHANGE REF RESPONSE: ", response.data)
     if (response.status != 200) throw `POINT->changeReferralCode: API Error: ${response.data.message}`;
