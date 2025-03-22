@@ -33,7 +33,7 @@ type StateCallback = (order: Order, oldState: BookingState, newState: BookingSta
 
 // Функция, которая вызывается классом Order при получении нового сообщения в чате
 type ChatCallback = (order: Order, message: string) => Promise<void>;
-async function CriticalErrorHandler(ctx:Context | undefined,error: Error) {
+async function CriticalErrorHandler(ctx:Context | undefined,error: any) {
   await this.ctx?.chat.sendMessage('Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: ' + error.toString());
   await this.ctx?.storage.delete(this.ctx?.userID ? this.ctx.userID : '');
   await this.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? 'error');
