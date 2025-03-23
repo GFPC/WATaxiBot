@@ -22,7 +22,7 @@ export async function RideHandler(ctx: Context) {
             conflictWithRider: ctx.constants.getPrompt('conflict_with_rider', ctx.user.settings.lang.api_id ),
             veryExpensive: ctx.constants.getPrompt('very_expensive', ctx.user.settings.lang.api_id ),
           }
-          const reasonContainer = "\n" + text.mistakenlyOrder + " - 1\n" + text.waitingForLonger + " - 2\n" + text.conflictWithRider + " - 3\n" + text.veryExpensive + " - 4";
+          const reasonContainer = "\n*1* - " + text.mistakenlyOrder + "\n*2* - " + text.waitingForLonger + "\n*3* - " + text.conflictWithRider + "\n*4* - " + text.veryExpensive + "";
           await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.collectionCancelReason, ctx.user.settings.lang.api_id ).replace('%reasons%', reasonContainer));
           state.state = 'cancelReason';
           await ctx.storage.push(ctx.userID, state);
