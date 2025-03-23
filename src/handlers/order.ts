@@ -36,10 +36,10 @@ export async function OrderHandler(ctx: Context) {
       const chat = await ctx.message.getChat();
       const orderMsg = await chat.sendMessage(ctx.constants.getPrompt(localizationNames.creatingOrder, ctx.user.settings.lang.api_id ));
 
-      try {
-        const observer = new OrderObserverCallback(ctx.client, chat.id, ctx.logger, ctx.userID, ctx.storage, ctx.constants, ctx.user.settings.lang.api_id);
-        const order = new Order(ctx.userID, ctx.auth, observer.callback.bind(observer), async () => {});
+      const observer = new OrderObserverCallback(ctx.client, chat.id, ctx.logger, ctx.userID, ctx.storage, ctx.constants, ctx.user.settings.lang.api_id);
+      const order = new Order(ctx.userID, ctx.auth, observer.callback.bind(observer), async () => {});
 
+      try {
         if (state.data.when === undefined) throw "The meaning of when is undefined";
         await order.new(
           state.data.from,
@@ -52,16 +52,14 @@ export async function OrderHandler(ctx: Context) {
             state.data.additionalOptions
         );
 
-        const newState = newRide(order);
-        await ctx.storage.push(ctx.userID, newState);
-
         await ctx.chat.sendMessage("TEST POINT: DRIVE ID: " + order.id);
       } catch (e) {
         ctx.logger.error(`OrderHandler: Error when creating an order: ${e}`);
         await orderMsg.edit(ctx.constants.getPrompt(localizationNames.errorWhenCreatingOrder, ctx.user.settings.lang.api_id ));
         break;
       }
-
+      const newState = newRide(order);
+      await ctx.storage.push(ctx.userID, newState);
       await new Promise(f => setTimeout(f, constants.orderMessageDelay));
       await orderMsg.edit(ctx.constants.getPrompt(localizationNames.orderCreated, ctx.user.settings.lang.api_id ));
       break;
