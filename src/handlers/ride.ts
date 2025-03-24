@@ -8,7 +8,7 @@ import {MessageMedia} from "whatsapp-web.js";
 export async function RideHandler(ctx: Context) {
   var state = await ctx.storage.pull(ctx.userID);
   console.log('RIDE HANDLER: ', ctx.message.body,state.state)
-  if(ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.cancelLower, ctx.user.settings.lang.api_id ) || ctx.message.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.cancelDigital, ctx.user.settings.lang.api_id )){
+  if(ctx.message.body.toLowerCase() === "0"){
       ctx.message.body = "отмена";
   }
   switch (state.state) {
