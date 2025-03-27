@@ -1,7 +1,7 @@
-import {Storage} from "./storage";
+import { Storage } from "./storage";
 
 export class MemoryStorage implements Storage {
-  table: {[id: string]: any} = {}
+  table: { [id: string]: any } = {};
 
   async pull(id: string): Promise<any | null> {
     return this.table[id] !== undefined ? this.table[id] : null;

@@ -16,5 +16,4 @@ export const constants = {
   orderMessageDelay: 500,
   // ms
   rateMessagesDelay: 500,
-
-}
+};

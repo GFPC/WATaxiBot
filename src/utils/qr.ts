@@ -1,10 +1,10 @@
-import {createCanvas, Image, ImageData} from "canvas";
+import { createCanvas, Image, ImageData } from "canvas";
 import jsqr from "jsqr";
 
 async function loadImage(imageBody: string): Promise<ImageData> {
   // Удаляем префикс "data:image/png;base64," и декодируем строку в буфер
-  const base64Data = imageBody.replace(/^data:image\/\w+;base64,/, '');
-  const imageBuffer = Buffer.from(base64Data, 'base64');
+  const base64Data = imageBody.replace(/^data:image\/\w+;base64,/, "");
+  const imageBuffer = Buffer.from(base64Data, "base64");
 
   // Создаем новый объект Image и загружаем в него изображение
   const img = new Image();
@@ -12,7 +12,7 @@ async function loadImage(imageBody: string): Promise<ImageData> {
 
   // Создаем canvas с размерами изображения
   const canvas = createCanvas(img.width, img.height);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   // Отрисовываем изображение на canvas
   ctx.drawImage(img, 0, 0);
@@ -21,7 +21,9 @@ async function loadImage(imageBody: string): Promise<ImageData> {
   return ctx.getImageData(0, 0, img.width, img.height);
 }
 
-export async function readQRCodeFromImage(imageBody: string): Promise<string | undefined> {
+export async function readQRCodeFromImage(
+  imageBody: string,
+): Promise<string | undefined> {
   /* Функция, которая считывает QR-код с изображения, закодированного в base64 */
   // Загружаем изображение
   const image = await loadImage(imageBody);
@@ -29,5 +31,5 @@ export async function readQRCodeFromImage(imageBody: string): Promise<string | u
   // Читаем QR код
   const qrCode = jsqr(image.data, image.width, image.height);
 
-  return qrCode?.data
+  return qrCode?.data;
 }

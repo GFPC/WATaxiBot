@@ -1,8 +1,8 @@
 export const baseURL = "https://ibronevik.ru/taxi/c/gruzvill/api/v1/";
 
 export interface AuthData {
-  token: string
-  hash: string
+  token: string;
+  hash: string;
 }
 
 export enum BookingState {
@@ -18,21 +18,27 @@ export enum BookingState {
 }
 
 export const postHeaders = {
-  'User-Agent': 'WhatsAppBot/1.0',
-  'Content-Type': 'application/x-www-form-urlencoded',
-  'Accept': 'application/json'
+  "User-Agent": "WhatsAppBot/1.0",
+  "Content-Type": "application/x-www-form-urlencoded",
+  Accept: "application/json",
 };
 
-export function createForm(data: {[key: string]: string | Blob | undefined | {[key: string]: string}}, auth: AuthData): FormData {
+export function createForm(
+  data: {
+    [key: string]: string | Blob | undefined | { [key: string]: string };
+  },
+  auth: AuthData,
+): FormData {
   /* Функция, которая создает FormData на основе данных авторизации и данных для отправки */
   const form = new FormData();
 
-  form.append('token', auth.token);
-  form.append('u_hash', auth.hash);
+  form.append("token", auth.token);
+  form.append("u_hash", auth.hash);
 
   for (let key in data) {
-    if (data[key] !== undefined) { // @ts-ignore
-      form.append(key, data[key])
+    if (data[key] !== undefined) {
+      // @ts-ignore
+      form.append(key, data[key]);
     }
   }
 

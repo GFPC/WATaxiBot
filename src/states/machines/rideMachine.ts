@@ -1,49 +1,57 @@
-import {StateMachine} from "../types";
-import {Order} from "../../api/order";
+import { StateMachine } from "../types";
+import { Order } from "../../api/order";
 
 export interface RideMachine extends StateMachine {
-  id: 'ride'
+  id: "ride";
   // `searchCar` - поиск машины.
   // `orderAccepted` - заказ принят, водитель едет.
   // `carArrived` - машина прибыла, ждём пассажира.
   // `inDrive` - в пути.
   // `rate` - оценка водителя (заказ завершён).
-  state: 'searchCar' | 'orderAccepted' | 'carArrived' | 'inDrive' | 'rate' | 'cancelReason' | 'comment' | 'extendStartTips'
+  state:
+    | "searchCar"
+    | "orderAccepted"
+    | "carArrived"
+    | "inDrive"
+    | "rate"
+    | "cancelReason"
+    | "comment"
+    | "extendStartTips";
   data: {
-    isCollectionReason: boolean
-    chatModeActive: boolean
-    order: Order
-  }
+    isCollectionReason: boolean;
+    chatModeActive: boolean;
+    order: Order;
+  };
 }
 
 export function newRide(order: Order): RideMachine {
   return {
-    id: 'ride',
-    state: 'searchCar',
+    id: "ride",
+    state: "searchCar",
     data: {
       isCollectionReason: false,
       chatModeActive: false,
-      order: order
-    }
-  }
+      order: order,
+    },
+  };
 }
 
 export interface VoteMachine extends StateMachine {
-  id: 'voting'
-  state: 'voting'
+  id: "voting";
+  state: "voting";
   data: {
-    order: Order,
-    chatModeActive: boolean
-  }
+    order: Order;
+    chatModeActive: boolean;
+  };
 }
 
 export function newVote(order: Order): VoteMachine {
   return {
-    id: 'voting',
-    state: 'voting',
+    id: "voting",
+    state: "voting",
     data: {
       order: order,
-      chatModeActive: false
-    }
-  }
+      chatModeActive: false,
+    },
+  };
 }

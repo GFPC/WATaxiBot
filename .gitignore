@@ -8,3 +8,4 @@ node_modules
 .wwebjs_cache
 .idea
 start.sh
+sessions
