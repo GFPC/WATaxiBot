@@ -237,11 +237,6 @@ function createBot(botId: string) {
       API_CONSTANTS[botId].data.data.langs[
         API_CONSTANTS[botId].data.default_lang
       ];
-    console.log(
-      defaultLang,
-      API_CONSTANTS[botId].data.default_lang,
-      API_CONSTANTS[botId].data.data.langs,
-    );
 
     // Создаём контекст
     const ctx: Context = {
