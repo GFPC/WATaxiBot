@@ -49,8 +49,8 @@ export async function GetLocation(
   } else if (msg.location) {
     // @ts-ignore
     if (
-      (msg.location.latitude == undefined ||
-        msg.location.longitude == undefined)
+      msg.location.latitude == undefined ||
+      msg.location.longitude == undefined
     ) {
       throw "Location is not found";
     }

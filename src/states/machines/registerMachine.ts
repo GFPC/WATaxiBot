@@ -1,10 +1,16 @@
 import { StateMachine } from "../types";
 import { Context } from "../../index";
-import {Message} from "whatsapp-web.js";
+import { Message } from "whatsapp-web.js";
 
 export interface RegistrationMachine extends StateMachine {
   id: "register";
-  state: "collectionPublicOffers" | "collectionPrivacyPolicy" | "collectionLegalInformation" | "collectionFullName" | "collectionRefCode" | "collectionLanguage";
+  state:
+    | "collectionPublicOffers"
+    | "collectionPrivacyPolicy"
+    | "collectionLegalInformation"
+    | "collectionFullName"
+    | "collectionRefCode"
+    | "collectionLanguage";
   data: {
     fullName: string;
     refCode?: string;
@@ -12,7 +18,7 @@ export interface RegistrationMachine extends StateMachine {
       api_id: string;
       iso: string;
     };
-    docs:{
+    docs: {
       publicOffersMessage: Message | null;
       privacyPolicyMessage: Message | null;
       legalInformationMessage: Message | null;
@@ -20,7 +26,7 @@ export interface RegistrationMachine extends StateMachine {
       publicOffersExpanded: boolean;
       privacyPolicyExpanded: boolean;
       legalInformationExpanded: boolean;
-    }
+    };
   };
 }
 

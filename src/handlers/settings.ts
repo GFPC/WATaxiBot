@@ -106,7 +106,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             "666",
             user.referrer_u_id,
             ctx.auth,
-              ctx.baseURL
+            ctx.baseURL,
           );
           await ctx.chat.sendMessage(JSON.stringify(res));
           const actualUserData = await axios.post(
@@ -141,8 +141,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
               )
               .replace(
                 "%refCode%",
-                searchRefCodeByREfID(actualUserDataSection?.referrer_u_id,ctx) ??
-                  "---",
+                searchRefCodeByREfID(
+                  actualUserDataSection?.referrer_u_id,
+                  ctx,
+                ) ?? "---",
               )
               .replace("%selfRefCode%", user.ref_code ?? "---")
               .replace(
@@ -159,7 +161,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             user.u_details?.refCodeBackup,
             "666",
             ctx.auth,
-              ctx.baseURL
+            ctx.baseURL,
           );
           await ctx.chat.sendMessage(JSON.stringify(res));
           const actualUserData = await axios.post(
@@ -195,8 +197,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
               )
               .replace(
                 "%refCode%",
-                searchRefCodeByREfID(actualUserDataSection?.referrer_u_id,ctx) ??
-                  "---",
+                searchRefCodeByREfID(
+                  actualUserDataSection?.referrer_u_id,
+                  ctx,
+                ) ?? "---",
               )
               .replace("%selfRefCode%", user.ref_code ?? "---")
               .replace(
@@ -259,7 +263,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(userPreload.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(userPreload.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", userPreload.ref_code ?? "---")
             .replace(
@@ -294,7 +298,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
           ctx.userID.split("@")[0],
           languages.find((item) => item.id == ctx.message.body)?.api_id ?? "-1",
           ctx.auth,
-          ctx.baseURL
+          ctx.baseURL,
         );
 
         if (
@@ -332,7 +336,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
               )
               .replace(
                 "%refCode%",
-                searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+                searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
               )
               .replace("%selfRefCode%", user.ref_code ?? "---")
               .replace(
@@ -345,7 +349,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                       )
                       .replace(
                         "%code%",
-                        searchRefCodeByREfID(user.u_details?.refCodeBackup,ctx),
+                        searchRefCodeByREfID(
+                          user.u_details?.refCodeBackup,
+                          ctx,
+                        ),
                       ) + "\n"
                   : "",
               )
@@ -410,7 +417,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", user.ref_code ?? "---")
             .replace(
@@ -460,7 +467,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", user.ref_code ?? "---")
             .replace(
@@ -548,7 +555,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(actualUserDataSection.referrer_u_id,ctx) ??
+              searchRefCodeByREfID(actualUserDataSection.referrer_u_id, ctx) ??
                 "---",
             )
             .replace("%selfRefCode%", actualUserDataSection.ref_code ?? "---")
@@ -603,7 +610,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", user.ref_code ?? "---")
             .replace(
@@ -654,7 +661,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", user.ref_code ?? "---")
             .replace(

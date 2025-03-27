@@ -45,7 +45,11 @@ export async function checkRegister(
   return response.data.message !== "u_details not array";
 }
 
-export async function register(user: User, adminAuth: AuthData,baseURL:string) {
+export async function register(
+  user: User,
+  adminAuth: AuthData,
+  baseURL: string,
+) {
   /* Функция, которая регистрирует пользователя. */
   const lang = user.lang;
   const form = await createFormData(user, adminAuth);
@@ -57,7 +61,7 @@ export async function register(user: User, adminAuth: AuthData,baseURL:string) {
   if (response.status != 200 || response.data.status != "success")
     throw `API Error: ${response.data.message}`;
 
-  await changeLang(user.phone, lang, adminAuth,baseURL);
+  await changeLang(user.phone, lang, adminAuth, baseURL);
 }
 
 export async function authUser(
@@ -86,7 +90,7 @@ export async function changeLang(
   phone: string,
   lang_id: string | undefined,
   adminAuth: AuthData,
-  baseURL: string
+  baseURL: string,
 ): Promise<{ status: string; message: string }> {
   const response = await axios.post(
     `${baseURL}/user`,
@@ -114,7 +118,7 @@ export async function changeReferralCode(
   code: string,
   prevRefCode: string,
   adminAuth: AuthData,
-  baseURL: string
+  baseURL: string,
 ): Promise<{ status: string; message: string }> {
   let data;
   if (prevRefCode && prevRefCode != "") {

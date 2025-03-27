@@ -65,10 +65,9 @@ export const REFCODES: { [key: string]: string } = {
 export const ConstantsStorage = (urlManager: {
   [key: string]: string;
 }): { [key: string]: Constants } => {
-
-    let out: { [key: string]: Constants } = {}
-    for(let i in urlManager) {
-        out[i] = new Constants()
-    }
-    return out
-}
+  let out: { [key: string]: Constants } = {};
+  for (let i in urlManager) {
+    out[i] = new Constants();
+  }
+  return out;
+};

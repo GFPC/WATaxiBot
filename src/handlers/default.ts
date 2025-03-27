@@ -33,7 +33,7 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
             )
             .replace(
               "%refCode%",
-              searchRefCodeByREfID(user.referrer_u_id,ctx) ?? "---",
+              searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
             )
             .replace("%selfRefCode%", user.ref_code ?? "---")
             .replace(

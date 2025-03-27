@@ -111,9 +111,13 @@ export class Order {
       this.adminAuth,
     );
     try {
-      const res = await axios.post(`${this.ctx?.baseURL}drive/get/` + this.id, form, {
-        headers: postHeaders,
-      });
+      const res = await axios.post(
+        `${this.ctx?.baseURL}drive/get/` + this.id,
+        form,
+        {
+          headers: postHeaders,
+        },
+      );
       console.log("API extendSubmitPrice:", res.data);
     } catch (e) {
       await CriticalErrorHandler(ctx, e);
@@ -630,10 +634,14 @@ export class Order {
     const driver_u_id = drive.data.booking[this.id].drivers[0]?.u_id;
     const car_u_id = drive.data.booking[this.id].drivers[0]?.c_id;
 
-    const driver = await axios.post(`${this.ctx?.baseURL}user/${driver_u_id}`, form, {
-      headers: postHeaders,
-      timeout: 10000,
-    });
+    const driver = await axios.post(
+      `${this.ctx?.baseURL}user/${driver_u_id}`,
+      form,
+      {
+        headers: postHeaders,
+        timeout: 10000,
+      },
+    );
     if (driver.status != 200 || driver.data.status != "success")
       console.log(`API Error: ${driver}`);
 
