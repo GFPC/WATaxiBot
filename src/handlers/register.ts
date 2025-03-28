@@ -133,13 +133,6 @@ export async function RegisterHandler(ctx: Context) {
         );
         await ctx.storage.push(ctx.userID, state);
         break;
-      } else if (ctx.message.body === "2") {
-        await ctx.chat.sendMessage(
-          ctx.constants.getPrompt(
-            localizationNames.reject_terms,
-            state.data.lang.api_id,
-          ),
-        );
       } else if (ctx.message.body === "3") {
         state.data.docs.legalInformationExpanded =
           !state.data.docs.legalInformationExpanded;
@@ -167,7 +160,11 @@ export async function RegisterHandler(ctx: Context) {
                   : localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            )
+              .replace(
+                  "%accept%",
+                  ctx.constants.getPrompt(localizationNames.next_step, state.data.lang.api_id)
+              ),
         );
 
         await ctx.storage.push(ctx.userID, state);
@@ -184,6 +181,13 @@ export async function RegisterHandler(ctx: Context) {
 
     case "collectionPrivacyPolicy":
       if (ctx.message.body === "1") {
+        if(!state.data.docs.publicOffersExpanded){
+          await ctx.chat.sendMessage(
+              ctx.constants
+                  .getPrompt(localizationNames.commandNotFound, state.data.lang.api_id)
+          );
+          break;
+        }
         state.state = "collectionLegalInformation";
         state.data.docs.legalInformationMessage = await ctx.chat.sendMessage(
           ctx.constants
@@ -198,7 +202,10 @@ export async function RegisterHandler(ctx: Context) {
                 localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            ).replace(
+                "%accept%",
+              ctx.constants.getPrompt(localizationNames.next_step, state.data.lang.api_id)
+          ),
         );
         await ctx.storage.push(ctx.userID, state);
         break;
@@ -233,7 +240,14 @@ export async function RegisterHandler(ctx: Context) {
                   : localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            )
+              .replace(
+                  "%accept%",
+                  state.data.docs.privacyPolicyExpanded ? ctx.constants.getPrompt(
+                      localizationNames.accept_doc,
+                      state.data.lang.api_id
+                  ) : ""
+              ),
         );
 
         await ctx.storage.push(ctx.userID, state);
@@ -250,6 +264,15 @@ export async function RegisterHandler(ctx: Context) {
 
     case "collectionPublicOffers":
       if (ctx.message.body === "1") {
+
+        if(!state.data.docs.publicOffersExpanded){
+          await ctx.chat.sendMessage(
+            ctx.constants
+              .getPrompt(localizationNames.commandNotFound, state.data.lang.api_id)
+          );
+          break;
+        }
+
         state.state = "collectionPrivacyPolicy";
         state.data.docs.privacyPolicyMessage = await ctx.chat.sendMessage(
           ctx.constants
@@ -261,7 +284,8 @@ export async function RegisterHandler(ctx: Context) {
                 localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            )
+              .replace("%accept%", ""),
         );
         await ctx.storage.push(ctx.userID, state);
         break;
@@ -296,7 +320,11 @@ export async function RegisterHandler(ctx: Context) {
                   : localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            )
+              .replace(
+                  "%accept%",
+                  state.data.docs.publicOffersExpanded ? ctx.constants.getPrompt(localizationNames.accept_doc, state.data.lang.api_id) : "",
+              ),
         );
 
         await ctx.storage.push(ctx.userID, state);
@@ -330,7 +358,7 @@ export async function RegisterHandler(ctx: Context) {
                 localizationNames.expand_doc,
                 state.data.lang.api_id,
               ),
-            ),
+            ).replace("%accept%", ""),
         );
         await ctx.storage.push(ctx.userID, state);
         break;
@@ -344,6 +372,7 @@ export async function RegisterHandler(ctx: Context) {
       }
 
       break;
+
     default:
       // Создаём новое состояние
       state = await createEmptyRegistration(ctx);

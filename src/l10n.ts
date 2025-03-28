@@ -197,6 +197,7 @@ export const localization = {
   reject_terms:
     "Вы не приняли условия сервиса и не можете использовать его. В любой момент вы можеет согласиться с условиями, введя ( *1* ).",
   invalid_language: "❌ Введен некорректный код языка, попробуйте ещё раз",
+  next_step: "Для перехода к следующему шагу введите ( *3* )"
 };
 export const localizationNames = {
   welcome: "wab_welcome".toLowerCase(),
@@ -309,6 +310,8 @@ export const localizationNames = {
   legal_information_big: "wab_legal_information_big".toLowerCase(),
   expand_doc: "wab_expand_doc".toLowerCase(),
   collapse_doc: "wab_collapse_doc".toLowerCase(),
+  next_step: "wab_next_step".toLowerCase(),
+  accept_doc: "wab_accept_doc".toLowerCase(),
 };
 function exportToJsonFile() {
   const file = "l10n.json";

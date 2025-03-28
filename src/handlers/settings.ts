@@ -6,6 +6,7 @@ import { REFCODES } from "../api/constants";
 import axios from "axios";
 import { baseURL, postHeaders } from "../api/general";
 import searchRefCodeByREfID from "../utils/settings";
+import {newSettings} from "../states/machines/settingsMachine";
 
 type LanguageCodeData = {
   id: string;
@@ -67,6 +68,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
     return;
   }
 
+
   if (state.state === "settings") {
     switch (ctx.message.body) {
       case "1":
@@ -94,6 +96,28 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 state.state  = 'changeReferralCode';
                 await ctx.storage.push(ctx.userID, state);
                 break;*/
+      case "2":
+          state.data.docs.legalInformationMessage = await ctx.chat.sendMessage(
+              ctx.constants
+                  .getPrompt(
+                      localizationNames.legal_information,
+                      ctx.user.settings.lang.api_id,
+                  )
+                  .replace("%doc%", "")
+                  .replace(
+                      "%action%",
+                      ctx.constants.getPrompt(
+                          localizationNames.expand_doc,
+                          ctx.user.settings.lang.api_id,
+                      ),
+                  ).replace(
+                  "%accept%",
+                  ctx.constants.getPrompt(localizationNames.next_step, ctx.user.settings.lang.api_id)
+              ),
+          );
+          state.state = "collectionLegalInformation";
+          await ctx.storage.push(ctx.userID, state);
+          break;
       case "3":
         const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
         let mode = "default";
@@ -226,6 +250,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
     }
     return;
   }
+  const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
   switch (state.state) {
     case "changeLanguage":
       console.log(
@@ -388,7 +413,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
       }
       break;
     case "changeReferralCode":
-      const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
+
       console.log("changeReferralCode: ", ctx.message.body, user);
 
       if (
@@ -690,7 +715,95 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
         );
         break;
       }
-      break;
+    case "collectionLegalInformation":
+        if (ctx.message.body === "1") {
+            await ctx.chat.sendMessage(
+                ctx.constants
+                    .getPrompt(
+                        localizationNames.settingsMenu,
+                        ctx.user.settings.lang.api_id,
+                    )
+                    .replace(
+                        "%language%",
+                        user.settings.lang.native + "(" + user.settings.lang.iso + ")",
+                    )
+                    .replace(
+                        "%refCode%",
+                        searchRefCodeByREfID(user.referrer_u_id, ctx) ?? "---",
+                    )
+                    .replace("%selfRefCode%", user.ref_code ?? "---")
+                    .replace(
+                        "%prevRefCodeHint%",
+                        user.referrer_u_id === "666"
+                            ? ctx.constants
+                            .getPrompt(
+                                localizationNames.settingsPreviousReferralCode,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            .replace("%code%", user.u_details?.refCodeBackup) + "\n"
+                            : "",
+                    )
+                    .replace(
+                        "%testModeHint%",
+                        user.referrer_u_id === "666"
+                            ? ctx.constants.getPrompt(
+                                localizationNames.settingsTestModeActive,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            : ctx.constants.getPrompt(
+                                localizationNames.settingsTestModeHint,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                    ),
+            );
+
+            await ctx.storage.push(ctx.userID, newSettings());
+            break;
+        } else if (ctx.message.body === "3") {
+            state.data.docs.legalInformationExpanded =
+                !state.data.docs.legalInformationExpanded;
+
+            await state.data.docs.legalInformationMessage?.edit(
+                ctx.constants
+                    .getPrompt(
+                        localizationNames.legal_information,
+                        ctx.user.settings.lang.api_id,
+                    )
+                    .replace(
+                        "%doc%",
+                        state.data.docs.legalInformationExpanded
+                            ? ctx.constants.getPrompt(
+                                localizationNames.legal_information_big,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            : "",
+                    )
+                    .replace(
+                        "%action%",
+                        ctx.constants.getPrompt(
+                            state.data.docs.legalInformationExpanded
+                                ? localizationNames.collapse_doc
+                                : localizationNames.expand_doc,
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    )
+                    .replace(
+                        "%accept%",
+                        ctx.constants.getPrompt(localizationNames.next_step, ctx.user.settings.lang.api_id)
+                    ),
+            );
+
+            await ctx.storage.push(ctx.userID, state);
+            break;
+        } else {
+            await ctx.chat.sendMessage(
+                ctx.constants.getPrompt(
+                    localizationNames.commandNotFound,
+                    state.data.lang.api_id,
+                ),
+            );
+        }
+        break;
     default:
       await ctx.chat.sendMessage("Not Implemented: SettingsHandler");
       break;
