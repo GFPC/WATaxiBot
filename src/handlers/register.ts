@@ -348,6 +348,7 @@ export async function RegisterHandler(ctx: Context) {
         );
         if(ctx.message.body !== '1'){
           await ctx.chat.sendMessage('TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *1* )');
+          await ctx.storage.push(ctx.userID, state);
           break;
         }
         state.data.lang.iso = selectedLang?.iso ?? "en";
