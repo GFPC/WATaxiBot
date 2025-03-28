@@ -319,6 +319,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
         break;
       }
       if (languages.map((item) => item.id).includes(ctx.message.body)) {
+          if(ctx.message.body === '1'){
+              await ctx.chat.sendMessage('TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *1* )');
+              break;
+          }
         const response = await changeLang(
           ctx.userID.split("@")[0],
           languages.find((item) => item.id == ctx.message.body)?.api_id ?? "-1",

@@ -200,7 +200,7 @@ export async function RegisterHandler(ctx: Context) {
               "%action%",
               ctx.constants.getPrompt(
                 localizationNames.expand_doc,
-                state.data.lang.api_id,
+                state.data.lang.api_id
               ),
             ).replace(
                 "%accept%",
@@ -346,6 +346,10 @@ export async function RegisterHandler(ctx: Context) {
         const selectedLang = languages.find(
           (item) => item.id == ctx.message.body,
         );
+        if(ctx.message.body === '1'){
+          await ctx.chat.sendMessage('TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *1* )');
+          break;
+        }
         state.data.lang.iso = selectedLang?.iso ?? "en";
         state.data.lang.api_id = selectedLang?.api_id ?? "2";
         state.data.docs.publicOffersMessage = await ctx.chat.sendMessage(
