@@ -346,7 +346,7 @@ export async function RegisterHandler(ctx: Context) {
         const selectedLang = languages.find(
           (item) => item.id == ctx.message.body,
         );
-        if(ctx.message.body === '1'){
+        if(ctx.message.body !== '1'){
           await ctx.chat.sendMessage('TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *1* )');
           break;
         }
