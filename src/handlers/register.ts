@@ -219,6 +219,9 @@ export async function RegisterHandler(ctx: Context) {
           ),
         );
       } else if (ctx.message.body === "3") {
+        if (!state.data.docs.privacyPolicyExpanded) {
+          state.data.docs.privacyPolicyAcceptAvailable = true
+        }
         state.data.docs.privacyPolicyExpanded =
           !state.data.docs.privacyPolicyExpanded;
         await new Promise(f => setTimeout(f, state?.data.docs.privacyPolicyExpanded ? 3000 : 0));
@@ -246,7 +249,7 @@ export async function RegisterHandler(ctx: Context) {
             )
               .replace(
                   "%accept%",
-                  state.data.docs.privacyPolicyExpanded ? ctx.constants.getPrompt(
+                  state.data.docs.privacyPolicyAcceptAvailable ? ctx.constants.getPrompt(
                       localizationNames.accept_doc,
                       state.data.lang.api_id
                   ) : ""
@@ -300,6 +303,9 @@ export async function RegisterHandler(ctx: Context) {
           ),
         );
       } else if (ctx.message.body === "3") {
+        if(!state.data.docs.publicOffersExpanded){
+            state.data.docs.publicOffersAcceptAvailable = true;
+        }
         state.data.docs.publicOffersExpanded =
           !state.data.docs.publicOffersExpanded;
         await new Promise(f => setTimeout(f, state?.data.docs.publicOffersExpanded ? 3000 : 0));
@@ -327,7 +333,7 @@ export async function RegisterHandler(ctx: Context) {
             )
               .replace(
                   "%accept%",
-                  state.data.docs.publicOffersExpanded ? ctx.constants.getPrompt(localizationNames.accept_doc, state.data.lang.api_id) : "",
+                  state.data.docs.publicOffersAcceptAvailable ? ctx.constants.getPrompt(localizationNames.accept_doc, state.data.lang.api_id) : "",
               ),
         );
 

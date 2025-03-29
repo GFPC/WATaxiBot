@@ -26,6 +26,10 @@ export interface RegistrationMachine extends StateMachine {
       publicOffersExpanded: boolean;
       privacyPolicyExpanded: boolean;
       legalInformationExpanded: boolean;
+
+      publicOffersAcceptAvailable: boolean;
+      privacyPolicyAcceptAvailable: boolean;
+      legalInformationAcceptAvailable: boolean;
     };
   };
 }
@@ -50,6 +54,10 @@ export async function createEmptyRegistration(
         publicOffersExpanded: false,
         privacyPolicyExpanded: false,
         legalInformationExpanded: false,
+
+        publicOffersAcceptAvailable: false,
+        privacyPolicyAcceptAvailable: false,
+        legalInformationAcceptAvailable: false,
       },
     },
   };
