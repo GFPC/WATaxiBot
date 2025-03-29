@@ -182,8 +182,8 @@ export async function RegisterHandler(ctx: Context) {
       break;
 
     case "collectionPrivacyPolicy":
-      if (ctx.message.body === "1" && !state.data.docs.privacyPolicyAcceptAvailable) {
-        if(!state.data.docs.publicOffersExpanded){
+      if (ctx.message.body === "1") {
+        if(!state.data.docs.privacyPolicyAcceptAvailable){
           await ctx.chat.sendMessage(
               ctx.constants
                   .getPrompt(localizationNames.commandNotFound, state.data.lang.api_id)
@@ -269,9 +269,9 @@ export async function RegisterHandler(ctx: Context) {
       break;
 
     case "collectionPublicOffers":
-      if (ctx.message.body === "1" && !state.data.docs.publicOffersAcceptAvailable) {
+      if (ctx.message.body === "1") {
 
-        if(!state.data.docs.publicOffersExpanded){
+        if(!state.data.docs.publicOffersAcceptAvailable){
           await ctx.chat.sendMessage(
             ctx.constants
               .getPrompt(localizationNames.commandNotFound, state.data.lang.api_id)
@@ -304,7 +304,7 @@ export async function RegisterHandler(ctx: Context) {
         );
       } else if (ctx.message.body === "3") {
         if(!state.data.docs.publicOffersExpanded){
-            state.data.docs.publicOffersAcceptAvailable = true;
+          state.data.docs.publicOffersAcceptAvailable = true;
         }
         state.data.docs.publicOffersExpanded =
           !state.data.docs.publicOffersExpanded;
