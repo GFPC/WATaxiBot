@@ -137,7 +137,7 @@ export async function RegisterHandler(ctx: Context) {
       } else if (ctx.message.body === "3") {
         state.data.docs.legalInformationExpanded =
           !state.data.docs.legalInformationExpanded;
-        await new Promise(f => setTimeout(f, state?.data.docs.legalInformationExpanded ? 3000 : 0));
+        await new Promise(f => setTimeout(f, state?.data.docs.legalInformationExpanded ? 3000 : 1000));
 
         await state.data.docs.legalInformationMessage?.edit(
           ctx.constants
@@ -224,7 +224,7 @@ export async function RegisterHandler(ctx: Context) {
         }
         state.data.docs.privacyPolicyExpanded =
           !state.data.docs.privacyPolicyExpanded;
-        await new Promise(f => setTimeout(f, state?.data.docs.privacyPolicyExpanded ? 3000 : 0));
+        await new Promise(f => setTimeout(f, state?.data.docs.privacyPolicyExpanded ? 3000 : 1000));
 
         await state.data.docs.privacyPolicyMessage?.edit(
           ctx.constants
@@ -308,7 +308,7 @@ export async function RegisterHandler(ctx: Context) {
         }
         state.data.docs.publicOffersExpanded =
           !state.data.docs.publicOffersExpanded;
-        await new Promise(f => setTimeout(f, state?.data.docs.publicOffersExpanded ? 3000 : 0));
+        await new Promise(f => setTimeout(f, state?.data.docs.publicOffersExpanded ? 3000 : 1000));
 
         await state.data.docs.publicOffersMessage?.edit(
           ctx.constants
