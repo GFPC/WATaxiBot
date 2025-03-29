@@ -300,7 +300,7 @@ export async function RegisterHandler(ctx: Context) {
       } else if (ctx.message.body === "3") {
         state.data.docs.publicOffersExpanded =
           !state.data.docs.publicOffersExpanded;
-        await new Promise(f => setTimeout(f, !state?.data.docs.publicOffersExpanded ? 3000 : 0));
+        await new Promise(f => setTimeout(f, state?.data.docs.publicOffersExpanded ? 3000 : 0));
 
         await state.data.docs.publicOffersMessage?.edit(
           ctx.constants
