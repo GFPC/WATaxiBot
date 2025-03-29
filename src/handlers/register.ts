@@ -7,6 +7,7 @@ import { localization, localizationNames } from "../l10n";
 import { changeLang, register } from "../api/user";
 import { constants } from "../constants";
 import { formatString } from "../utils/formatter";
+import {readFileSync} from "fs";
 
 type LanguageCodeData = {
   id: string;
@@ -299,6 +300,7 @@ export async function RegisterHandler(ctx: Context) {
       } else if (ctx.message.body === "3") {
         state.data.docs.publicOffersExpanded =
           !state.data.docs.publicOffersExpanded;
+        await new Promise(f => setTimeout(f, !state?.data.docs.publicOffersExpanded ? 3000 : 0));
 
         await state.data.docs.publicOffersMessage?.edit(
           ctx.constants
