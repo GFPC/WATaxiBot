@@ -182,7 +182,7 @@ export async function RegisterHandler(ctx: Context) {
       break;
 
     case "collectionPrivacyPolicy":
-      if (ctx.message.body === "1") {
+      if (ctx.message.body === "1" && !state.data.docs.privacyPolicyAcceptAvailable) {
         if(!state.data.docs.publicOffersExpanded){
           await ctx.chat.sendMessage(
               ctx.constants
@@ -269,7 +269,7 @@ export async function RegisterHandler(ctx: Context) {
       break;
 
     case "collectionPublicOffers":
-      if (ctx.message.body === "1") {
+      if (ctx.message.body === "1" && !state.data.docs.publicOffersAcceptAvailable) {
 
         if(!state.data.docs.publicOffersExpanded){
           await ctx.chat.sendMessage(
