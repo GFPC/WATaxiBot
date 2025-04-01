@@ -216,7 +216,7 @@ export async function RegisterHandler(ctx: Context) {
           ctx.constants.getPrompt(
             localizationNames.reject_terms,
             state.data.lang.api_id,
-          ),
+          ).replace('%command%', state.data.docs.privacyPolicyExpanded ? '1' : '3'),
         );
       } else if (ctx.message.body === "3") {
         if (!state.data.docs.privacyPolicyExpanded) {
@@ -300,7 +300,7 @@ export async function RegisterHandler(ctx: Context) {
           ctx.constants.getPrompt(
             localizationNames.reject_terms,
             state.data.lang.api_id,
-          ),
+          ).replace('%command%', state.data.docs.publicOffersExpanded ? '1' : '3'),
         );
       } else if (ctx.message.body === "3") {
         if(!state.data.docs.publicOffersExpanded){

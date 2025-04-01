@@ -19,5 +19,9 @@ export function formatDateHuman(date: Date | null, ctx: Context): string {
       ctx.user.settings.lang.api_id,
     );
   }
-  return date.toLocaleString(ctx.user.settings.lang.iso);
+  return date.toLocaleDateString(ctx.user.settings.lang.iso, {
+    month: 'numeric', day: 'numeric'
+  }) + " " + date.toLocaleTimeString(ctx.user.settings.lang.iso, {
+    hour: '2-digit', minute: '2-digit'
+  });
 }

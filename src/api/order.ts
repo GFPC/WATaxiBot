@@ -337,7 +337,6 @@ export class Order {
             console.log("EXTRAPOINT 0x02: ", response.data);
           if (response.status != 200 || response.data.status != "success")
             throw `API Error: ${response.data}`;
-          console.log("EXTRAPOINT 0x01: ", response.data);
           return response.data;
         })
         .catch(async (error) => {

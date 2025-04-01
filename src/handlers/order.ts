@@ -331,7 +331,6 @@ export async function OrderHandler(ctx: Context) {
         await ctx.storage.push(ctx.userID, state);
         break;
       }
-      console.log(ctx.message.body, ctx.message.body.split(" "));
       const msg = ctx.message.body.replace(/\s{2,}/g, " ");
       let successFlag = true;
       for (let i = 0; i < msg.split(" ").length; i++) {
