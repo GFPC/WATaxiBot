@@ -242,7 +242,7 @@ export class Order {
       },
       this.adminAuth,
     );
-    this.waitingTime += 3 * 60 * 1000;
+    this.waitingTime += 3 * 60;
 
     // Отправляем запрос
     console.log("CREATING ADD TIME REQ: ", form);
