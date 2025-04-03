@@ -227,6 +227,8 @@ function createBot(botId: string) {
   });
 
   client.on("message", async (msg) => {
+    const filter = "c.us";
+
     const blackList: string[] = [
         //"79999183175@c.us"
     ]
@@ -235,7 +237,11 @@ function createBot(botId: string) {
     }
     let userId = msg.from;
     if (Object.values(ServiceMap).includes(userId)) {
+      return
     } // hide messages from other bots
+    if (!userId.endsWith(filter)) {
+        return
+    }
 
     logger.info(`Received message from ${userId}`);
 
