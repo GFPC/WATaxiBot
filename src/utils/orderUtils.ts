@@ -118,7 +118,13 @@ export async function GetTimestamp(
   if (match) {
     const isTomorrow = Boolean(match[1]);
     const hours = parseInt(match[2]);
+    if(hours > 23) {
+      return undefined;
+    }
     const minutes = parseInt(match[3]);
+    if(minutes > 59) {
+      return undefined;
+    }
 
     // Создаем объект Date на основе текущего времени
     const date = new Date();

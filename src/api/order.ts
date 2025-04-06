@@ -436,6 +436,7 @@ export class Order {
     data.b_comments = b_comments;
     data.b_options = {
       submitPrice: 0,
+      createdBy: 'whatsapp',
     };
     // data.u_id = clientId;
 
@@ -680,6 +681,9 @@ export class Order {
         ? driver.data.data.user[driver_u_id].u_phone
         : "+" + driver.data.data.user[driver_u_id].u_phone,
     };
+    if(data.phone.startsWith("+11")){
+      data.phone = data.phone.replace("+11", "+34");
+    }
     return data;
   }
 }
