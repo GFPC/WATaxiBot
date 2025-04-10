@@ -501,6 +501,8 @@ export class Order {
 
     if (isNaN(this.id)) throw "Invalid id";
 
+    await new Promise(f => setTimeout(f, 1000));
+
     this.startStateChecking();
     if (this.isVoting) return b_driver_code;
   }
