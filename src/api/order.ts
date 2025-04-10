@@ -409,14 +409,14 @@ export class Order {
     // Формируем запрос
     const data: { [key: string]: any } = {};
 
-    if (startLoc.address) {
+    if (!startLoc.latitude || !endLoc.latitude) {
       data.b_start_address = startLoc.address;
     } else {
       data.b_start_latitude = startLoc.latitude;
       data.b_start_longitude = startLoc.longitude;
     }
 
-    if (endLoc.address) {
+    if (!endLoc.latitude || !endLoc.latitude) {
       data.b_destination_address = endLoc.address;
     } else {
       data.b_destination_latitude = endLoc.latitude;
