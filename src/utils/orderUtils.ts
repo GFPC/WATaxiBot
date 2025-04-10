@@ -56,6 +56,7 @@ export async function GetLocation(
     }
 
     const location = msg.location as unknown as Location;
+    console.log('LOCATION: ',msg.location)
     return {
       latitude: location.latitude,
       longitude: location.longitude,
