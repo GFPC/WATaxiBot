@@ -121,19 +121,31 @@ export async function getRouteInfo(
             `${osrmUrl}/driving/${coordinates}?${params}`
         );
 
+        if (!response || !response.data) {
+            throw new Error('Invalid OSRM API response');
+        }
+
         if (response.data.code !== 'Ok') {
             throw new Error(`OSRM API error: ${response.data.code}`);
         }
 
-        if (!response.data.routes.length) {
-            throw new Error('No routes found');
+        if (!response.data.routes || !response.data.routes.length) {
+            throw new Error('No routes found in OSRM response');
         }
 
-        console.log('OSRM route response:', response.data.routes[0]);
-        return response.data.routes[0];
+        const route = response.data.routes[0];
+        if (!route || typeof route.distance !== 'number' || typeof route.duration !== 'number') {
+            throw new Error('Invalid route data in OSRM response');
+        }
+
+        console.log('OSRM route response:', route);
+        return route;
     } catch (error) {
         console.error('Error getting OSRM route:', error);
-        throw error;
+        if (error instanceof Error) {
+            throw new Error(`OSRM API error: ${error.message}`);
+        }
+        throw new Error('Unknown error occurred while getting OSRM route');
     }
 }
 
@@ -147,16 +159,25 @@ export async function getDistanceAndDuration(
     start: Location,
     end: Location
 ): Promise<{ distance: number; duration: number }> {
-    const route = await getRouteInfo(start, end, {
-        steps: false,
-        annotations: false,
-        overview: 'false'
-    });
+    try {
+        const route = await getRouteInfo(start, end, {
+            steps: false,
+            annotations: false,
+            overview: 'false'
+        });
 
-    return {
-        distance: route.distance,
-        duration: route.duration
-    };
+        if (!route || typeof route.distance !== 'number' || typeof route.duration !== 'number') {
+            throw new Error('Invalid route data received');
+        }
+
+        return {
+            distance: route.distance,
+            duration: route.duration
+        };
+    } catch (error) {
+        console.error('Error getting distance and duration:', error);
+        throw error;
+    }
 }
 
 /**
@@ -230,22 +251,31 @@ export async function getTaxiRouteInfo(
     end: Location,
     pricing: TaxiPricing = DEFAULT_PRICING
 ): Promise<TaxiRouteInfo> {
-    const route = await getRouteInfo(start, end, {
-        steps: true,
-        annotations: true,
-        overview: 'simplified'
-    });
+    try {
+        const route = await getRouteInfo(start, end, {
+            steps: true,
+            annotations: true,
+            overview: 'simplified'
+        });
 
-    // Calculate estimated wait time based on distance and time of day
-    const estimatedWaitTime = calculateWaitTime(route.distance);
+        if (!route || typeof route.distance !== 'number' || typeof route.duration !== 'number') {
+            throw new Error('Invalid route data received');
+        }
 
-    return {
-        distance: route.distance,
-        duration: route.duration,
-        estimatedPrice: calculatePrice(route.distance, route.duration, pricing),
-        estimatedWaitTime,
-        route
-    };
+        const estimatedWaitTime = calculateWaitTime(route.distance);
+        const estimatedPrice = calculatePrice(route.distance, route.duration, pricing);
+
+        return {
+            distance: route.distance,
+            duration: route.duration,
+            estimatedPrice,
+            estimatedWaitTime,
+            route
+        };
+    } catch (error) {
+        console.error('Error getting taxi route info:', error);
+        throw error;
+    }
 }
 
 /**
@@ -304,12 +334,24 @@ export async function getQuickEstimate(
     estimatedPrice: number;
     estimatedWaitTime: number;
 }> {
-    const { distance, duration } = await getDistanceAndDuration(start, end);
-    
-    return {
-        distance,
-        duration,
-        estimatedPrice: calculatePrice(distance, duration, pricing),
-        estimatedWaitTime: calculateWaitTime(distance)
-    };
+    try {
+        const { distance, duration } = await getDistanceAndDuration(start, end);
+        
+        if (typeof distance !== 'number' || typeof duration !== 'number') {
+            throw new Error('Invalid distance or duration received');
+        }
+
+        const estimatedPrice = calculatePrice(distance, duration, pricing);
+        const estimatedWaitTime = calculateWaitTime(distance);
+
+        return {
+            distance,
+            duration,
+            estimatedPrice,
+            estimatedWaitTime
+        };
+    } catch (error) {
+        console.error('Error getting quick estimate:', error);
+        throw error;
+    }
 }
