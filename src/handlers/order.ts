@@ -517,7 +517,7 @@ export async function OrderHandler(ctx: Context) {
         await ctx.chat.sendMessage(response);
       }
 
-      console.log(getRouteInfo(
+      console.log('ROUTE: ',getRouteInfo(
         state.data.from,
         state.data.to
       ))
