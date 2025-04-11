@@ -491,6 +491,10 @@ export async function OrderHandler(ctx: Context) {
 
         if (typeof location != "string") {
           state.data.to = location;
+          console.log('ROUTE: ',getRouteInfo(
+              state.data.from,
+              state.data.to
+          ))
           state.state = "collectionHowManyPeople";
           await ctx.storage.push(ctx.userID, state);
           await ctx.chat.sendMessage(
@@ -516,11 +520,6 @@ export async function OrderHandler(ctx: Context) {
         );
         await ctx.chat.sendMessage(response);
       }
-
-      console.log('ROUTE: ',getRouteInfo(
-        state.data.from,
-        state.data.to
-      ))
 
       break;
     default:
