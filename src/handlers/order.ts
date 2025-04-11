@@ -15,6 +15,7 @@ import {
 } from "../utils/orderUtils";
 import { formatDateHuman, formatString } from "../utils/formatter";
 import { newRide, newVote } from "../states/machines/rideMachine";
+import {getRouteInfo} from "../api/osrm";
 
 export async function OrderHandler(ctx: Context) {
   let state: OrderMachine | null = await ctx.storage.pull(ctx.userID);
@@ -515,6 +516,11 @@ export async function OrderHandler(ctx: Context) {
         );
         await ctx.chat.sendMessage(response);
       }
+
+      console.log(getRouteInfo(
+        state.data.from,
+        state.data.to
+      ))
 
       break;
     default:
