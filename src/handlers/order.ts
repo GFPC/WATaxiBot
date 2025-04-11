@@ -100,6 +100,59 @@ export async function OrderHandler(ctx: Context) {
         ctx.constants,
         ctx.user.settings.lang.api_id,
       );
+
+      if(state.data.voting){
+        const order = new Order(
+            ctx.userID,
+            ctx.auth,
+            observer.callback.bind(observer),
+            async () => {},
+            true,
+        );
+        const timestamp = await GetTimestamp("сейчас"); // здесь язык не важен
+
+        if (
+            timestamp === undefined ||
+            (timestamp !== null && Date.now() - timestamp.getTime() > 0)
+        ) {
+          break;
+        }
+
+        const b_driver_code = await order.new(
+            state.data.from,
+            state.data.to,
+            timestamp,
+            state.data.peopleCount,
+            constants.maxWaitingTimeSecs,
+            ctx.chat,
+            ctx,
+            state.data.additionalOptions,
+        );
+
+        const routeData = await getRouteInfo(state.data.from, state.data.to);
+
+        await ctx.chat.sendMessage("TEST POINT: VOTING DRIVE ID: " + order.id+'\nROUTE: '+JSON.stringify(routeData));
+        await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
+        await orderMsg.edit(
+            ctx.constants.getPrompt(
+                localizationNames.votingActivated,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        await ctx.chat.sendMessage(
+            ctx.constants
+                .getPrompt(
+                    localizationNames.votingVerificationCode,
+                    ctx.user.settings.lang.api_id,
+                )
+                .replace("%code%", b_driver_code),
+        );
+        const newState = newVote(order);
+
+        await ctx.storage.push(ctx.userID, newState);
+        break;
+      }
+
       const order = new Order(
         ctx.userID,
         ctx.auth,
@@ -153,62 +206,39 @@ export async function OrderHandler(ctx: Context) {
           ) ||
         ctx.message.body.toLowerCase() === "3"
       ) {
-        // Создаём новый стейт
-        const car_code = ctx.message.body;
-        const chat = await ctx.message.getChat();
-        const observer = new OrderObserverCallback(
-          ctx.client,
-          chat.id,
-          ctx.logger,
-          ctx.userID,
-          ctx.storage,
-          ctx.constants,
-          ctx.user.settings.lang.api_id,
-        );
-        const order = new Order(
-          ctx.userID,
-          ctx.auth,
-          observer.callback.bind(observer),
-          async () => {},
-          true,
-        );
-        const timestamp = await GetTimestamp("сейчас"); // здесь язык не важен
 
-        if (
-          timestamp === undefined ||
-          (timestamp !== null && Date.now() - timestamp.getTime() > 0)
-        ) {
-          break;
-        }
-
-        const b_driver_code = await order.new(
-          state.data.from,
-          state.data.to,
-          timestamp,
-          state.data.peopleCount,
-          constants.maxWaitingTimeSecs,
-          ctx.chat,
-          ctx,
-          state.data.additionalOptions,
+        state.data.voting = true;
+        state.data.when = null;
+        state.state = "collectionOrderConfirm";
+        const response = formatString(
+            ctx.constants.getPrompt(
+                localizationNames.collectionOrderConfirm,
+                ctx.user.settings.lang.api_id,
+            ),
+            {
+              from:
+                  state.data.from?.address ??
+                  `${state.data.from.latitude} ${state.data.from.longitude}`,
+              to:
+                  state.data.to?.address ??
+                  `${state.data.to.latitude} ${state.data.to.longitude}`,
+              peoplecount: state.data.peopleCount.toString(),
+              when: formatDateHuman((await GetTimestamp("сейчас") ?? null), ctx),
+              options:
+                  state.data.additionalOptions.length > 0
+                      ? state.data.additionalOptions
+                          .map(
+                              (i) =>
+                                  ctx.constants.data.data.booking_comments[i][
+                                      ctx.user.settings.lang.iso
+                                      ],
+                          )
+                          .join(", ")
+                      : "",
+            },
         );
-        await ctx.chat.sendMessage("TEST POINT:DRIVE ID: " + order.id);
-        await ctx.chat.sendMessage(
-          ctx.constants.getPrompt(
-            localizationNames.votingActivated,
-            ctx.user.settings.lang.api_id,
-          ),
-        );
-        await ctx.chat.sendMessage(
-          ctx.constants
-            .getPrompt(
-              localizationNames.votingVerificationCode,
-              ctx.user.settings.lang.api_id,
-            )
-            .replace("%code%", b_driver_code),
-        );
-        const newState = newVote(order);
-
-        await ctx.storage.push(ctx.userID, newState);
+        await ctx.chat.sendMessage(response);
+        await ctx.storage.push(ctx.userID, state);
         break;
       }
 
@@ -491,10 +521,6 @@ export async function OrderHandler(ctx: Context) {
 
         if (typeof location != "string") {
           state.data.to = location;
-          console.log('ROUTE: ',getRouteInfo(
-              state.data.from,
-              state.data.to
-          ))
           state.state = "collectionHowManyPeople";
           await ctx.storage.push(ctx.userID, state);
           await ctx.chat.sendMessage(

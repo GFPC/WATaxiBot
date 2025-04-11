@@ -20,6 +20,7 @@ export interface OrderMachine extends StateMachine {
     peopleCount: number;
     when?: Date | null; // null - сейчас,
     additionalOptions: number[];
+    voting: boolean
   };
 }
 
@@ -34,6 +35,7 @@ export function newEmptyOrder(): OrderMachine {
       to: {},
       peopleCount: 0,
       additionalOptions: [],
+      voting: false
     },
   };
 }

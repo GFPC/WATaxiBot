@@ -353,7 +353,7 @@ export class Order {
               this.ctx?.user.settings.lang.api_id,
             ) ?? "error",
           );
-          throw `API Error: ${error}`;
+          //throw `API Error: ${error}`;
         });
     } catch (e) {
       await CriticalErrorHandler(this.ctx, e);
