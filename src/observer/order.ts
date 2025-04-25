@@ -6,6 +6,7 @@ import { BookingState } from "../api/general";
 import { Storage } from "../storage/storage";
 import { RideMachine } from "../states/machines/rideMachine";
 import { Constants } from "../api/constants";
+import {formatPriceFormula} from "../handlers/order";
 
 export class OrderObserverCallback {
   client: Client;
@@ -88,13 +89,17 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.Completed:
+          const state: RideMachine = await this.storage.pull(this.userId);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ),
+            ).replace('%price%', String(state.data.pricingModel.price))
+                .replace('%formula%', formatPriceFormula(
+                    state.data.pricingModel.formula,
+                    state.data.pricingModel.options
+                ))
           );
-          const state: RideMachine = await this.storage.pull(this.userId);
           state.state = "rate";
           await this.storage.pull(this.userId);
           break;
@@ -152,14 +157,17 @@ export class OrderObserverCallback {
           break;
 
         case BookingState.Completed:
+          const state: RideMachine = await this.storage.pull(this.userId);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ),
+            ).replace('%price%', String(state.data.pricingModel.price))
+                .replace('%formula%', formatPriceFormula(
+                    state.data.pricingModel.formula,
+                    state.data.pricingModel.options
+                )),
           );
-
-          const state: RideMachine = await this.storage.pull(this.userId);
           state.state = "rate";
           await this.storage.pull(this.userId);
           break;

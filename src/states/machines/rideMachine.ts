@@ -1,4 +1,4 @@
-import { StateMachine } from "../types";
+import {PricingModel, StateMachine} from "../types";
 import { Order } from "../../api/order";
 
 export interface RideMachine extends StateMachine {
@@ -21,6 +21,7 @@ export interface RideMachine extends StateMachine {
     isCollectionReason: boolean;
     chatModeActive: boolean;
     order: Order;
+    pricingModel: PricingModel;
   };
 }
 
@@ -32,6 +33,7 @@ export function newRide(order: Order): RideMachine {
       isCollectionReason: false,
       chatModeActive: false,
       order: order,
+      pricingModel: order.pricingModel,
     },
   };
 }

@@ -5,7 +5,7 @@ import {
   createForm,
   postHeaders,
 } from "./general";
-import { Location } from "../states/types";
+import {Location, PricingModel} from "../states/types";
 import axios from "axios";
 import { Chat, Message } from "whatsapp-web.js";
 import { constants } from "../constants";
@@ -42,6 +42,8 @@ type StateCallback = (
 
 // Функция, которая вызывается классом Order при получении нового сообщения в чате
 type ChatCallback = (order: Order, message: string) => Promise<void>;
+
+
 async function CriticalErrorHandler(ctx: Context | undefined, error: any) {
   await ctx?.chat.sendMessage(
     "Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: " +
@@ -80,6 +82,7 @@ export class Order {
   notificationMessage: Message | undefined;
   ctx: Context | undefined;
   submitPrice: number = 0;
+  pricingModel: PricingModel;
 
   constructor(
     clientTg: string,
@@ -93,6 +96,11 @@ export class Order {
     this.stateCallback = stateCallback;
     this.chatCallback = chatCallback;
     this.isVoting = isVoting;
+    this.pricingModel = {
+      formula: "",
+      price: 0,
+      options: {},
+    }
   }
 
   async extendSubmitPrice(price: number, ctx: Context) {
@@ -391,6 +399,7 @@ export class Order {
     chat: Chat | null,
     ctx: Context,
     b_comments: number[],
+    pricingModel: PricingModel,
   ) {
     /* Создание нового заказа */
     if (this.id) throw "The order has already been created";
@@ -402,6 +411,7 @@ export class Order {
       maxWaitingSecs = this.waitingTime;
     }
     this.ctx = ctx;
+    this.pricingModel = pricingModel;
 
     // Переменная для кода водителя(нужно для режима voting)
     var b_driver_code = undefined;

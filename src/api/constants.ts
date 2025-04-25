@@ -4,38 +4,50 @@ import { postHeaders } from "./general";
 export class Constants {
   data: {
     data: {
-      car_colors: any;
-      car_models: any;
+      car_colors: any[];
+      car_models: any[];
+      lang_vls: {
+        [key: string]: {
+          [key: string]: string;
+        };
+      };
+      site_constants: {
+        pricingModels: {
+          value: string;
+        };
+        [key: string]: any;
+      };
       langs: {
         [key: string]: {
           native: string;
           iso: string;
         };
       };
-      lang_vls: {
-        [key: string]: {
-          [key: string]: string;
-        };
-      };
       [key: string]: any;
     };
     default_lang: string;
-    default_currency: string;
+    default_currency: string
   } = {
     data: {
       car_colors: [],
       car_models: [],
       langs: {},
       lang_vls: {},
+      site_constants: {
+        pricingModels: {
+          value: ''
+        }
+      }
     },
     default_lang: "2",
     default_currency: "GHS",
+
   };
   localization_prefix = "wab_";
   constructor() {}
 
-  getData(baseUrl: string) {
-    axios
+  async getData(baseUrl: string) {
+    await axios
       .post(baseUrl + "/data", {}, { headers: postHeaders })
       .then((response) => {
         this.data = response.data.data;

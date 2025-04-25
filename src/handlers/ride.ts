@@ -212,6 +212,14 @@ export async function RideHandler(ctx: Context) {
         );
         await ctx.storage.delete(ctx.userID);
       }
+      else {
+        await ctx.chat.sendMessage(
+          ctx.constants.getPrompt(
+            localizationNames.commandNotFound,
+            ctx.user.settings.lang.api_id,
+          ),
+        );
+      }
       break;
     case "rate":
       if (ctx.message.body == "отмена") {

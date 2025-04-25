@@ -18,7 +18,7 @@ import { StateMachine } from "./states/types";
 import { RideHandler } from "./handlers/ride";
 import { MemoryStorage } from "./storage/mem";
 import { DrivesStorage } from "./storage/drivesStorage";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { UsersStorage } from "./storage/usersStorage";
 import { VotingHandler } from "./handlers/voting";
 import { Constants, ConstantsStorage } from "./api/constants";
@@ -31,6 +31,10 @@ import { URLManager } from "./URLManager";
 import * as url from "url";
 
 const SESSION_DIR = "./sessions";
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 1000; // 1 second
+const MESSAGE_FILTER = "c.us";
+const BLACKLIST = ["79999183175@c.us", "34614478119@c.us"];
 
 // Создаем папку для сессий
 if (!fs.existsSync(SESSION_DIR)) {
@@ -72,6 +76,23 @@ const urlManager = URLManager(
 );
 
 const API_CONSTANTS = ConstantsStorage(urlManager);
+
+interface UserSettings {
+  lang: {
+    iso: string;
+    api_id: string;
+    native: string;
+  };
+}
+
+interface UserData {
+  api_u_id: string;
+  settings: UserSettings;
+  referrer_u_id: string | null;
+  u_details: any | null;
+  ref_code: string | null;
+}
+
 export interface Context {
   message: Message;
   chat: Chat;
@@ -84,7 +105,9 @@ export interface Context {
   constants: Constants;
   details?: any;
   usersList: UsersStorage;
-  user: any;
+  user: {
+    settings: UserSettings;
+  };
   botID: string;
   baseURL: string;
 }
@@ -95,94 +118,81 @@ async function router(
   ctx: Context,
   userList: UsersStorage,
   adminAuth: AuthData,
-): Promise<(ctx: Context) => Promise<void>> {
-  const user = await userList.pull(ctx.userID.split("@")[0]);
-  if (user?.api_u_id == "-1" || !user || user?.reloadFromApi == true) {
-    console.log(
-      "Point 0x0000-0 router requesting user, config: " + ServiceMap[ctx.botID],
-      "USER:",
-      {
-        token: adminAuth.token,
-        u_hash: adminAuth.hash,
-        u_a_phone: ctx.userID.split("@")[0],
-      },
-    );
+): Promise<Handler> {
+  try {
+    const user = await userList.pull(ctx.userID.split("@")[0]);
+    
+    if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
+      const userData = await fetchUserData(ctx, adminAuth);
+      if (!userData) {
+        return RegisterHandler;
+      }
+      await userList.push(ctx.userID.split("@")[0], userData);
+      ctx.api_u_id = Object.keys(userData)[0];
+    }
+
+    ctx.user = await userList.pull(ctx.userID.split("@")[0]);
+    const state: StateMachine | null = await ctx.storage.pull(ctx.userID);
+
+    if (ctx.message.body === "9" && state?.id === "order" && 
+        (state?.state === "collectionFrom" || state?.state === "collectionTo")) {
+      return HelpHandler;
+    }
+
+    const handlerMap: Record<string, Handler> = {
+      "ride": RideHandler,
+      "voting": VotingHandler,
+      "settings": SettingsHandler,
+      "order": OrderHandler,
+    };
+
+    return handlerMap[state?.id ?? ""] ?? DefaultHandler;
+  } catch (error) {
+    ctx.logger.error(`Router error: ${error}`);
+    return DefaultHandler;
+  }
+}
+
+async function fetchUserData(ctx: Context, adminAuth: AuthData): Promise<UserData | null> {
+  try {
     const userData = await axios.post(
       `${ctx.baseURL}user`,
       {
         token: adminAuth.token,
-        u_hash: adminAuth.hash,
+        hash: adminAuth.hash,
         u_a_phone: ctx.userID.split("@")[0],
       },
       { headers: postHeaders },
     );
-    console.log("Point 0x0000-1 response", userData.data);
+
     if (userData.data.status === "error") {
-      console.log("REG POINT DEFAULT_LANG: ", ctx.constants.data.default_lang);
-      ctx.details.lang = {
-        iso: API_CONSTANTS[ctx.botID].data.data.langs[
-          ctx.constants.data.default_lang
-        ].iso,
-        api_id: ctx.constants.data.default_lang,
-        native:
-          API_CONSTANTS[ctx.botID].data.data.langs[
-            ctx.constants.data.default_lang
-          ].native,
-      };
-      // Если пользователь не зарегистрирован, то вызываем обработчик регистрации
-      return RegisterHandler;
+      return null;
     }
-    const userSection =
-      userData.data.data.user[Object.keys(userData.data.data.user)[0]];
-    await userList.push(ctx.userID.split("@")[0], {
+
+    const userSection = userData.data.data.user[Object.keys(userData.data.data.user)[0]];
+    const langId = userSection.u_lang ?? ctx.constants.data.default_lang;
+    const langData = ctx.constants.data.data.langs[langId];
+
+    return {
       api_u_id: userData.data.auth_user.u_id,
       settings: {
         lang: {
-          iso: API_CONSTANTS[ctx.botID].data.data.langs[
-            userData.data.data.user[Object.keys(userData.data.data.user)[0]]
-              .u_lang ?? ctx.constants.data.default_lang
-          ].iso,
-          api_id:
-            userData.data.data.user[Object.keys(userData.data.data.user)[0]]
-              .u_lang ?? ctx.constants.data.default_lang,
-          native:
-            API_CONSTANTS[ctx.botID].data.data.langs[
-              userData.data.data.user[Object.keys(userData.data.data.user)[0]]
-                .u_lang ?? ctx.constants.data.default_lang
-            ].native,
+          iso: langData.iso,
+          api_id: langId,
+          native: langData.native,
         },
       },
       referrer_u_id: userSection?.referrer_u_id ?? null,
       u_details: userSection?.u_details ?? null,
       ref_code: userSection?.ref_code ?? null,
-    });
-    ctx.api_u_id = Object.keys(userData.data.data.user)[0];
-  }
-
-  ctx.user = await userList.pull(ctx.userID.split("@")[0]);
-
-  const state: StateMachine | null = await ctx.storage.pull(ctx.userID);
-  console.log("BOT `" + ctx.botID + "`  STATE: ", state);
-
-  if (ctx.message.body == "9") {
-    if (state?.id === "order" && state?.state === "collectionFrom") {
-      return HelpHandler;
-    } else if (state?.id === "order" && state?.state === "collectionTo") {
-      return HelpHandler;
+    };
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      ctx.logger.error(`Failed to fetch user data: ${error.message}`);
+    } else {
+      ctx.logger.error(`Unexpected error while fetching user data: ${error}`);
     }
-  }
-
-  switch (state?.id) {
-    case "ride":
-      return RideHandler;
-    case "voting":
-      return VotingHandler;
-    case "settings":
-      return SettingsHandler;
-    case "order":
-      return OrderHandler;
-    default:
-      return DefaultHandler;
+    return null;
   }
 }
 
@@ -230,7 +240,6 @@ function createBot(botId: string) {
     const filter = "c.us";
 
     const blackList: string[] = [
-        //"79999183175@c.us"
     ]
     if (blackList.includes(msg.from)) {
         return;
@@ -326,6 +335,7 @@ Object.keys(API_CONSTANTS).forEach(async (key) => {
   console.log(`Загрузка констант для ${key}...`);
   await API_CONSTANTS[key].getData(urlManager[key]);
   console.log(`Константы для ${key} загружены`);
+  console.log(JSON.stringify(JSON.parse(API_CONSTANTS[key].data.data.site_constants.pricingModels.value)));
 });
 
 // Создаем N ботов

@@ -1,4 +1,4 @@
-import { StateMachine, Location } from "../types";
+import {StateMachine, Location, PricingModel} from "../types";
 import { Order } from "../../api/order";
 
 export interface OrderMachine extends StateMachine {
@@ -20,7 +20,8 @@ export interface OrderMachine extends StateMachine {
     peopleCount: number;
     when?: Date | null; // null - сейчас,
     additionalOptions: number[];
-    voting: boolean
+    voting: boolean;
+    priceModel: PricingModel;
   };
 }
 
@@ -35,7 +36,14 @@ export function newEmptyOrder(): OrderMachine {
       to: {},
       peopleCount: 0,
       additionalOptions: [],
-      voting: false
+      voting: false,
+      priceModel: {
+        formula: "",
+        price: 0,
+        options: {
+          dd:0
+        }
+      }
     },
   };
 }
@@ -49,11 +57,12 @@ export interface VotingMachine extends StateMachine {
     carCode: string;
     from: Location;
     to: Location;
+    priceModel: PricingModel
   };
 }
 
 export function newVoting(order: OrderMachine, startAt?: Date): VotingMachine {
-  return {
+  return <VotingMachine>{
     id: "voting",
     state: "voting",
     data: {
@@ -62,6 +71,11 @@ export function newVoting(order: OrderMachine, startAt?: Date): VotingMachine {
       carCode: "",
       from: {},
       to: {},
+      priceModel: {
+        formula: "",
+        price: 0,
+        options: {}
+      }
     },
   };
 }
