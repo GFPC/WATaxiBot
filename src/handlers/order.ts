@@ -165,7 +165,7 @@ function formatOrderConfirmation(
                     .map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso])
                     .join(", ")
                 : "",
-            price: Math.trunc(priceModel.price).toString() + ctx.constants.data.default_currency,
+            price: Math.trunc(priceModel.price).toString() + ' ' + ctx.constants.data.default_currency,
             formula: formatPriceFormula(priceModel.formula, priceModel.options)
         }
     );
@@ -458,6 +458,7 @@ export async function OrderHandler(ctx: Context) {
       );
 
       const response = formatOrderConfirmation(ctx, state, state.data.priceModel);
+      await new Promise(f => setTimeout(f, 500));
       await calculatingRouteMessage.edit(response);
       await ctx.storage.push(ctx.userID, state);
       break;
