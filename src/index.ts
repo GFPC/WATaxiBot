@@ -26,9 +26,10 @@ import { SettingsHandler } from "./handlers/settings";
 import { DefaultHandler } from "./handlers/default";
 import { HelpHandler } from "./handlers/help";
 import * as fs from "fs";
-import { ServiceMap } from "./ServiceMap";
-import { URLManager } from "./URLManager";
+import {ConfigsMap, ServiceMap} from "./ServiceMap";
+import { URLManager } from "./managers/URLManager";
 import * as url from "url";
+import {ConfigManager} from "./managers/ConfigManager";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -74,6 +75,10 @@ const urlManager = URLManager(
   "https://ibronevik.ru/taxi/c/%config%/api/v1/",
   ServiceMap,
 );
+const configManager = new ConfigManager(
+  ConfigsMap,
+  urlManager
+)
 
 const API_CONSTANTS = ConstantsStorage(urlManager);
 
@@ -121,9 +126,12 @@ async function router(
 ): Promise<Handler> {
   try {
     const user = await userList.pull(ctx.userID.split("@")[0]);
+    console.log('USER', user, ctx.userID);
     
     if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
+      console.log("AAAA",adminAuth)
       const userData = await fetchUserData(ctx, adminAuth);
+      console.log('USER DATA', userData);
       if (!userData) {
         return RegisterHandler;
       }
@@ -157,13 +165,14 @@ async function fetchUserData(ctx: Context, adminAuth: AuthData): Promise<UserDat
   try {
     const userData = await axios.post(
       `${ctx.baseURL}user`,
-      {
-        token: adminAuth.token,
-        hash: adminAuth.hash,
-        u_a_phone: ctx.userID.split("@")[0],
-      },
+        {
+          token: adminAuth.token,
+          u_hash: adminAuth.hash,
+          u_a_phone: ctx.userID.split("@")[0],
+        },
       { headers: postHeaders },
     );
+    console.log("REQUESTING USER DATA RES:", userData.data);
 
     if (userData.data.status === "error") {
       return null;
@@ -197,15 +206,12 @@ async function fetchUserData(ctx: Context, adminAuth: AuthData): Promise<UserDat
 }
 
 // Функция создания бота
-function createBot(botId: string) {
+async function createBot(botId: string) {
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 5;
   const baseDelay = 1000; // 1 секунда
 
-  const adminAuth: AuthData = {
-    token: process.env.API_ADMIN_TOKEN ?? "",
-    hash: process.env.API_ADMIN_HASH ?? "",
-  };
+  const adminAuth: AuthData = await configManager.auth(ServiceMap[botId],botId);
 
   // Создаём Storage
   const storage = new MemoryStorage();
@@ -240,9 +246,13 @@ function createBot(botId: string) {
     const filter = "c.us";
 
     const blackList: string[] = [
+      /*
+      "79999183175@c.us",
+      "34614478119@c.us",
+      */
     ]
     if (blackList.includes(msg.from)) {
-        return;
+      return;
     }
     let userId = msg.from;
     if (Object.values(ServiceMap).includes(userId)) {
@@ -344,8 +354,12 @@ const bots = Object.keys(ServiceMap).map((key, index) => {
 });
 
 // Обработка завершения работы
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   console.log("\nЗавершение работы...");
-  bots.forEach((bot) => bot.destroy());
+  for (const bot of bots) {
+    (await bot).destroy().then(r =>
+      console.log(`Бот ${bot} завершен, response: ${r === undefined ? "ok" : r}`)
+    );
+  }
   process.exit();
 });

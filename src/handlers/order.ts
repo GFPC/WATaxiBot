@@ -185,6 +185,8 @@ export async function OrderHandler(ctx: Context) {
     "collectionWhen",
     "collectionOrderConfirm",
     "collectionCarCode",
+      "collectionShowAdditionalOptions",
+      "collectionAdditionalOptions",
   ];
   console.log(state.state);
   if (
@@ -233,12 +235,10 @@ export async function OrderHandler(ctx: Context) {
       }
 
       const chat = await ctx.message.getChat();
-      const orderMsg = await chat.sendMessage(
-        ctx.constants.getPrompt(
+      const orderMsg = await chat.sendMessage(ctx.constants.getPrompt(
           localizationNames.creatingOrder,
           ctx.user.settings.lang.api_id,
-        ),
-      );
+      ))
 
       const observer = new OrderObserverCallback(
         ctx.client,
@@ -396,6 +396,9 @@ export async function OrderHandler(ctx: Context) {
             .toUTCString()
             .replace(/ GMT$/, ""),
       );
+      const calculatingRouteMessage = await ctx.chat.sendMessage(
+          ctx.constants.getPrompt(localizationNames.calculatingRoute, ctx.user.settings.lang.api_id)
+      )
 
       if (timestamp === undefined) {
         await ctx.chat.sendMessage(
@@ -455,7 +458,7 @@ export async function OrderHandler(ctx: Context) {
       );
 
       const response = formatOrderConfirmation(ctx, state, state.data.priceModel);
-      await ctx.chat.sendMessage(response);
+      await calculatingRouteMessage.edit(response);
       await ctx.storage.push(ctx.userID, state);
       break;
     case "collectionAdditionalOptions":
@@ -529,7 +532,8 @@ export async function OrderHandler(ctx: Context) {
       if (ctx.message.body === "1") {
         state.state = "collectionAdditionalOptions";
         await ctx.storage.push(ctx.userID, state);
-      } else {
+      }
+      else if (ctx.message.body === "2") {
         state.state = "collectionWhen";
         await ctx.chat.sendMessage(
           ctx.constants.getPrompt(
@@ -538,6 +542,15 @@ export async function OrderHandler(ctx: Context) {
           ),
         );
         await ctx.storage.push(ctx.userID, state);
+        break;
+      }
+      else {
+        await ctx.chat.sendMessage(
+          ctx.constants.getPrompt(
+            localizationNames.commandNotFound,
+            ctx.user.settings.lang.api_id,
+          ),
+        );
         break;
       }
 

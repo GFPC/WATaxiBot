@@ -1,5 +1,6 @@
 import {StateMachine, Location, PricingModel} from "../types";
 import { Order } from "../../api/order";
+import {Message} from "whatsapp-web.js";
 
 export interface OrderMachine extends StateMachine {
   id: "order";

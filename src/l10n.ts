@@ -312,6 +312,7 @@ export const localizationNames = {
   collapse_doc: "wab_collapse_doc".toLowerCase(),
   next_step: "wab_next_step".toLowerCase(),
   accept_doc: "wab_accept_doc".toLowerCase(),
+  calculatingRoute: "wab_calculatingRoute".toLowerCase(),
 };
 function exportToJsonFile() {
   const file = "l10n.json";
