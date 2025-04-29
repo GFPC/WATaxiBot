@@ -246,10 +246,10 @@ async function createBot(botId: string) {
     const filter = "c.us";
 
     const blackList: string[] = [
-      /*
+
       "79999183175@c.us",
       "34614478119@c.us",
-      */
+
     ]
     if (blackList.includes(msg.from)) {
       return;
