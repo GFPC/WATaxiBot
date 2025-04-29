@@ -14,7 +14,7 @@ export const ConfigsMap: {
 } = {
   children: {
     login: "admin@ibronevik.ru",
-    password: "c|a197B1ba",
+    password: "p@ssw0rd",
     type: "e-mail",
   },
   gruzvill: {
