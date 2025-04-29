@@ -165,7 +165,7 @@ function formatOrderConfirmation(
                     .map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso])
                     .join(", ")
                 : "",
-            price: Math.trunc(priceModel.price).toString(),
+            price: Math.trunc(priceModel.price).toString() + ctx.constants.data.default_currency,
             formula: formatPriceFormula(priceModel.formula, priceModel.options)
         }
     );
