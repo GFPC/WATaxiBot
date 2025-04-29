@@ -14,12 +14,12 @@ export const ConfigsMap: {
 } = {
   children: {
     login: "admin@ibronevik.ru",
-    password: "p@ssw0rd",
+    password: "c|a197B1ba",
     type: "e-mail",
   },
   gruzvill: {
     login: "admin@ibronevik.ru",
-    password: "c|a197B1ba",
+    password: "p@ssw0rd",
     type: "e-mail",
   }
 }
