@@ -66,13 +66,13 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
     try {
         // Заменяем переменные в формуле на их значения
         let formattedFormula = formula
-            .replace('base_price', `(${params.base_price})`)
-            .replace('distance', `(${params.distance})`)
-            .replace('price_per_km', `(${params.price_per_km})`)
-            .replace('duration', `(${params.duration})`)
-            .replace('price_per_minute', `(${params.price_per_minute})`)
-            .replace('time_ratio', `(${params.time_ratio})`)
-            .replace('options_sum', `(${params.options_sum})`);
+            .replace('base_price', `${params.base_price}`)
+            .replace('distance', `${params.distance}`)
+            .replace('price_per_km', `${params.price_per_km}`)
+            .replace('duration', `${params.duration}`)
+            .replace('price_per_minute', `${params.price_per_minute}`)
+            .replace('time_ratio', `${params.time_ratio}`)
+            .replace('options_sum', `${params.options_sum}`);
 
         // Добавляем пробелы вокруг операторов для лучшей читаемости
         formattedFormula = formattedFormula
