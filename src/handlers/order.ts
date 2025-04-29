@@ -98,6 +98,7 @@ async function calculateOrderPrice(
 ): Promise<PriceModel> {
     // If either location is not set, return default values
     if (!from?.latitude || !to?.latitude) {
+        console.log('Skipping price calculation due to missing location');
         return {
             formula: '-',
             price: 0,
@@ -458,7 +459,7 @@ export async function OrderHandler(ctx: Context) {
       );
 
       const response = formatOrderConfirmation(ctx, state, state.data.priceModel);
-      await new Promise(f => setTimeout(f, 500));
+      await new Promise(f => setTimeout(f, 1000));
       await calculatingRouteMessage.edit(response);
       await ctx.storage.push(ctx.userID, state);
       break;
