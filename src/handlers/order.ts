@@ -17,6 +17,7 @@ import { formatDateHuman, formatString } from "../utils/formatter";
 import { newRide, newVote } from "../states/machines/rideMachine";
 import {getRouteInfo} from "../api/osrm";
 import { Location } from "../states/types";
+import {MultiUsersRefCodes} from "../ServiceMap";
 
 interface PriceCalculationParams {
 /*    base_price: number;
@@ -35,7 +36,16 @@ interface PriceModel {
     options: PriceCalculationParams;
 }
 
-export function calculatePrice(formula: string, params: PriceCalculationParams): number {
+export function calculatePrice(formula: string, params: PriceCalculationParams = {
+    base_price: 0,
+    distance: 0,
+    price_per_km: 0,
+    duration: 0,
+    price_per_minute: 0,
+    time_ratio: 0,
+    options_sum: 0,
+    submit_price: 0
+}): number {
     try {
         // Заменяем переменные в формуле на их значения
         let evaluatedFormula = formula
@@ -45,7 +55,8 @@ export function calculatePrice(formula: string, params: PriceCalculationParams):
             .replace('duration', params.duration.toString())
             .replace('price_per_minute', params.price_per_minute.toString())
             .replace('time_ratio', params.time_ratio.toString())
-            .replace('options_sum', params.options_sum.toString());
+            .replace('options_sum', params.options_sum.toString())
+            .replace('submit_price', params.submit_price.toString());
 
         // Вычисляем выражение
         const result = eval(evaluatedFormula);
@@ -72,7 +83,8 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
             .replace('duration', `${params.duration}`)
             .replace('price_per_minute', `${params.price_per_minute}`)
             .replace('time_ratio', `${params.time_ratio}`)
-            .replace('options_sum', `${params.options_sum}`);
+            .replace('options_sum', `${params.options_sum}`)
+            .replace('submit_price', `${params.submit_price}`);
 
         // Добавляем пробелы вокруг операторов для лучшей читаемости
         formattedFormula = formattedFormula
@@ -91,12 +103,14 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
 }
 
 async function calculateOrderPrice(
+    ctx: Context,
     from: Location | undefined,
     to: Location | undefined,
     pricingModels: any,
-    isVoting: boolean
+    isVoting: boolean,
+    additionalOptions: number[],
+    submitPrice?: number
 ): Promise<PriceModel> {
-    // If either location is not set, return default values
     if (!from?.latitude || !to?.latitude) {
         console.log('Skipping price calculation due to missing location');
         return {
@@ -106,52 +120,85 @@ async function calculateOrderPrice(
         };
     }
 
-    const priceModel = pricingModels[isVoting ? "voting" : "basic"];
-    const routeInfo = await getRouteInfo(from, to);
-    
-    // Get current time in GMT+1
-    const now = new Date();
-    const gmtPlus1 = new Date(now.getTime() + (60 * 60 * 1000)); // Add 1 hour for GMT+1
-    const currentHour = gmtPlus1.getUTCHours();
-    console.log("CURRENT HOUR: " + currentHour);
-    
-    // Determine if it's day (6-21) or night (21-6)
-    const isDayTime = currentHour >= 6 && currentHour < 21;
-    const timeRatio = isDayTime 
-        ? priceModel.constants.time_ratio.day
-        : priceModel.constants.time_ratio.night;
-    
-    const params = {
-        base_price: priceModel.constants.base_price,
-        distance: routeInfo.distance/1000,
-        price_per_km: priceModel.constants.price_per_km,
-        duration: routeInfo.duration/60,
-        price_per_minute: priceModel.constants.price_per_minute,
-        time_ratio: timeRatio,
-        options_sum: 0
-    };
+    try {
+        const priceModel = pricingModels[isVoting ? "voting" : "basic"];
+        
+        // Добавляем значения по умолчанию на случай ошибки OSRM
+        let distance = 0;
+        let duration = 0;
 
-    const price = calculatePrice(priceModel.model.expression, params);
+        try {
+            const routeInfo = await getRouteInfo(from, to);
+            distance = routeInfo.distance;
+            duration = routeInfo.duration;
+        } catch (error) {
+            console.error('Failed to get route info, using straight-line distance');
+            // Вычисляем примерное расстояние по прямой линии
+            if(from.latitude && to.latitude && from.longitude && to.longitude) {
+                const R = 6371e3; // радиус Земли в метрах
+                const φ1 = from.latitude * Math.PI/180;
+                const φ2 = to.latitude * Math.PI/180;
+                const Δφ = (to.latitude - from.latitude) * Math.PI/180;
+                const Δλ = (to.longitude - from.longitude) * Math.PI/180;
 
-    return {
-        formula: priceModel.model.expression,
-        price: price,
-        options: {
-            ...params,
-            distance: Math.trunc(params.distance),
-            duration: Math.trunc(params.duration)
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+                distance = R * c; // в метрах
+                duration = distance / 8.33; // примерно 30 км/ч в м/с
+            }
         }
-    };
+        
+        const now = new Date();
+        const gmtPlus1 = new Date(now.getTime() + (60 * 60 * 1000));
+        const currentHour = gmtPlus1.getUTCHours();
+        
+        const isDayTime = currentHour >= 6 && currentHour < 21;
+        const timeRatio = isDayTime 
+            ? priceModel.constants.time_ratio.day
+            : priceModel.constants.time_ratio.night;
+        console.log(ctx.constants.data.data.booking_comments);
+        console.log(ctx.constants.data.data.booking_comments['1'].options.price)
+        console.log(additionalOptions.reduce((sum, option) => sum + ctx.constants.data.data.booking_comments[String(option)].options.price, 0))
+        const params = {
+            base_price: priceModel.constants.base_price,
+            distance: distance/1000,
+            price_per_km: priceModel.constants.price_per_km,
+            duration: duration/60,
+            price_per_minute: priceModel.constants.price_per_minute,
+            time_ratio: timeRatio,
+            options_sum: additionalOptions.reduce((sum, option) => sum + ctx.constants.data.data.booking_comments[String(option)].options.price, 0),
+            submit_price: 0 || submitPrice
+        };
+
+        const price = calculatePrice(priceModel.model.expression, params);
+
+        return {
+            formula: priceModel.model.expression,
+            price: price,
+            options: {
+                ...params,
+                distance: Math.trunc(params.distance),
+                duration: Math.trunc(params.duration)
+            }
+        };
+    } catch (error) {
+        console.error('Price calculation error:', error);
+        throw new Error('ROUTE_SERVICE_UNAVAILABLE');
+    }
 }
 
-function formatOrderConfirmation(
+async function formatOrderConfirmation(
     ctx: Context,
     state: OrderMachine,
     priceModel: PriceModel
-): string {
+): Promise<string> {
+    const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
     return formatString(
         ctx.constants.getPrompt(
-            localizationNames.collectionOrderConfirm,
+            user.referrer_u_id === MultiUsersRefCodes[ctx.botID].test ? localizationNames.collectionOrderConfirmTestMode : localizationNames.collectionOrderConfirm,
             ctx.user.settings.lang.api_id,
         ),
         {
@@ -163,10 +210,10 @@ function formatOrderConfirmation(
             when: formatDateHuman(state.data.when ?? null, ctx),
             options: state.data.additionalOptions.length > 0
                 ? state.data.additionalOptions
-                    .map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso])
+                    .map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso] + " ( " + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + " )")
                     .join(", ")
                 : "",
-            price: Math.trunc(priceModel.price).toString() + ' ' + ctx.constants.data.default_currency,
+            price: Math.trunc(priceModel.price).toString() === "0" ? '-' : Math.trunc(priceModel.price) +  ctx.constants.data.default_currency,
             formula: formatPriceFormula(priceModel.formula, priceModel.options)
         }
     );
@@ -353,17 +400,20 @@ export async function OrderHandler(ctx: Context) {
       ) {
           const pricingModels = JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models;
           state.data.priceModel = await calculateOrderPrice(
+              ctx,
               state.data.from,
               state.data.to,
               pricingModels,
-              true
+              true,
+              state.data.additionalOptions ?? [],
+              0
           );
           
           state.data.voting = true;
           state.data.when = null;
           state.state = "collectionOrderConfirm";
           
-          const response = formatOrderConfirmation(ctx, state, state.data.priceModel);
+          const response = await formatOrderConfirmation(ctx, state, state.data.priceModel);
           await ctx.chat.sendMessage(response);
           await ctx.storage.push(ctx.userID, state);
           break;
@@ -397,9 +447,13 @@ export async function OrderHandler(ctx: Context) {
             .toUTCString()
             .replace(/ GMT$/, ""),
       );
-      const calculatingRouteMessage = await ctx.chat.sendMessage(
-          ctx.constants.getPrompt(localizationNames.calculatingRoute, ctx.user.settings.lang.api_id)
-      )
+
+      let calculatingRouteMessage;
+      if(state.data.from.latitude && state.data.to.latitude){
+          calculatingRouteMessage = await ctx.chat.sendMessage(
+              ctx.constants.getPrompt(localizationNames.calculatingRoute, ctx.user.settings.lang.api_id)
+          )
+      }
 
       if (timestamp === undefined) {
         await ctx.chat.sendMessage(
@@ -452,15 +506,23 @@ export async function OrderHandler(ctx: Context) {
       
       const pricingModels = JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models;
       state.data.priceModel = await calculateOrderPrice(
+          ctx,
           state.data.from,
           state.data.to,
           pricingModels,
-          state.data.voting
+          state.data.voting,
+          state.data.additionalOptions ?? [],
+          0
       );
 
-      const response = formatOrderConfirmation(ctx, state, state.data.priceModel);
-      await new Promise(f => setTimeout(f, 1000));
-      await calculatingRouteMessage.edit(response);
+      const response = await formatOrderConfirmation(ctx, state, state.data.priceModel);
+
+      if(calculatingRouteMessage){
+          await new Promise(f => setTimeout(f, 1000));
+          await calculatingRouteMessage.edit(response);
+      } else {
+          await ctx.chat.sendMessage(response);
+      }
       await ctx.storage.push(ctx.userID, state);
       break;
     case "collectionAdditionalOptions":
@@ -569,8 +631,7 @@ export async function OrderHandler(ctx: Context) {
             ". " +
             ctx.constants.data.data.booking_comments[i][
               ctx.user.settings.lang.iso
-            ] +
-            "\n";
+            ] + ' ( ' + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + ' )\n';
         }
       }
       await ctx.chat.sendMessage(text);

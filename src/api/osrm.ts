@@ -93,11 +93,11 @@ export async function getRouteInfo(
     } = {}
 ): Promise<OSRMRoute> {
     const {
-        osrmUrl = DEFAULT_OSRM_URL,
+        osrmUrl = 'http://router.project-osrm.org/route/v1', // Можно заменить на более быстрый сервер
         alternatives = false,
         steps = true,
         geometries = 'polyline',
-        overview = 'simplified',
+        overview = 'false',
         annotations = true,
         continue_straight = true
     } = options;
@@ -118,7 +118,13 @@ export async function getRouteInfo(
     try {
         console.log(`Requesting OSRM route from ${osrmUrl}/driving/${coordinates}?${params}`);
         const response = await axios.get<OSRMResponse>(
-            `${osrmUrl}/driving/${coordinates}?${params}`
+            `${osrmUrl}/driving/${coordinates}?${params}`,
+            {
+                timeout: 10000,
+                headers: {
+                    'Accept-Encoding': 'gzip'
+                }
+            } as const
         );
 
         if (!response || !response.data) {
@@ -142,10 +148,7 @@ export async function getRouteInfo(
         return route;
     } catch (error) {
         console.error('Error getting OSRM route:', error);
-        if (error instanceof Error) {
-            throw new Error(`OSRM API error: ${error.message}`);
-        }
-        throw new Error('Unknown error occurred while getting OSRM route');
+        throw new Error('OSRM_SERVICE_ERROR');
     }
 }
 

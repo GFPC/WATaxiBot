@@ -226,6 +226,7 @@ export const localizationNames = {
   getTimestampError: "wab_getTimestampError".toLowerCase(),
   timestampTimeout: "wab_timestampTimeout".toLowerCase(),
   collectionOrderConfirm: "wab_collectionOrderConfirm".toLowerCase(),
+  collectionOrderConfirmTestMode: "wab_collectionOrderConfirmTestMode".toLowerCase(),
   confirmLower: "wab_confirmLower".toLowerCase(),
   confirmPrompt: "wab_confirmPrompt".toLowerCase(),
   votingActivated: "wab_votingActivated".toLowerCase(),

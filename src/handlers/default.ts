@@ -64,11 +64,15 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
         await ctx.storage.push(ctx.userID, newSettings());
         break;
       case "9":
+          console.log(JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models)
         await ctx.chat.sendMessage(
           ctx.constants.getPrompt(
             localizationNames.help,
             ctx.user.settings.lang.api_id,
-          ),
+          ).replace('%base_price%',String(Math.min(
+              JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models.basic.constants.base_price,
+              JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models.voting.constants.base_price))
+          ).replace('%currency%',ctx.constants.data.default_currency),
         );
         break;
       default:

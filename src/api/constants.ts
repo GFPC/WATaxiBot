@@ -59,7 +59,7 @@ export class Constants {
       car_models: this.data.data.car_models,
     };
   }
-  getPrompt(name: string, lang_id: string): string {
+  getPrompt(name: string, lang_id: string | undefined = this.data.default_lang): string {
     console.log(name, lang_id);
     if (!this.data.data.lang_vls[name]) {
       return "@@@Lang value not found@@@" + name;

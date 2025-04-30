@@ -6,7 +6,7 @@ import { BookingState } from "../api/general";
 import { Storage } from "../storage/storage";
 import { RideMachine } from "../states/machines/rideMachine";
 import { Constants } from "../api/constants";
-import {formatPriceFormula} from "../handlers/order";
+import {calculatePrice, formatPriceFormula} from "../handlers/order";
 
 export class OrderObserverCallback {
   client: Client;
@@ -38,6 +38,7 @@ export class OrderObserverCallback {
     this.logger.info(order.state);
 
     const chat = await this.client.getChatById(this.chatId._serialized);
+    const state: RideMachine = await this.storage.pull(this.userId);
     console.log(newState);
 
     // TODO: Approved -> Processing => водитель отказался от заказа
@@ -65,6 +66,8 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.DriverStarted:
+          state.data.driveStartedTimestamp = Math.floor(Date.now() / 1000);
+          await this.storage.push(this.userId, state);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.driverStarted,
@@ -89,19 +92,22 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.Completed:
-          const state: RideMachine = await this.storage.pull(this.userId);
+          const currentTimestamp = Math.floor(Date.now() / 1000);
+          state.data.pricingModel.options.duration = Math.round((currentTimestamp - (state.data.driveStartedTimestamp ?? Math.floor(Date.now() / 1000))) / 60);
+          state.data.pricingModel.options.submit_price = order.submitPrice;
+          state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ).replace('%price%', String(state.data.pricingModel.price))
+            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price))
                 .replace('%formula%', formatPriceFormula(
                     state.data.pricingModel.formula,
                     state.data.pricingModel.options
                 ))
           );
           state.state = "rate";
-          await this.storage.pull(this.userId);
+          await this.storage.push(this.userId, state);
           break;
         default:
           await chat.sendMessage(
@@ -137,6 +143,8 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.DriverStarted:
+          state.data.driveStartedTimestamp = Math.floor(Date.now() / 1000);
+          await this.storage.push(this.userId, state);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.driverStarted,
@@ -157,19 +165,22 @@ export class OrderObserverCallback {
           break;
 
         case BookingState.Completed:
-          const state: RideMachine = await this.storage.pull(this.userId);
+          const currentTimestamp = Math.floor(Date.now() / 1000);
+          state.data.pricingModel.options.duration = Math.round((currentTimestamp - (state.data.driveStartedTimestamp ?? Math.floor(Date.now() / 1000))) / 60);
+          state.data.pricingModel.options.submit_price = order.submitPrice;
+          state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
           await chat.sendMessage(
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ).replace('%price%', String(state.data.pricingModel.price))
+            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price))
                 .replace('%formula%', formatPriceFormula(
                     state.data.pricingModel.formula,
                     state.data.pricingModel.options
                 )),
           );
           state.state = "rate";
-          await this.storage.pull(this.userId);
+          await this.storage.push(this.userId, state);
           break;
         default:
           await chat.sendMessage(

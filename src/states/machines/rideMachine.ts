@@ -22,6 +22,7 @@ export interface RideMachine extends StateMachine {
     chatModeActive: boolean;
     order: Order;
     pricingModel: PricingModel;
+    driveStartedTimestamp?: number;
   };
 }
 
@@ -44,6 +45,7 @@ export interface VoteMachine extends StateMachine {
   data: {
     order: Order;
     chatModeActive: boolean;
+    driveStartedTimestamp?: number;
   };
 }
 
