@@ -640,7 +640,7 @@ export async function OrderHandler(ctx: Context) {
             ". " +
             ctx.constants.data.data.booking_comments[i][
               ctx.user.settings.lang.iso
-            ] + !ctx.constants.data.data.booking_comments[i].options.priceHidden ? '' : (' ( ' + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + ' )') +'\n';
+            ] + (ctx.constants.data.data.booking_comments[i].options.priceHidden ? '' : (' ( ' + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + ' )')) +'\n';
         }
       }
       await ctx.chat.sendMessage(text);
