@@ -666,6 +666,19 @@ export class Order {
       console.log(`API Error: ${car}`);
     console.log(car.data.data.car, car_u_id);
 
+    let makeAndModel = this.ctx?.constants.getPrompt(
+        localizationNames.carModelNotSpecified,
+        this.ctx?.user.settings.lang.api_id,
+    );
+    if(driver.data.data.user[driver_u_id].u_details?.carMark){
+      makeAndModel = `${this.ctx?.constants.data.data.car_makes[driver.data.data.user[driver_u_id].u_details?.carMark][this.ctx?.user.settings.lang.iso]}`
+      if(driver.data.data.user[driver_u_id].u_details?.carModel){
+        makeAndModel += ` / ${this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][this.ctx?.user.settings.lang.iso]}`
+      } else {
+        makeAndModel += ' / -'
+      }
+    }
+
     const data = {
       name: (
         driver.data.data.user[driver_u_id].u_family +
@@ -681,14 +694,7 @@ export class Order {
             this.ctx?.user.settings.lang.api_id,
           ),
       plate: car.data.data.car[car_u_id].registration_plate,
-      model:
-        this.ctx?.constants.getForDriverAndCar.car_models[
-          car.data.data.car[car_u_id?.toString()].cm_id?.toString()
-        ]?.ru ??
-        this.ctx?.constants.getPrompt(
-          localizationNames.carModelNotSpecified,
-          this.ctx?.user.settings.lang.api_id,
-        ),
+      model: makeAndModel || '',
       phone: driver.data.data.user[driver_u_id].u_phone.startsWith("+")
         ? driver.data.data.user[driver_u_id].u_phone
         : "+" + driver.data.data.user[driver_u_id].u_phone,

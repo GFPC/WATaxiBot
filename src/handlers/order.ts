@@ -75,25 +75,34 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
 }
 export function formatPriceFormula(formula: string, params: PriceCalculationParams): string {
     try {
-        // Заменяем переменные в формуле на их значения
-        let formattedFormula = formula
-            .replace('base_price', `${params.base_price}`)
-            .replace('distance', `${params.distance}`)
-            .replace('price_per_km', `${params.price_per_km}`)
-            .replace('duration', `${params.duration}`)
-            .replace('price_per_minute', `${params.price_per_minute}`)
-            .replace('time_ratio', `${params.time_ratio}`)
-            .replace('options_sum', `${params.options_sum}`)
-            .replace('submit_price', `${params.submit_price}`);
+        // Сначала заменим все переменные на их значения
+        let formattedFormula = formula;
+        const variables = ['base_price', 'distance', 'price_per_km', 'duration', 
+                         'price_per_minute', 'time_ratio', 'options_sum', 'submit_price'];
+        
+        for (const variable of variables) {
+            const value = params[variable];
+            const regex = new RegExp(variable, 'g');
+            formattedFormula = formattedFormula.replace(regex, value.toString());
+        }
+
+        // Если time_ratio равен 1, попробуем упростить выражения вида (X)*1
+        if (params.time_ratio === 1) {
+            // Ищем все выражения в скобках, умноженные на 1
+            formattedFormula = formattedFormula.replace(/\(([^()]+)\)\s*\*\s*1(?!\d)/g, '$1');
+        }
 
         // Добавляем пробелы вокруг операторов для лучшей читаемости
         formattedFormula = formattedFormula
-            .replace(/\*/g, ' * ')
-            .replace(/\+/g, ' + ')
-            .replace(/\-/g, ' - ')
-            .replace(/\//g, ' / ')
-            .replace(/\(/g, '( ')
-            .replace(/\)/g, ' )');
+            .replace(/\*/g, '*')
+            .replace(/\+/g, '+')
+            .replace(/\-/g, '-')
+            .replace(/\//g, '/')
+            .replace(/\(/g, '(')
+            .replace(/\)/g, ')')
+            // Убираем лишние пробелы
+            .replace(/\s+/g, '')
+            .trim();
 
         return formattedFormula;
     } catch (error) {

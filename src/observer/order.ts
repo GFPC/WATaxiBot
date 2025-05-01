@@ -100,7 +100,7 @@ export class OrderObserverCallback {
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price))
+            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price)  + order.ctx?.constants.data.default_currency)
                 .replace('%formula%', formatPriceFormula(
                     state.data.pricingModel.formula,
                     state.data.pricingModel.options
@@ -173,7 +173,7 @@ export class OrderObserverCallback {
             this.constants.getPrompt(
               localizationNames.stateCompleted,
               this.lang,
-            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price))
+            ).replace('%price%', state.data.pricingModel.price == 0 ? '-' : String(state.data.pricingModel.price) + order.ctx?.constants.data.default_currency)
                 .replace('%formula%', formatPriceFormula(
                     state.data.pricingModel.formula,
                     state.data.pricingModel.options
