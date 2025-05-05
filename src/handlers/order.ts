@@ -168,9 +168,6 @@ async function calculateOrderPrice(
         const timeRatio = isDayTime 
             ? priceModel.constants.time_ratio.day
             : priceModel.constants.time_ratio.night;
-        console.log(ctx.constants.data.data.booking_comments);
-        console.log(ctx.constants.data.data.booking_comments['1'].options.price)
-        console.log(additionalOptions.reduce((sum, option) => sum + ctx.constants.data.data.booking_comments[String(option)].options.price, 0))
         const params = {
             base_price: priceModel.constants.base_price,
             distance: distance/1000,
@@ -181,6 +178,7 @@ async function calculateOrderPrice(
             options_sum: additionalOptions.reduce((sum, option) => sum + ctx.constants.data.data.booking_comments[String(option)].options.price, 0),
             submit_price: 0 || submitPrice
         };
+        console.log('PARAMS', params);
 
         const price = calculatePrice(priceModel.model.expression, params);
 
@@ -189,8 +187,7 @@ async function calculateOrderPrice(
             price: price,
             options: {
                 ...params,
-                distance: Math.trunc(params.distance),
-                duration: Math.trunc(params.duration)
+
             }
         };
     } catch (error) {
@@ -549,7 +546,6 @@ export async function OrderHandler(ctx: Context) {
       const msg = ctx.message.body.replace(/\s{2,}/g, " ");
       let successFlag = true;
       for (let i = 0; i < msg.split(" ").length; i++) {
-        console.log(state.data.additionalOptions, i);
         if (
           msg.split(" ")[i] in
           [

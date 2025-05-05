@@ -447,6 +447,7 @@ export class Order {
     data.b_options = {
       submitPrice: 0,
       createdBy: 'whatsapp',
+      pricingModel: pricingModel
     };
     // data.u_id = clientId;
 
@@ -673,9 +674,9 @@ export class Order {
     if(driver.data.data.user[driver_u_id].u_details?.carMark){
       makeAndModel = `${this.ctx?.constants.data.data.car_makes[driver.data.data.user[driver_u_id].u_details?.carMark][this.ctx?.user.settings.lang.iso]}`
       if(driver.data.data.user[driver_u_id].u_details?.carModel){
-        makeAndModel += ` / ${this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][this.ctx?.user.settings.lang.iso]}`
+        makeAndModel += ` ${this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][this.ctx?.user.settings.lang.iso]}`
       } else {
-        makeAndModel += ' / -'
+        makeAndModel += ''
       }
     }
 
@@ -685,9 +686,9 @@ export class Order {
         " " +
         driver.data.data.user[driver_u_id].u_name
       ).trim(),
-      color: car.data.data.car[car_u_id.toString()].color
+      color: driver.data.data.user[driver_u_id].u_details?.carColor
         ? this.ctx?.constants.getForDriverAndCar.car_colors[
-            car.data.data.car[car_u_id.toString()].color.toString()
+              driver.data.data.user[driver_u_id].u_details?.carColor.toString()
           ].ru
         : this.ctx?.constants.getPrompt(
             localizationNames.carColorNotSpecified,
