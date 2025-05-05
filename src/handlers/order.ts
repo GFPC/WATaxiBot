@@ -81,7 +81,8 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
                          'price_per_minute', 'time_ratio', 'options_sum', 'submit_price'];
         
         for (const variable of variables) {
-            const value = params[variable];
+            let value = params[variable];
+            value = Math.trunc(value);
             const regex = new RegExp(variable, 'g');
             formattedFormula = formattedFormula.replace(regex, value.toString());
         }
