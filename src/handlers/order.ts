@@ -49,14 +49,14 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
     try {
         // Заменяем переменные в формуле на их значения
         let evaluatedFormula = formula
-            .replace('base_price', params.base_price.toString())
-            .replace('distance', params.distance.toString())
-            .replace('price_per_km', params.price_per_km.toString())
-            .replace('duration', params.duration.toString())
-            .replace('price_per_minute', params.price_per_minute.toString())
-            .replace('time_ratio', params.time_ratio.toString())
-            .replace('options_sum', params.options_sum.toString())
-            .replace('submit_price', params.submit_price.toString());
+            .replace('base_price', (params.base_price || 0).toString())
+            .replace('distance', (params.distance || 0).toString())
+            .replace('price_per_km', (params.price_per_km || 0).toString())
+            .replace('duration', (params.duration || 0).toString())
+            .replace('price_per_minute', (params.price_per_minute || 0).toString())
+            .replace('time_ratio', (params.time_ratio || 0).toString())
+            .replace('options_sum', (params.options_sum || 0).toString())
+            .replace('submit_price', (params.submit_price || 0).toString());
 
         // Вычисляем выражение
         const result = eval(evaluatedFormula);
