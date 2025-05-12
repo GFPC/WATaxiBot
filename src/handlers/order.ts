@@ -69,8 +69,8 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
         // Округляем до 2 знаков после запятой
         return Math.trunc(Math.round(result * 100) / 100);
     } catch (error) {
-        console.error('Error calculating price:', error);
-        throw new Error('Failed to calculate price: ' + (error instanceof Error ? error.message + 'STACK: ' + JSON.stringify(params): 'Unknown error'));
+        console.error('Failed to calculate price: ' + (error instanceof Error ? error.message + 'STACK: ' + JSON.stringify(params): 'Unknown error'));
+        return 0
     }
 }
 export function formatPriceFormula(formula: string, params: PriceCalculationParams): string {
