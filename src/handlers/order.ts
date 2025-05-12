@@ -18,6 +18,7 @@ import { newRide, newVote } from "../states/machines/rideMachine";
 import {getRouteInfo} from "../api/osrm";
 import { Location } from "../states/types";
 import {MultiUsersRefCodes} from "../ServiceMap";
+import {options} from "axios";
 
 interface PriceCalculationParams {
 /*    base_price: number;
@@ -70,7 +71,7 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
         return Math.trunc(Math.round(result * 100) / 100);
     } catch (error) {
         console.error('Error calculating price:', error);
-        throw new Error('Failed to calculate price: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        throw new Error('Failed to calculate price: ' + (error instanceof Error ? error.message + 'STACK: ' + JSON.stringify(options): 'Unknown error'));
     }
 }
 export function formatPriceFormula(formula: string, params: PriceCalculationParams): string {
