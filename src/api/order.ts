@@ -83,6 +83,7 @@ export class Order {
   ctx: Context | undefined;
   submitPrice: number = 0;
   pricingModel: PricingModel;
+  isDriveStartedTimestampSpecified: boolean = false;
 
   constructor(
     clientTg: string,
@@ -621,6 +622,30 @@ export class Order {
 
     if (response.status != 200 || response.data.status != "success")
       throw `API Error: ${response.data}`;
+  }
+
+  async setDriveStartedTimestamp() {
+    if (this.id === undefined) throw "The order has not yet been created";
+    const form = createForm({
+      data: JSON.stringify({
+        b_options: [["=", ["driveStartedTimestamp"], Math.floor(Date.now() / 1000)]],
+
+      }),
+      u_a_phone: (this.ctx?.userID || "").split("@")[0],
+      u_a_role: "1",
+      action: "edit"
+    }, this.adminAuth);
+    const response = await axios.post(
+      `${this.ctx?.baseURL}drive/get/${this.id}`,
+      form,
+      {
+        headers: postHeaders,
+      },
+    );
+    console.log('setDriveStartedTimestamp response:', response.data);
+    if (response.status != 200 || response.data.status != "success")
+      throw `API Error: ${response.data}`;
+    this.isDriveStartedTimestampSpecified = true;
   }
 
   async getDriverAndCar(): Promise<{

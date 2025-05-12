@@ -66,6 +66,9 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.DriverStarted:
+          if(!order.isDriveStartedTimestampSpecified){
+            await order.setDriveStartedTimestamp()
+          }
           state.data.driveStartedTimestamp = Math.floor(Date.now() / 1000);
           await this.storage.push(this.userId, state);
           await chat.sendMessage(
@@ -143,6 +146,9 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.DriverStarted:
+          if(!order.isDriveStartedTimestampSpecified){
+            await order.setDriveStartedTimestamp()
+          }
           state.data.driveStartedTimestamp = Math.floor(Date.now() / 1000);
           await this.storage.push(this.userId, state);
           await chat.sendMessage(
