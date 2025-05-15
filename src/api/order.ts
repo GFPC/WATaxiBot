@@ -413,6 +413,7 @@ export class Order {
     }
     this.ctx = ctx;
     this.pricingModel = pricingModel;
+    console.log('APIORDER new priceModel', pricingModel);
 
     // Переменная для кода водителя(нужно для режима voting)
     var b_driver_code = undefined;
@@ -730,4 +731,5 @@ export class Order {
     }
     return data;
   }
+
 }

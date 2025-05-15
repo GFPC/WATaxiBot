@@ -46,6 +46,7 @@ export interface VoteMachine extends StateMachine {
     order: Order;
     chatModeActive: boolean;
     driveStartedTimestamp?: number;
+    pricingModel: PricingModel;
   };
 }
 
@@ -56,6 +57,7 @@ export function newVote(order: Order): VoteMachine {
     data: {
       order: order,
       chatModeActive: false,
+      pricingModel: order.pricingModel
     },
   };
 }

@@ -7,6 +7,7 @@ import { Storage } from "../storage/storage";
 import { RideMachine } from "../states/machines/rideMachine";
 import { Constants } from "../api/constants";
 import {calculatePrice, formatPriceFormula} from "../handlers/order";
+import moment from "moment";
 
 export class OrderObserverCallback {
   client: Client;
@@ -40,6 +41,7 @@ export class OrderObserverCallback {
     const chat = await this.client.getChatById(this.chatId._serialized);
     const state: RideMachine = await this.storage.pull(this.userId);
     console.log(newState);
+    console.log('Observer pricing model: ' + state.data.pricingModel);
 
     // TODO: Approved -> Processing => водитель отказался от заказа
 
@@ -50,11 +52,15 @@ export class OrderObserverCallback {
         case BookingState.Processing:
           break;
         case BookingState.Approved:
+          console.log("Approved");
+          var driver_and_car = await order.getDriverAndCar();
           await chat.sendMessage(
-            this.constants.getPrompt(
-              localizationNames.stateApproved,
-              this.lang,
-            ),
+              this.constants
+                  .getPrompt(localizationNames.stateApproved, this.lang)
+                  .replace("%driver%", driver_and_car.name)
+                  .replace("%color%", driver_and_car.color)
+                  .replace("%model%", driver_and_car.model)
+                  .replace("%plate%", driver_and_car.plate),
           );
           break;
         case BookingState.DriverArrived:
@@ -95,8 +101,10 @@ export class OrderObserverCallback {
           );
           break;
         case BookingState.Completed:
-          const currentTimestamp = Math.floor(Date.now() / 1000);
-          state.data.pricingModel.options.duration = Math.round((currentTimestamp - (state.data.driveStartedTimestamp ?? Math.floor(Date.now() / 1000))) / 60);
+          if(!order.id) return
+          console.log('COMPLETED VOTING DRIVE STATE', state.data);
+          const orderOnApi = (await order.getData()).data.booking[order.id];
+          state.data.pricingModel.options.duration = moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes');
           state.data.pricingModel.options.submit_price = order.submitPrice;
           state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
           await chat.sendMessage(
@@ -168,8 +176,9 @@ export class OrderObserverCallback {
           break;
 
         case BookingState.Completed:
-          const currentTimestamp = Math.floor(Date.now() / 1000);
-          state.data.pricingModel.options.duration = Math.round((currentTimestamp - (state.data.driveStartedTimestamp ?? Math.floor(Date.now() / 1000))) / 60);
+          if(!order.id) return
+          const orderOnApi = (await order.getData()).data.booking[order.id];
+          state.data.pricingModel.options.duration = moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes');
           state.data.pricingModel.options.submit_price = order.submitPrice;
           state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
           await chat.sendMessage(
