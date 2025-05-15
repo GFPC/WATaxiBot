@@ -329,10 +329,10 @@ export class Order {
     }
   }
 
-  async getData(): Promise<any> {
+  async getData( skipCompleted = false): Promise<any> {
     if (this.id === undefined) throw "The order has not yet been created";
     if (this.isCanceled) throw "The trip was canceled";
-    if (this.isComplete) throw "The trip was completed";
+    if (this.isComplete && !skipCompleted) throw "The trip was completed";
 
     const form = createForm({}, this.adminAuth);
     try {

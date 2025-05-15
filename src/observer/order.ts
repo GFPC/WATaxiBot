@@ -103,7 +103,7 @@ export class OrderObserverCallback {
         case BookingState.Completed:
           if(!order.id) return
           console.log('COMPLETED VOTING DRIVE STATE', state.data);
-          const orderOnApi = (await order.getData()).data.booking[order.id];
+          const orderOnApi = (await order.getData(true)).data.booking[order.id];
           state.data.pricingModel.options.duration = moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes');
           state.data.pricingModel.options.submit_price = order.submitPrice;
           state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
@@ -177,7 +177,7 @@ export class OrderObserverCallback {
 
         case BookingState.Completed:
           if(!order.id) return
-          const orderOnApi = (await order.getData()).data.booking[order.id];
+          const orderOnApi = (await order.getData(true)).data.booking[order.id];
           state.data.pricingModel.options.duration = moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes');
           state.data.pricingModel.options.submit_price = order.submitPrice;
           state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
