@@ -178,6 +178,11 @@ export class OrderObserverCallback {
         case BookingState.Completed:
           if(!order.id) return
           const orderOnApi = (await order.getData(true)).data.booking[order.id];
+          console.log('b_completed: ', orderOnApi.b_completed, 'b_start_datetime: ', orderOnApi.b_start_datetime);
+          await chat.sendMessage('TEST POINT\n' +
+          'b_start: ' + orderOnApi.b_start_datetime + '\n' +
+          'b_completed: ' + orderOnApi.b_completed + '\n' +
+          'diff: ' + moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes') + '\n')
           state.data.pricingModel.options.duration = moment(orderOnApi.b_completed).diff(moment(orderOnApi.b_start_datetime), 'minutes');
           state.data.pricingModel.options.submit_price = order.submitPrice;
           state.data.pricingModel.price = calculatePrice(state.data.pricingModel.formula, state.data.pricingModel.options);
