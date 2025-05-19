@@ -108,7 +108,10 @@ export class Order {
     this.submitPrice += price;
     console.log("API extendSubmitPrice:", this.submitPrice,"Current submitPrice:", this.submitPrice);
     const data = {
-      b_options: [["=", ["submitPrice"], this.submitPrice]],
+      b_options: [
+          ["=", ["submitPrice"], this.submitPrice],
+          ["=",["pricingModel","options","submit_price"],this.submitPrice]
+      ],
     };
     const form = createForm(
       {

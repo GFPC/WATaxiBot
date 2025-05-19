@@ -188,7 +188,6 @@ async function calculateOrderPrice(
             price: price,
             options: {
                 ...params,
-
             }
         };
     } catch (error) {

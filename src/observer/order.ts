@@ -41,7 +41,7 @@ export class OrderObserverCallback {
     const chat = await this.client.getChatById(this.chatId._serialized);
     const state: RideMachine = await this.storage.pull(this.userId);
     console.log(newState);
-    console.log('Observer pricing model: ' + state.data.pricingModel);
+    console.log('Observer pricing model: ',JSON.stringify(state.data.pricingModel));
 
     // TODO: Approved -> Processing => водитель отказался от заказа
 
