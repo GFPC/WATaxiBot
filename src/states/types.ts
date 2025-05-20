@@ -14,4 +14,5 @@ export type PricingModel = {
   formula: string;
   price: number;
   options: { [key: string]: number };
+  calculationType?: string;
 };

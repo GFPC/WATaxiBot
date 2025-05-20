@@ -34,6 +34,7 @@ interface PriceModel {
     formula: string;
     price: number;
     options: PriceCalculationParams;
+    calculationType?: string;
 }
 
 export function calculatePrice(formula: string, params: PriceCalculationParams = {
@@ -73,16 +74,21 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
         return 0
     }
 }
-export function formatPriceFormula(formula: string, params: PriceCalculationParams): string {
+export function formatPriceFormula(formula: string, params: PriceCalculationParams,calculationType: string = 'full'): string {
     try {
         // Сначала заменим все переменные на их значения
         let formattedFormula = formula;
         const variables = ['base_price', 'distance', 'price_per_km', 'duration', 
                          'price_per_minute', 'time_ratio', 'options_sum', 'submit_price'];
+        const incompleteteVariables = ['distance', 'duration'];
         
         for (const variable of variables) {
             let value = params[variable];
-            value = Math.trunc(value);
+            if(calculationType === 'incomplete' && incompleteteVariables.includes(variable)) {
+                value = '?'
+            } else {
+                value = Math.trunc(value);
+            }
             const regex = new RegExp(variable, 'g');
             formattedFormula = formattedFormula.replace(regex, value.toString());
         }
@@ -112,53 +118,60 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
     }
 }
 
-async function calculateOrderPrice(
+export async function calculateOrderPrice(
     ctx: Context,
-    from: Location | undefined,
-    to: Location | undefined,
+    from: Location,
+    to: Location,
     pricingModels: any,
     isVoting: boolean,
     additionalOptions: number[],
     submitPrice?: number
 ): Promise<PriceModel> {
-    if (!from?.latitude || !to?.latitude) {
+    /*if (!from?.latitude || !to?.latitude) {
         console.log('Skipping price calculation due to missing location');
         return {
             formula: '-',
             price: 0,
             options: {}
         };
-    }
+    }*/
+    let calculationType: string = 'incomplete';
 
     try {
         const priceModel = pricingModels[isVoting ? "voting" : "basic"];
         
         // Добавляем значения по умолчанию на случай ошибки OSRM
-        let distance = 0;
-        let duration = 0;
+        let distance = null;
+        let duration = null;
 
-        try {
-            const routeInfo = await getRouteInfo(from, to);
-            distance = routeInfo.distance;
-            duration = routeInfo.duration;
-        } catch (error) {
-            console.error('Failed to get route info, using straight-line distance');
-            // Вычисляем примерное расстояние по прямой линии
-            if(from.latitude && to.latitude && from.longitude && to.longitude) {
-                const R = 6371e3; // радиус Земли в метрах
-                const φ1 = from.latitude * Math.PI/180;
-                const φ2 = to.latitude * Math.PI/180;
-                const Δφ = (to.latitude - from.latitude) * Math.PI/180;
-                const Δλ = (to.longitude - from.longitude) * Math.PI/180;
+        if(from.latitude && from.longitude && to.latitude && to.longitude) {
+            try {
+                const routeInfo = await getRouteInfo(from, to);
+                distance = routeInfo.distance;
+                duration = routeInfo.duration;
+                calculationType = 'full';
+            } catch (error) {
+                console.error('Failed to get route info, using straight-line distance');
+                // Вычисляем примерное расстояние по прямой линии
+                if(from.latitude && to.latitude && from.longitude && to.longitude) {
+                    const R = 6371e3; // радиус Земли в метрах
+                    const φ1 = from.latitude * Math.PI/180;
+                    const φ2 = to.latitude * Math.PI/180;
+                    const Δφ = (to.latitude - from.latitude) * Math.PI/180;
+                    const Δλ = (to.longitude - from.longitude) * Math.PI/180;
 
-                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                        Math.cos(φ1) * Math.cos(φ2) *
+                        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-                distance = R * c; // в метрах
-                duration = distance / 8.33; // примерно 30 км/ч в м/с
+                    distance = R * c; // в метрах
+                    duration = distance / 8.33; // примерно 30 км/ч в м/с
+                }
             }
+        } else {
+            distance = 0;
+            duration = 0;
         }
         
         const now = new Date();
@@ -171,9 +184,9 @@ async function calculateOrderPrice(
             : priceModel.constants.time_ratio.night;
         const params = {
             base_price: priceModel.constants.base_price,
-            distance: distance/1000,
+            distance: (distance || 0)/1000,
             price_per_km: priceModel.constants.price_per_km,
-            duration: duration/60,
+            duration: (duration || 0)/60,
             price_per_minute: priceModel.constants.price_per_minute,
             time_ratio: timeRatio,
             options_sum: additionalOptions.reduce((sum, option) => sum + ctx.constants.data.data.booking_comments[String(option)].options.price, 0),
@@ -188,7 +201,8 @@ async function calculateOrderPrice(
             price: price,
             options: {
                 ...params,
-            }
+            },
+            calculationType: calculationType
         };
     } catch (error) {
         console.error('Price calculation error:', error);
