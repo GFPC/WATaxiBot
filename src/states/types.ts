@@ -12,7 +12,7 @@ export interface Location {
 }
 export type PricingModel = {
   formula: string;
-  price: number;
+  price: string;
   options: { [key: string]: number };
   calculationType?: string;
 };

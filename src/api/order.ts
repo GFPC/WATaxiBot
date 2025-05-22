@@ -99,7 +99,7 @@ export class Order {
     this.isVoting = isVoting;
     this.pricingModel = {
       formula: "",
-      price: 0,
+      price: '0',
       options: {},
     }
   }

@@ -32,7 +32,7 @@ interface PriceCalculationParams {
 
 interface PriceModel {
     formula: string;
-    price: number;
+    price: string;
     options: PriceCalculationParams;
     calculationType?: string;
 }
@@ -46,7 +46,7 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
     time_ratio: 0,
     options_sum: 0,
     submit_price: 0
-}): number {
+}, calculationType: string = 'full'): string {
     try {
         // Заменяем переменные в формуле на их значения
         let evaluatedFormula = formula
@@ -68,13 +68,13 @@ export function calculatePrice(formula: string, params: PriceCalculationParams =
         }
 
         // Округляем до 2 знаков после запятой
-        return Math.trunc(result);
+        return Math.trunc(result).toString();
     } catch (error) {
         console.error('Failed to calculate price: ' + (error instanceof Error ? error.message + 'STACK: ' + JSON.stringify(params): 'Unknown error'));
-        return 0
+        return '0'
     }
 }
-export function formatPriceFormula(formula: string, params: PriceCalculationParams,calculationType: string = 'full'): string {
+export function formatPriceFormula(formula: string, params: PriceCalculationParams, calculationType: string = 'full'): string {
     try {
         // Сначала заменим все переменные на их значения
         let formattedFormula = formula;
@@ -84,7 +84,9 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
         
         for (const variable of variables) {
             let value = params[variable];
+            console.log('var: ' + variable + ', val: ' + value, incompleteteVariables.includes(variable));
             if(calculationType === 'incomplete' && incompleteteVariables.includes(variable)) {
+                console.log('filling incomplete variable: ' + variable);
                 value = '?'
             } else {
                 value = Math.trunc(value);
@@ -92,6 +94,7 @@ export function formatPriceFormula(formula: string, params: PriceCalculationPara
             const regex = new RegExp(variable, 'g');
             formattedFormula = formattedFormula.replace(regex, value.toString());
         }
+        console.log('Formatted formula: ' + formattedFormula);
 
         // Если time_ratio равен 1, попробуем упростить выражения вида (X)*1
         if (params.time_ratio === 1) {
@@ -233,8 +236,8 @@ async function formatOrderConfirmation(
                     .map(i => ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso] + " ( " + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + " )")
                     .join(", ")
                 : "",
-            price: Math.trunc(priceModel.price).toString() === "0" ? '-' : Math.trunc(priceModel.price) +  ctx.constants.data.default_currency,
-            formula: formatPriceFormula(priceModel.formula, priceModel.options)
+            price: priceModel.price === "0" ? '-' : priceModel.price + (priceModel.calculationType === "incomplete" ? " + ?" : "") +  ctx.constants.data.default_currency,
+            formula: formatPriceFormula(priceModel.formula, priceModel.options, !!state.data.from.latitude && !!state.data.from.longitude && !!state.data.to.latitude && !!state.data.to.longitude ? 'full': 'incomplete'),
         }
     );
 }

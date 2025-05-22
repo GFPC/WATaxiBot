@@ -40,7 +40,7 @@ export function newEmptyOrder(): OrderMachine {
       voting: false,
       priceModel: {
         formula: "",
-        price: 0,
+        price: '0',
         options: {
           dd:0
         }
@@ -74,7 +74,7 @@ export function newVoting(order: OrderMachine, startAt?: Date): VotingMachine {
       to: {},
       priceModel: {
         formula: "",
-        price: 0,
+        price: '0',
         options: {}
       }
     },
