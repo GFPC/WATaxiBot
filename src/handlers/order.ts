@@ -314,11 +314,11 @@ async function formatOrderConfirmation(
             price:
                 priceModel.price === "0"
                     ? "-"
-                    : priceModel.price +
+                    : makeCurrencySymbol(priceModel.price +
                       (priceModel.calculationType === "incomplete"
                           ? " + ?"
-                          : "") +
-                      ctx.constants.data.default_currency,
+                          : "") ,
+                      ctx.constants.data.default_currency),
             formula: formatPriceFormula(
                 priceModel.formula,
                 priceModel.options,
@@ -329,11 +329,18 @@ async function formatOrderConfirmation(
                     ? "full"
                     : "incomplete",
             ),
-            class: state.data.carClass? ctx.constants.data.data.car_classes[state.data.carClass][ctx.user.settings.lang.iso] : ctx.constants.getPrompt('wab_anyClass', ctx.user.settings.lang.api_id),
+            class: state.data.carClass? ctx.constants.data.data.car_classes[state.data.carClass][ctx.user.settings.lang.iso] : ctx.constants.getPrompt(localizationNames.anyClass, ctx.user.settings.lang.api_id),
         },
     );
 }
 
+function makeCurrencySymbol(price: string, currency: string): string {
+    if(currency==="EUR"){
+        return "€" + price
+    } else {
+        return price + " " + currency
+    }
+}
 export async function OrderHandler(ctx: Context) {
     let state: OrderMachine | null = await ctx.storage.pull(ctx.userID);
 
@@ -767,7 +774,7 @@ export async function OrderHandler(ctx: Context) {
                     text +=
                         i.toString() +
                         ". " + ctx.constants.data.data.booking_comments[i][ctx.user.settings.lang.iso] +
-                        ((ctx.configName=="children" || ctx.constants.data.data.booking_comments[i].options.priceHidden) ? "" : " ( " + ctx.constants.data.data.booking_comments[i].options.price + ctx.constants.data.default_currency + " )") + "\n";
+                        ((ctx.configName=="children" || ctx.constants.data.data.booking_comments[i].options.priceHidden) ? "" : " ( " + makeCurrencySymbol(ctx.constants.data.data.booking_comments[i].options.price, ctx.constants.data.default_currency )+ " )") + "\n";
                 }
             }
             await ctx.chat.sendMessage(text);

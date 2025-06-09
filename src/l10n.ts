@@ -321,6 +321,7 @@ export const localizationNames = {
     accountRecovery: "wab_accountRecovery".toLowerCase(),
     askShowCarClass: "wab_askShowCarClass".toLowerCase(),
     selectCarClass: "wab_selectCarClass".toLowerCase(),
+    anyClass: "wab_anyClass".toLowerCase(),
 };
 function exportToJsonFile() {
     const file = "l10n.json";

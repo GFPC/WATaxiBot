@@ -364,13 +364,6 @@ Object.keys(API_CONSTANTS).forEach(async (key) => {
     console.log(`Загрузка констант для ${key}...`);
     await API_CONSTANTS[key].getData(urlManager[key]);
     console.log(`Константы для ${key} загружены`);
-    console.log(
-        JSON.stringify(
-            JSON.parse(
-                API_CONSTANTS[key].data.data.site_constants.pricingModels.value,
-            ),
-        ),
-    );
 });
 
 // Создаем N ботов
