@@ -278,7 +278,7 @@ async function formatOrderConfirmation(
     state: OrderMachine,
     priceModel: PriceModel,
 ): Promise<string> {
-    const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
+    const user = await ctx.usersList.pull(ctx.userID);
     return formatString(
         ctx.constants.getPrompt(
             user.referrer_u_id === MultiUsersRefCodes[ctx.botID].test
@@ -473,7 +473,6 @@ export async function OrderHandler(ctx: Context) {
                 const newState = newVote(order);
 
                 await ctx.storage.push(ctx.userID, newState);
-                break;
             }
 
             const order = new Order(
@@ -544,13 +543,9 @@ export async function OrderHandler(ctx: Context) {
                 state.data.voting = true;
                 state.data.when = null;
                 state.state = "collectionOrderConfirm";
-
-                const response = await formatOrderConfirmation(
-                    ctx,
-                    state,
-                    state.data.priceModel,
-                );
-                await ctx.chat.sendMessage(response);
+                const response = await formatOrderConfirmation(ctx, state, state.data.priceModel);
+                state.data.nextMessageForAI = response;
+                state.data.nextStateForAI = "collectionOrderConfirm";
                 await ctx.storage.push(ctx.userID, state);
                 break;
             }
@@ -642,38 +637,19 @@ export async function OrderHandler(ctx: Context) {
 
             state.data.when = timestamp;
             state.state = "collectionOrderConfirm";
-
-            const pricingModels = JSON.parse(
-                ctx.constants.data.data.site_constants.pricingModels.value,
-            ).pricing_models;
-            state.data.priceModel = await calculateOrderPrice(
-                ctx,
-                state.data.from,
-                state.data.to,
-                pricingModels,
-                state.data.voting,
-                state.data.additionalOptions ?? [],
-                0,
-                state.data.carClass
-            );
-
-            const response = await formatOrderConfirmation(
-                ctx,
-                state,
-                state.data.priceModel,
-            );
-
-            if (calculatingRouteMessage) {
-                await new Promise((f) => setTimeout(f, 1000));
-                await calculatingRouteMessage.edit(response);
-            } else {
-                await ctx.chat.sendMessage(response);
-            }
+            const response = await formatOrderConfirmation(ctx, state, state.data.priceModel);
+            state.data.nextMessageForAI = response;
+            state.data.nextStateForAI = "collectionOrderConfirm";
             await ctx.storage.push(ctx.userID, state);
             break;
         case "collectionAdditionalOptions":
             if (ctx.message.body === "00") {
                 state.state = "collectionWhen";
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.collectionWhen,
+                    ctx.user.settings.lang.api_id,
+                );
+                state.data.nextStateForAI = "collectionWhen";
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.collectionWhen,
@@ -727,11 +703,21 @@ export async function OrderHandler(ctx: Context) {
                     ),
                 );
                 state.state = "collectionAdditionalOptions";
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.collectionAdditionalOptionsError,
+                    ctx.user.settings.lang.api_id,
+                );
+                state.data.nextStateForAI = "collectionAdditionalOptions";
                 state.data.additionalOptions = [];
                 await ctx.storage.push(ctx.userID, state);
                 break;
             }
             state.state = "collectionWhen";
+            state.data.nextMessageForAI = ctx.constants.getPrompt(
+                localizationNames.collectionWhen,
+                ctx.user.settings.lang.api_id,
+            );
+            state.data.nextStateForAI = "collectionWhen";
             await ctx.chat.sendMessage(
                 ctx.constants.getPrompt(
                     localizationNames.collectionWhen,
@@ -742,16 +728,21 @@ export async function OrderHandler(ctx: Context) {
         case "collectionShowAdditionalOptions":
             if (ctx.message.body === "1") {
                 state.state = "collectionAdditionalOptions";
+                state.data.nextStateForAI = "collectionAdditionalOptions";
                 await ctx.storage.push(ctx.userID, state);
             } else if (ctx.message.body === "2") {
                 state.state = "collectionWhen";
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.collectionWhen,
+                    ctx.user.settings.lang.api_id,
+                );
+                state.data.nextStateForAI = "collectionWhen";
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.collectionWhen,
                         ctx.user.settings.lang.api_id,
                     ),
                 );
-                await ctx.storage.push(ctx.userID, state);
                 break;
             } else {
                 await ctx.chat.sendMessage(
@@ -782,6 +773,11 @@ export async function OrderHandler(ctx: Context) {
         case "collectionCarClass":
             if (ctx.message.body === "00") {
                 state.state = "collectionShowAdditionalOptions";
+                state.data.nextStateForAI = "collectionShowAdditionalOptions";
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.needAdditionalOptionsQuestion,
+                    ctx.user.settings.lang.api_id,
+                );
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.needAdditionalOptionsQuestion,
@@ -802,6 +798,11 @@ export async function OrderHandler(ctx: Context) {
             }
             state.data.carClass = ctx.message.body;
             state.state = "collectionShowAdditionalOptions";
+            state.data.nextMessageForAI = ctx.constants.getPrompt(
+                localizationNames.needAdditionalOptionsQuestion,
+                ctx.user.settings.lang.api_id,
+            );
+            state.data.nextStateForAI = "collectionShowAdditionalOptions";
             await ctx.chat.sendMessage(
                 ctx.constants.getPrompt(
                     localizationNames.needAdditionalOptionsQuestion,
@@ -817,10 +818,13 @@ export async function OrderHandler(ctx: Context) {
                     text += i.replace(' ','') + '. ' + car_classes[i][ctx.user.settings.lang.iso]+'\n';
                 }
                 state.state = "collectionCarClass";
+                state.data.nextStateForAI = "collectionCarClass";
+                state.data.nextMessageForAI = text;
                 await ctx.storage.push(ctx.userID, state);
                 await ctx.chat.sendMessage(text);
             } else if (ctx.message.body === "2") {
                 state.state = "collectionShowAdditionalOptions";
+                state.data.nextStateForAI = "collectionShowAdditionalOptions";
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.needAdditionalOptionsQuestion,
@@ -857,6 +861,10 @@ export async function OrderHandler(ctx: Context) {
                 break;
             }
             if (peopleCount > constants.maxPeopleInOrder) {
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.tooManyPeople,
+                    ctx.user.settings.lang.api_id,
+                );
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.tooManyPeople,
@@ -866,6 +874,10 @@ export async function OrderHandler(ctx: Context) {
                 break;
             }
             if (peopleCount < constants.minPeopleInOrder) {
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.tooFewPeople,
+                    ctx.user.settings.lang.api_id,
+                );
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.tooFewPeople,
@@ -878,12 +890,22 @@ export async function OrderHandler(ctx: Context) {
 
             if (ctx.configName === "children") {
                 state.state = "collectionShowCarClass";
+                state.data.nextMessageForAI = ctx.constants.getPrompt(
+                    localizationNames.askShowCarClass,
+                    ctx.user.settings.lang.api_id,
+                );
+                state.data.nextStateForAI = "collectionShowCarClass";
                 await ctx.storage.push(ctx.userID, state);
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.askShowCarClass, ctx.user.settings.lang.api_id));
                 break;
             }
 
             state.state = "collectionShowAdditionalOptions";
+            state.data.nextMessageForAI = ctx.constants.getPrompt(
+                localizationNames.needAdditionalOptionsQuestion,
+                ctx.user.settings.lang.api_id,
+            );
+            state.data.nextStateForAI = "collectionShowAdditionalOptions";
             await ctx.storage.push(ctx.userID, state);
 
             await ctx.chat.sendMessage(
@@ -907,6 +929,11 @@ export async function OrderHandler(ctx: Context) {
                 if (typeof location != "string") {
                     state.data.to = location;
                     state.state = "collectionHowManyPeople";
+                    state.data.nextStateForAI = "collectionHowManyPeople";
+                    state.data.nextMessageForAI = ctx.constants.getPrompt(
+                        localizationNames.collectionPeopleCount,
+                        ctx.user.settings.lang.api_id,
+                    );
                     await ctx.storage.push(ctx.userID, state);
                     await ctx.chat.sendMessage(
                         ctx.constants.getPrompt(
@@ -948,6 +975,11 @@ export async function OrderHandler(ctx: Context) {
                 if (typeof location != "string") {
                     state.data.from = location;
                     state.state = "collectionTo";
+                    state.data.nextStateForAI = "collectionTo";
+                    state.data.nextMessageForAI = ctx.constants.getPrompt(
+                        localizationNames.collectionTo,
+                        ctx.user.settings.lang.api_id,
+                    );
                     await ctx.storage.push(ctx.userID, state);
                     await ctx.chat.sendMessage(
                         ctx.constants.getPrompt(

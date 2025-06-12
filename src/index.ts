@@ -30,6 +30,8 @@ import { ConfigsMap, ServiceMap } from "./ServiceMap";
 import { URLManager } from "./managers/URLManager";
 import * as url from "url";
 import { ConfigManager } from "./managers/ConfigManager";
+import {AIStorage} from "./storage/AIStorage";
+import {AIHandler} from "./handlers/ai";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -107,6 +109,7 @@ export interface Context {
     constants: Constants;
     details?: any;
     usersList: UsersStorage;
+    aiStorage: AIStorage;
     user: {
         settings: UserSettings;
     };
@@ -116,34 +119,27 @@ export interface Context {
 }
 
 export type Handler = (ctx: Context) => Promise<void>;
-
 async function router(
     ctx: Context,
     userList: UsersStorage,
+    aiStorage: AIStorage,
     adminAuth: AuthData,
 ): Promise<Handler> {
     try {
-        const user = await userList.pull(ctx.userID.split("@")[0]);
-        console.log(
-            "USER",
-            user,
-            ctx.userID,
-            "State",
-            ctx.storage.pull(ctx.userID),
-        );
+        const user = await userList.pull(ctx.userID);
+        console.log("->Router. State=", (await ctx.storage.pull(ctx.userID))?.id + "." + (await ctx.storage.pull(ctx.userID))?.state + ". User=", user, ' Message=', ctx.message.body);
 
         if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
-            console.log("AAAA", adminAuth);
             const userData = await fetchUserData(ctx, adminAuth);
-            console.log("USER DATA", userData);
+            //console.log("USER DATA", userData);
             if (!userData) {
                 return RegisterHandler;
             }
-            await userList.push(ctx.userID.split("@")[0], userData);
+            await userList.push(ctx.userID, userData);
             ctx.api_u_id = Object.keys(userData)[0];
         }
 
-        ctx.user = await userList.pull(ctx.userID.split("@")[0]);
+        ctx.user = await userList.pull(ctx.userID);
         const state: StateMachine | null = await ctx.storage.pull(ctx.userID);
 
         if (
@@ -153,6 +149,11 @@ async function router(
                 state?.state === "collectionTo")
         ) {
             return HelpHandler;
+        } else if (
+            (ctx.message.body === "9" &&
+            (state?.id === "order")) || state?.state === "aiQuestion" || state?.state === "aiAnswer"
+        ) {
+            return AIHandler;
         }
 
         const handlerMap: Record<string, Handler> = {
@@ -180,7 +181,7 @@ async function fetchUserData(
             {
                 token: adminAuth.token,
                 u_hash: adminAuth.hash,
-                u_a_phone: ctx.userID.split("@")[0],
+                u_a_phone: ctx.userID,
             },
             { headers: postHeaders },
         );
@@ -236,6 +237,9 @@ async function createBot(botId: string) {
 
     // Справочник юзеров и их api_id
     const userList = new UsersStorage();
+
+    // Справочник сообщений к ИИ от юзера
+    const aiStorage = new AIStorage();
 
     const client = new Client({
         authStrategy: new LocalAuth({
@@ -295,6 +299,7 @@ async function createBot(botId: string) {
             constants: API_CONSTANTS[botId],
             details: {},
             usersList: userList,
+            aiStorage: aiStorage,
             user: {
                 settings: {
                     lang: {
@@ -308,7 +313,7 @@ async function createBot(botId: string) {
             baseURL: urlManager[botId],
             configName: ServiceMap[botId],
         };
-        const handler = await router(ctx, userList, adminAuth);
+        const handler = await router(ctx, userList, aiStorage, adminAuth);
         await handler(ctx);
         try {
         } catch (e) {

@@ -14,7 +14,9 @@ export interface OrderMachine extends StateMachine {
         | "collectionShowAdditionalOptions"
         | "collectionAdditionalOptions"
         | "collectionShowCarClass"
-        | "collectionCarClass";
+        | "collectionCarClass"
+        | "aiQuestion"
+        | "aiAnswer";
     data: {
         handbookActive: boolean;
         topPlacesActive: boolean;
@@ -26,6 +28,10 @@ export interface OrderMachine extends StateMachine {
         voting: boolean;
         priceModel: PricingModel;
         carClass: string | null;
+        backupStateForAI?: string | null;
+        nextStateForAI?: string | null;
+        aiMessage?: Message;
+        nextMessageForAI?: string | null;
     };
 }
 
@@ -64,6 +70,9 @@ export interface VotingMachine extends StateMachine {
         to: Location;
         priceModel: PricingModel;
         carClass: string | null;
+        backupStateForAI?: string | null;
+        nextStateForAI?: string | null;
+        aiMessage?: Message;
     };
 }
 
