@@ -278,6 +278,7 @@ async function formatOrderConfirmation(
     state: OrderMachine,
     priceModel: PriceModel,
 ): Promise<string> {
+    console.log('formatOrderConfirmation', state, priceModel);
     const user = await ctx.usersList.pull(ctx.userID);
     return formatString(
         ctx.constants.getPrompt(
@@ -359,7 +360,7 @@ export async function OrderHandler(ctx: Context) {
         "collectionAdditionalOptions",
         "collectionCarClass",
     ];
-    console.log(state.state);
+    console.log(state.state,state.data.priceModel);
     if (
         exitAvailableStates.includes(state.state) &&
         (ctx.message.body.toLowerCase() ===
@@ -637,9 +638,23 @@ export async function OrderHandler(ctx: Context) {
 
             state.data.when = timestamp;
             state.state = "collectionOrderConfirm";
+            const pricingModels = JSON.parse(
+                ctx.constants.data.data.site_constants.pricingModels.value,
+            ).pricing_models;
+            state.data.priceModel = await calculateOrderPrice(
+                ctx,
+                state.data.from,
+                state.data.to,
+                pricingModels,
+                false,
+                state.data.additionalOptions ?? [],
+                0,
+                state.data.carClass
+            );
             const response = await formatOrderConfirmation(ctx, state, state.data.priceModel);
             state.data.nextMessageForAI = response;
             state.data.nextStateForAI = "collectionOrderConfirm";
+            await ctx.chat.sendMessage(response);
             await ctx.storage.push(ctx.userID, state);
             break;
         case "collectionAdditionalOptions":

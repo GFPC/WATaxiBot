@@ -51,7 +51,7 @@ export function newEmptyOrder(): OrderMachine {
                 formula: "",
                 price: "0",
                 options: {
-                    dd: 0,
+                    FAKE_OPTION: 0,
                 },
             },
             carClass: null,
