@@ -37,6 +37,28 @@ interface PriceModel {
     calculationType?: string;
 }
 
+function simplifyExpression(expr: string): string {
+    // Удаляем пробелы для удобства
+    expr = expr.replace(/\s+/g, '');
+
+    // Регулярное выражение для поиска ( ... )*1
+    const regex = /(\(([^()]+)\)|\b[^()]+\b)\*1/g;
+
+    // Заменяем все (expr)*1 → expr
+    let newExpr = expr.replace(regex, (match, group) => {
+        if (group.startsWith('(') && group.endsWith(')')) {
+            return group.slice(1, -1); // Удаляем скобки
+        }
+        return group; // Оставляем без изменений (например, `y*1` останется)
+    });
+
+    // Если после замены остались вложенные скобки, рекурсивно обрабатываем
+    if (newExpr !== expr) {
+        return simplifyExpression(newExpr);
+    }
+
+    return newExpr;
+}
 export function calculatePrice(
     formula: string,
     params: PriceCalculationParams = {
@@ -132,6 +154,13 @@ export function formatPriceFormula(
 
         // Если time_ratio равен 1, попробуем упростить выражения вида (X)*1
         if (params.time_ratio === 1) {
+            // Ищем все выражения в скобках, умноженные на 1
+            formattedFormula = formattedFormula.replace(
+                /\(([^()]+)\)\s*\*\s*1(?!\d)/g,
+                "$1",
+            );
+        }
+        if (params.car_class_ratio === 1) {
             // Ищем все выражения в скобках, умноженные на 1
             formattedFormula = formattedFormula.replace(
                 /\(([^()]+)\)\s*\*\s*1(?!\d)/g,
