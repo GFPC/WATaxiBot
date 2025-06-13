@@ -153,7 +153,7 @@ export function formatPriceFormula(
         console.log("Formatted formula: " + formattedFormula);
 
         // Если time_ratio равен 1, попробуем упростить выражения вида (X)*1
-        if (params.time_ratio === 1) {
+        /*if (params.time_ratio === 1) {
             // Ищем все выражения в скобках, умноженные на 1
             formattedFormula = formattedFormula.replace(
                 /\(([^()]+)\)\s*\*\s*1(?!\d)/g,
@@ -166,7 +166,9 @@ export function formatPriceFormula(
                 /\(([^()]+)\)\s*\*\s*1(?!\d)/g,
                 "$1",
             );
-        }
+        }*/
+        formattedFormula = simplifyExpression(formattedFormula);
+        console.log("Formatted formula: " + formattedFormula);
 
         // Добавляем пробелы вокруг операторов для лучшей читаемости
         formattedFormula = formattedFormula
