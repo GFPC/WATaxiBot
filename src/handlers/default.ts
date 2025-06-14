@@ -20,7 +20,7 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
                 await ctx.storage.push(ctx.userID, newEmptyOrder());
                 break;
             case "1":
-                const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
+                const user = await ctx.usersList.pull(ctx.userID);
                 await ctx.chat.sendMessage(
                     ctx.constants
                         .getPrompt(

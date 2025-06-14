@@ -91,7 +91,7 @@ export class OrderObserverCallback {
                     state.data.driveStartedTimestamp = Math.floor(
                         Date.now() / 1000,
                     );
-                    await this.storage.push(this.userId.split("@")[0], state);
+                    await this.storage.push(this.userId, state);
                     await chat.sendMessage(
                         this.constants.getPrompt(
                             localizationNames.driverStarted,
@@ -153,7 +153,7 @@ export class OrderObserverCallback {
                             ),
                     );
                     state.state = "rate";
-                    await this.storage.push(this.userId.split("@")[0], state);
+                    await this.storage.push(this.userId, state);
                     break;
                 default:
                     await chat.sendMessage(
@@ -198,7 +198,7 @@ export class OrderObserverCallback {
                     state.data.driveStartedTimestamp = Math.floor(
                         Date.now() / 1000,
                     );
-                    await this.storage.push(this.userId.split("@")[0], state);
+                    await this.storage.push(this.userId, state);
                     await chat.sendMessage(
                         this.constants.getPrompt(
                             localizationNames.driverStarted,
@@ -276,7 +276,7 @@ export class OrderObserverCallback {
                             ),
                     );
                     state.state = "rate";
-                    await this.storage.push(this.userId.split("@")[0], state);
+                    await this.storage.push(this.userId, state);
                     break;
                 default:
                     await chat.sendMessage(

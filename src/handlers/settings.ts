@@ -129,7 +129,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.storage.push(ctx.userID, state);
                 break;
             case "3":
-                const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
+                const user = await ctx.usersList.pull(ctx.userID);
                 let mode = "default";
                 if (user.referrer_u_id == "666") {
                     mode = "test";
@@ -162,7 +162,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     user.u_details.refCodeBackup = user.referrer_u_id;
                     user.referrer_u_id = "666";
 
-                    await ctx.usersList.push(ctx.userID.split("@")[0], user);
+                    await ctx.usersList.push(ctx.userID, user);
                     await ctx.chat.sendMessage(
                         ctx.constants
                             .getPrompt(
@@ -220,7 +220,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     }
                     user.referrer_u_id = user.u_details?.refCodeBackup;
                     user.u_details.refCodeBackup = "666";
-                    await ctx.usersList.push(ctx.userID.split("@")[0], user);
+                    await ctx.usersList.push(ctx.userID, user);
 
                     await ctx.chat.sendMessage(
                         ctx.constants
@@ -276,7 +276,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
         }
         return;
     }
-    const user = await ctx.usersList.pull(ctx.userID.split("@")[0]);
+    const user = await ctx.usersList.pull(ctx.userID);
     switch (state.state) {
         case "changeLanguage":
             console.log(
@@ -285,7 +285,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 ctx.message.body.toString() in languages.map((item) => item.id),
             );
             const userPreload = await ctx.usersList.pull(
-                ctx.userID.split("@")[0],
+                ctx.userID,
             );
             if (
                 ctx.message.body ===
@@ -380,14 +380,14 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     );
 
                     const user = await ctx.usersList.pull(
-                        ctx.userID.split("@")[0],
+                        ctx.userID,
                     );
                     user.reloadFromApi = true;
                     user.settings.lang.iso = selectedLang?.iso ?? "en";
                     user.settings.lang.native =
                         selectedLang?.native ?? "English(en)";
                     user.settings.lang.api_id = selectedLang?.api_id ?? "2";
-                    await ctx.usersList.push(ctx.userID.split("@")[0], user);
+                    await ctx.usersList.push(ctx.userID, user);
                     await ctx.chat.sendMessage(
                         ctx.constants.getPrompt(
                             localizationNames.langSelectedBakingToSettings,
@@ -684,7 +684,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 );
                 state.state = "settings";
                 user.referrer_u_id = refCode;
-                await ctx.usersList.push(ctx.userID.split("@")[0], user);
+                await ctx.usersList.push(ctx.userID, user);
                 await ctx.storage.push(ctx.userID, state);
                 break;
             } else if (response.message === "user or modified data not found") {
