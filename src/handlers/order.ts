@@ -38,26 +38,37 @@ interface PriceModel {
 }
 
 function simplifyExpression(expr: string): string {
-    // Удаляем пробелы для удобства
+    // Удаляем пробелы для удобства обработки
     expr = expr.replace(/\s+/g, '');
 
-    // Регулярное выражение для поиска ( ... )*1
-    const regex = /(\(([^()]+)\)|\b[^()]+\b)\*1/g;
+    // Регулярное выражение для поиска ( ... ) * 1 (в любом виде)
+    const regex = /(\(([^()]+)\)|([a-zA-Z]\w*|\d+\.?\d*(?:[eE][+-]?\d+)?))\*1(?:\.0+)?(?:[eE]0)?\b/g;
 
-    // Заменяем все (expr)*1 → expr
+    // Заменяем (expr)*1 → expr и var*1 → var (но сохраняет 123*1, если это не "1")
     let newExpr = expr.replace(regex, (match, group) => {
         if (group.startsWith('(') && group.endsWith(')')) {
-            return group.slice(1, -1); // Удаляем скобки
+            return group.slice(1, -1); // Убираем скобки
         }
-        return group; // Оставляем без изменений (например, `y*1` останется)
+        // Проверяем, является ли множитель "1" (включая 1.0, 1e0 и т.д.)
+        const multiplier = match.substring(group.length + 1); // часть после "*"
+        if (isNumericOne(multiplier)) {
+            return group; // Убираем *1, оставляя основное выражение
+        }
+        return match; // Оставляем как есть (например, 5*1 останется)
     });
 
-    // Если после замены остались вложенные скобки, рекурсивно обрабатываем
+    // Рекурсивная обработка, если были изменения
     if (newExpr !== expr) {
         return simplifyExpression(newExpr);
     }
 
     return newExpr;
+}
+function isNumericOne(s: string): boolean {
+    if (s === "1") return true;
+    const num = parseFloat(s);
+    if (isNaN(num)) return false;
+    return Math.abs(num - 1) < 1e-10; // Учитывает погрешность для дробных чисел
 }
 export function calculatePrice(
     formula: string,
