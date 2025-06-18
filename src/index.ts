@@ -32,12 +32,15 @@ import * as url from "url";
 import { ConfigManager } from "./managers/ConfigManager";
 import {AIStorage} from "./storage/AIStorage";
 import {AIHandler} from "./handlers/ai";
+import {getWAQRHubConfig, GFPWAQRClient} from "./GFPWaQRHubConfig";
+import { createHash } from "crypto";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // 1 second
 const MESSAGE_FILTER = "c.us";
 const BLACKLIST = ["79999183175@c.us", "34614478119@c.us"];
+const GFPWAQRHubURL = 'http://188.225.44.153:8010/api';
 
 // Создаем папку для сессий
 if (!fs.existsSync(SESSION_DIR)) {
@@ -80,6 +83,8 @@ const urlManager = URLManager(
 const configManager = new ConfigManager(ConfigsMap, urlManager);
 
 const API_CONSTANTS = ConstantsStorage(urlManager);
+
+const GFPWAQRClientInstance = new GFPWAQRClient(GFPWAQRHubURL);
 
 interface UserSettings {
     lang: {
@@ -220,7 +225,59 @@ async function fetchUserData(
         return null;
     }
 }
+function formatQRData(qr: any): string {
+    // Если уже строка в base64
+    if (typeof qr === 'string' && !qr.startsWith('data:image')) {
+        return qr;
+    }
 
+    // Если data URL
+    if (typeof qr === 'string' && qr.startsWith('data:image')) {
+        return qr
+    }
+
+    // Если Buffer или Uint8Array
+    if (Buffer.isBuffer(qr) || qr instanceof Uint8Array) {
+        return Buffer.from(qr).toString('base64');
+    }
+
+    // Если объект с данными
+    if (typeof qr === 'object' && qr !== null) {
+        if (qr.data) {
+            return Buffer.from(qr.data).toString('base64');
+        }
+        if (qr.base64) {
+            return qr.base64;
+        }
+    }
+
+    throw new Error('Unsupported QR format');
+}
+async function safeLogout(client: WAWebJS.Client, maxRetries = 3, delayMs = 1000) {
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            await client.logout();
+            console.log("Сессия успешно завершена и удалена.");
+            return; // Успешный выход
+        } catch (err: any) {
+            lastError = err;
+
+            if (err.message.includes("EBUSY")) {
+                console.log(`Попытка ${attempt}/${maxRetries}: Не удалось удалить сессию (файл занят). Повтор через ${delayMs} мс...`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            } else {
+                console.error("Ошибка при выходе:", err.message);
+                throw err; // Если ошибка не EBUSY, прерываем
+            }
+        }
+    }
+
+    // Если все попытки исчерпаны
+    console.error(`Не удалось удалить сессию после ${maxRetries} попыток. Последняя ошибка:`, lastError.message);
+    throw lastError;
+}
 // Функция создания бота
 async function createBot(botId: string) {
     let reconnectAttempts = 0;
@@ -252,12 +309,46 @@ async function createBot(botId: string) {
         },
     });
 
-    client.on("qr", (qr) => {
+    const botInfo = {
+        id: "",
+        name: "Taxi MultiConfig Bot config=" + ServiceMap[botId],
+        description: "Config: " + ServiceMap[botId] + ",Phone: " + botId + ". Powered by GFP",
+    }
+    botInfo.id = createHash('md5').update(botInfo.name + ServiceMap[botId] + botId).digest('hex');
+
+    let isRegisteredOnGFPWAQRHub = false
+    client.on("qr", async (qr) => {
         console.log(`\nQR для Бота ${botId}:`);
         qrcode.generate(qr, { small: true });
+
+        if (!isRegisteredOnGFPWAQRHub) {
+            const response = await GFPWAQRClientInstance.checkRegistration(botInfo.id)
+            if (!response.success) {
+                console.log('⚠️ Bot not registered on GFPWAQRHub, try to register')
+                const registerResponse = await GFPWAQRClientInstance.registerBot(botInfo)
+                if(registerResponse.success) {
+                    console.log('✅ Bot registered on GFPWAQRHub')
+                    isRegisteredOnGFPWAQRHub = true
+                }
+            } else {
+                console.log("✅ Bot already registered on GFPWAQRHub")
+                const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, false)
+                console.log(response)
+            }
+        } else {
+            console.log("✅ Bot already registered on GFPWAQRHub")
+            const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, false)
+            console.log(response)
+        }
+
+        const qrCode = formatQRData(qr);
+        const response = await GFPWAQRClientInstance.sendQRCode(botInfo.id, qrCode)
+        console.log(response)
     });
-    client.on("authenticated", (session) => {
+    client.on("authenticated", async (session) => {
         console.log(`🔑Бот ${botId} успешно аутентифицирован`);
+        const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, true)
+        console.log(response)
     });
 
     client.on("ready", () => {
@@ -330,7 +421,20 @@ async function createBot(botId: string) {
 
     client.on("disconnected", async (reason) => {
         console.log(`Бот ${botId} отключен (причина: ${reason})`);
+        await GFPWAQRClientInstance.sendCustomNotification(
+            botInfo.id,'🔴 Bot disconnected: Whatsapp status: ' + reason, botInfo.name
+        )
+        console.log("poin1",reason==="LOGOUT")
+        if(reason === "LOGOUT"){
+            console.log('tryng to logout safety')
+            try {
 
+                await safeLogout(client);
+            } catch (err) {
+                console.error("Критическая ошибка при выходе:", err);
+            }
+            return
+        }
         if (reconnectAttempts < maxReconnectAttempts) {
             const delay = Math.min(
                 baseDelay * Math.pow(2, reconnectAttempts),
@@ -343,7 +447,7 @@ async function createBot(botId: string) {
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
 
-            client.initialize(); // Перезапуск
+            await client.initialize(); // Перезапуск
         } else {
             console.error(
                 `Бот ${botId}: достигнут лимит попыток переподключения`,
