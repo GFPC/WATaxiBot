@@ -426,6 +426,7 @@ async function createBot(botId: string) {
         )
         console.log("poin1",reason==="LOGOUT")
         if(reason === "LOGOUT"){
+
             console.log('tryng to logout safety')
             try {
 
@@ -454,7 +455,9 @@ async function createBot(botId: string) {
             );
         }
     });
-
+    client.on("auth_failure", async () => {
+        await client.initialize()
+    })
     client
         .initialize()
         .then((r) =>
