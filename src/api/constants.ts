@@ -2,35 +2,49 @@ import axios from "axios";
 import { postHeaders } from "./general";
 import { CarClass } from "../states/types";
 
+export class GFPTaxiBotConstants {
+    data: {
+        defaultLangID: string;
+        defaultCurrency: string;
+        maxDefaultDriveWaiting: number;
+        maxVotingDriveWaiting: number;
+        searchDriversPeriodShort: number;
+        searchDriversPeriodLong: number;
+        maxPeoplesCount: number;
+    } = {
+        defaultLangID: '2',
+        defaultCurrency: 'GHS',
+        maxDefaultDriveWaiting: 3601,
+        maxVotingDriveWaiting: 1800,
+        searchDriversPeriodShort: 30,
+        searchDriversPeriodLong: 300,
+        maxPeoplesCount: 5,
+    }
+    constructor(data: Constants) {
+        const my_container = JSON.parse(data.data.data.site_constants.gfp_taxi_bot_settings.value)
+        this.data = {
+            ...my_container
+        }
+    }
+}
+
+
 export class Constants {
     data: {
         data: {
             car_colors: any[];
             car_models: any[];
             lang_vls: {
-                [key: string]: {
-                    [key: string]: string;
-                };
+                [key: string] : { [key: string]: string }
             };
-            car_classes: {
-                [key: string]: CarClass;
-            };
-            site_constants: {
-                pricingModels: {
-                    value: string;
-                };
-                [key: string]: any;
-            };
-            langs: {
-                [key: string]: {
-                    native: string;
-                    iso: string;
-                };
-            };
-            [key: string]: any;
+            car_classes: { [key: string]: any };
+            booking_comments: { [key: string]: any };
+            car_makes: { [key: string]: any };
+            site_constants: { gfp_taxi_bot_settings: { value: string }; pricingModels: { value: string }; waiting_interval_or?: any };
+            langs: { [key: string]: any },
         };
         default_lang: string;
-        default_currency: string;
+        default_currency: string
     } = {
         data: {
             car_colors: [],
@@ -38,10 +52,23 @@ export class Constants {
             langs: {},
             lang_vls: {},
             car_classes: {},
+            booking_comments: {},
+            car_makes: {},
             site_constants: {
                 pricingModels: {
                     value: "",
                 },
+                gfp_taxi_bot_settings: {
+                    value: JSON.stringify({
+                        defaultLangID: '2',
+                        defaultCurrency: 'GHS',
+                        maxDefaultDriveWaiting: 3601,
+                        maxVotingDriveWaiting: 1800,
+                        searchDriversPeriodShort: 30,
+                        searchDriversPeriodLong: 300,
+                        maxPeoplesCount: 5,
+                    })
+                }
             },
         },
         default_lang: "2",
@@ -51,11 +78,10 @@ export class Constants {
     constructor() {}
 
     async getData(baseUrl: string) {
-        await axios
+        const response = await axios
             .post(baseUrl + "/data", {}, { headers: postHeaders })
-            .then((response) => {
-                this.data = response.data.data;
-            });
+        this.data = response.data.data;
+
     }
     get getForDriverAndCar() {
         return {
@@ -67,13 +93,16 @@ export class Constants {
         name: string,
         lang_id: string | undefined = this.data.default_lang,
     ): string {
-        console.log(name, lang_id);
         if (!this.data.data.lang_vls[name]) {
             return "@@@Lang value not found@@@" + name;
         }
-        return this.data.data.lang_vls[name]
-            ? this.data.data.lang_vls[name][lang_id]
-            : "@@@Lang value not found@@@" + name;
+        
+        const langValues = this.data.data.lang_vls[name];
+        if (!langValues || !lang_id) {
+            return "@@@Lang value not found@@@" + name;
+        }
+        
+        return langValues[lang_id] || "@@@Lang value not found@@@" + name;
     }
 }
 

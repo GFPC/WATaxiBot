@@ -284,9 +284,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 languages.map((item) => item.id),
                 ctx.message.body.toString() in languages.map((item) => item.id),
             );
-            const userPreload = await ctx.usersList.pull(
-                ctx.userID,
-            );
+            const userPreload = await ctx.usersList.pull(ctx.userID);
             if (
                 ctx.message.body ===
                     ctx.constants.getPrompt(
@@ -379,9 +377,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         (item) => item.id == ctx.message.body,
                     );
 
-                    const user = await ctx.usersList.pull(
-                        ctx.userID,
-                    );
+                    const user = await ctx.usersList.pull(ctx.userID);
                     user.reloadFromApi = true;
                     user.settings.lang.iso = selectedLang?.iso ?? "en";
                     user.settings.lang.native =

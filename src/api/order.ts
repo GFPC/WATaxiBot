@@ -9,7 +9,7 @@ import { Location, PricingModel } from "../states/types";
 import axios from "axios";
 import { Chat, Message } from "whatsapp-web.js";
 import { constants } from "../constants";
-import { newEmptyOrder } from "../states/machines/orderMachine";
+import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { Context } from "../index";
 import { localization, localizationNames } from "../l10n";
 
@@ -148,6 +148,7 @@ export class Order {
         if (this.id === undefined) throw "The order has not yet been created";
 
         const data = await this.getData();
+        console.log(data.data.booking[this.id]);
 
         var state = Number(data.data.booking[this.id].b_state);
 
@@ -180,7 +181,7 @@ export class Order {
             }
         }
 
-        if (state === 1) {
+        if (state === 1 || state === 6) {
             if (driver_state === 3) {
                 return BookingState.DriverCanceled;
             } else {
@@ -361,10 +362,14 @@ export class Order {
         const form = createForm({}, this.adminAuth);
         try {
             return axios
-                .post(`${this.ctx?.baseURL}/drive/get/${this.id}`, form, {
-                    headers: postHeaders,
-                    timeout: 20000,
-                })
+                .post(
+                    `${this.ctx?.baseURL}/drive/get/${this.id}?fields=000000002`,
+                    form,
+                    {
+                        headers: postHeaders,
+                        timeout: 20000,
+                    },
+                )
                 .then((response) => {
                     if (
                         response.status != 200 ||
@@ -446,7 +451,7 @@ export class Order {
         this.ctx = ctx;
         this.pricingModel = pricingModel;
 
-        const user_state = await ctx.storage.pull(ctx.userID);
+        const user_state: OrderMachine = await ctx.storage.pull(ctx.userID);
         console.log("APIORDER new priceModel", pricingModel);
 
         // Переменная для кода водителя(нужно для режима voting)
@@ -489,8 +494,15 @@ export class Order {
         if (this.isVoting) {
             data.b_services.push(5);
         }
-        if(user_state.data.car_class) {
-            data.b_car_class = user_state.data.car_class
+        if (user_state.data.carClass) {
+            data.b_car_class = user_state.data.carClass;
+        }
+        if (user_state.data.preferredDriversList) {
+            data.b_only_offer = 1;
+        }
+        console.log("Children Profiles:" + user_state.data.childrenProfiles);
+        if (user_state.data.childrenProfiles) {
+            data.b_options.childrenProfiles = user_state.data.childrenProfiles;
         }
 
         const form = createForm(
@@ -557,6 +569,40 @@ export class Order {
 
         this.startStateChecking();
         if (this.isVoting) return b_driver_code;
+        if (user_state.data.preferredDriversList) {
+            await this.addOffer(user_state.data.preferredDriversList);
+            console.log("ADDED OFFER");
+        }
+    }
+
+    async addOffer(driverList: string[]) {
+        if (!this.id) throw "The order has not yet been created";
+        if (!this.ctx?.userID) throw "Cant add offer without user id";
+
+        for (let driver of driverList) {
+            const form = createForm(
+                {
+                    action: "set_offer",
+                    u_id: driver,
+                    u_a_role: "1",
+                    u_a_phone: this.ctx?.userID.split("@")[0],
+                },
+                this.adminAuth,
+            );
+            console.log(`ADDING OFFER FOR ${driver}: `, form);
+            try {
+                const response = await axios.post(
+                    `${this.ctx?.baseURL}drive/get/${this.id}`,
+                    form,
+                    { headers: postHeaders, timeout: 10000 },
+                );
+                console.log(`ADDING OFFER RES FOR ${driver}: `, response.data);
+                if (response.status != 200 || response.data.status != "success")
+                    throw `API Error: ${response.data}`;
+            } catch (e) {
+                throw "Не удалось предложить поездки" + (e || "").toString();
+            }
+        }
     }
 
     private finish(isCanceled: boolean = false) {
@@ -708,8 +754,8 @@ export class Order {
         if (this.id === undefined) throw "The order has not yet been created";
         const drive = await this.getData();
         const form = createForm({}, this.adminAuth);
-        if (drive.data.booking[this.id].drivers.length == 0)
-            throw "No driver found";
+        if (drive.data.booking[this.id].drivers?.length == 0)
+            throw "No driver found" + "\n" + JSON.stringify(drive.data);
 
         const suitable_driver =
             drive.data.booking[this.id].drivers?.length > 0
@@ -717,7 +763,8 @@ export class Order {
                       (driver: any) => driver.c_canceled === null,
                   )
                 : undefined;
-        if (!suitable_driver) throw "No driver found";
+        if (!suitable_driver)
+            throw "No driver found" + "\n" + JSON.stringify(drive.data);
 
         const driver_u_id = drive.data.booking[this.id].drivers[0]?.u_id;
         const car_u_id = drive.data.booking[this.id].drivers[0]?.c_id;

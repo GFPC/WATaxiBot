@@ -198,6 +198,11 @@ export const localization = {
         "Вы не приняли условия сервиса и не можете использовать его. В любой момент вы можеет согласиться с условиями, введя ( *1* ).",
     invalid_language: "❌ Введен некорректный код языка, попробуйте ещё раз",
     next_step: "Для перехода к следующему шагу введите ( *3* )",
+    noDriverNumbersForExclusion: "Не указаны номера для исключения.",
+    incorrectDriverNumber: "Некорректный номер водителя: %number%",
+    noDriverNumbersSpecified: "Не указаны номера водителей.",
+    testPointDriveId: "TEST POINT: DRIVE ID: ",
+    searchingForDrivers: "Ищем доступных водителей...",
 };
 export const localizationNames = {
     welcome: "wab_welcome".toLowerCase(),
@@ -322,6 +327,29 @@ export const localizationNames = {
     askShowCarClass: "wab_askShowCarClass".toLowerCase(),
     selectCarClass: "wab_selectCarClass".toLowerCase(),
     anyClass: "wab_anyClass".toLowerCase(),
+    enterHoursCount: "wab_enterHoursCount".toLowerCase(),
+    hoursNumberMystBeNumber: "wab_hoursNumberMystBeNumber".toLowerCase(),
+    enterChildrenCount: "wab_enterChildrenCount".toLowerCase(),
+    childrenCountMustBeNumber: "wab_childrenCountMustBeNumber".toLowerCase(),
+    selectChildGender: "wab_selectChildGender".toLowerCase(),
+    profileNumberPattern: "wab_profileNumberPattern".toLowerCase(),
+    selectChildAge: "wab_selectChildAge".toLowerCase(),
+    childAgeMustBeNumber: "wab_childAgeMustBeNumber".toLowerCase(),
+    enterChildName: "wab_enterChildName".toLowerCase(),
+    enterChildDetails: "wab_enterChildDetails".toLowerCase(),
+    selectBabySisterRange: "wab_selectBabySisterRange".toLowerCase(),
+    noDrivers: "wab_noDrivers".toLowerCase(),
+    childrenInfoShortedVariant: "wab_childrenInfoShortedVariant".toLowerCase(),
+
+    noDriverNumbersForExclusion: "wab_noDriverNumbersForExclusion".toLowerCase(),
+    incorrectDriverNumber: "wab_incorrectDriverNumber".toLowerCase(),
+    noDriverNumbersSpecified: "wab_noDriverNumbersSpecified".toLowerCase(),
+    searchingForDrivers: "wab_searchingForDrivers".toLowerCase(),
+    errorNoTimeUndefined: "wab_errorNoTimeUndefined".toLowerCase(),
+    searchCancelled: "wab_searchCancelled".toLowerCase(),
+    errorNoCoordinates: "wab_errorNoCoordinates".toLowerCase(),
+    noDriversFoundOrderCancelled: "wab_noDriversFoundOrderCancelled".toLowerCase(),
+    noDriversAvailableAttempt: "wab_noDriversAvailableAttempt".toLowerCase(),
 };
 function exportToJsonFile() {
     const file = "l10n.json";

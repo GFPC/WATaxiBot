@@ -5,7 +5,14 @@ import { Location } from "../states/types";
 import { localization, localizationNames } from "../l10n";
 import { constants } from "../constants";
 import { readQRCodeFromImage } from "./qr";
-import { Context } from "../index";
+import {
+    getCityByDriveStartLoc,
+    getDriversForCity,
+    getDriversForCityNight,
+    isNightTime,
+} from "../api/sql_templates";
+import { formatDriversList } from "../handlers/routes/order/collectionOrderConfirm";
+import { getLocalizationText } from "./textUtils";
 
 export async function GetLocation(
     msg: WAWebJS.Message,
@@ -13,40 +20,8 @@ export async function GetLocation(
     storage: Storage,
     state: OrderMachine,
     ctx: Context,
-): Promise<Location | string> {
-    /* Получение локации из сообщения.
-     * Возвращает строку, либо null, если требуется дополнительные действия.
-     * Может бросить исключение. */
-
-    if (state.data.handbookActive) {
-        // TODO: Вызывать интерфейс справочника
-        throw "No implement";
-    }
-
-    if (state?.data.topPlacesActive) {
-        // TODO: Вызывать интерфейс любимых мест
-        throw "No implement";
-    }
-
-    const codeRegex = /^\d{4,5}$/;
-
-    if (msg.body.toLowerCase().trim() === "01") {
-        //(msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.topPlacesLower, ctx.user.settings.lang.api_id)) {
-        state.data.topPlacesActive = true;
-        await storage.push(userId, state);
-
-        // TODO: Сделать отправку любимых мест
-        console.log("Любимые места");
-        return "Top places";
-    } else if (msg.body.toLowerCase().trim() === "02") {
-        //(msg.body.toLowerCase() === ctx.constants.getPrompt(localizationNames.handbookLower, ctx.user.settings.lang.api_id)) {
-        state.data.handbookActive = true;
-        await storage.push(userId, state);
-
-        // TODO: Сделать отправку справочника
-        console.log("Справочник");
-        return "Handbook";
-    } else if (msg.location) {
+): Promise<Location> {
+    if (msg.location) {
         // @ts-ignore
         if (
             msg.location.latitude == undefined ||
@@ -62,36 +37,16 @@ export async function GetLocation(
             longitude: location.longitude,
             address: location.address,
         };
-    } else if (codeRegex.test(msg.body)) {
-        // TODO: Сделать получение адреса по коду
-        console.log("Код");
-        throw "No implement";
-    } else if (msg.hasMedia) {
-        // TODO: Скачиваем, расшифруем, проверяем (как выше с кодом)
-        const media = await msg.downloadMedia();
-        const allowedMimeTypes = ["image/png", "image/jpeg"]; // Разрешённые типы файлов
-
-        if ((media.filesize ?? 0) > constants.maxFileSize)
-            throw "File size is too large";
-
-        if (media.mimetype.includes("audio/ogg")) {
-            // TODO: Сделать поддержку голосовых
-            throw "No implement";
-        } else if (allowedMimeTypes.includes(media.mimetype)) {
-            const data = await readQRCodeFromImage(media.data); // TODO: Сделать обработку ошибки
-            if (data === undefined) throw "Failed to recognize the QR code";
-            console.log(data);
-            await msg.reply(`QR-Код: ${data}`);
-
-            throw "No code found";
-        } else {
-            throw "Invalid media type";
-        }
     } else if (msg.body.length > 0) {
-        // Если просто передан адрес
-        return {
-            address: msg.body,
-        };
+        // Если просто передан адрес или координаты в разных форматах
+        const coord: Location | null = parseCoordinatesFromText(msg.body);
+        if (coord) {
+            return coord;
+        } else {
+            return {
+                address: msg.body,
+            };
+        }
     } else {
         throw "Invalid message type";
     }
@@ -108,9 +63,9 @@ export async function GetTimestamp(
         .toUTCString()
         .replace(/ GMT$/, "");
     console.log(now);
-    const trimmedBody = body.trim().toLowerCase();
+    const trimmedBody = body.trim().toLowerCase().normalize("NFC");
 
-    if (trimmedBody === "сейчас") {
+    if (trimmedBody.toString() === "сейчас") {
         return null;
     }
 
@@ -177,4 +132,306 @@ export async function parseGetLocationException(
     }
 
     return error;
+}
+
+export async function getDriverList(
+    ctx: Context,
+    latitude: number,
+    longitude: number,
+    test_message: boolean = false
+): Promise<
+    [
+        {
+            id_user: string;
+            phone: string;
+            name: string;
+            [key: string]: any;
+        },
+    ]
+> {
+    const city = await getCityByDriveStartLoc(ctx.auth, ctx.baseURL, {
+        latitude: latitude,
+        longitude: longitude,
+    });
+    if (!city.data) {
+        throw new Error("CITY NOT FOUND");
+    }
+    if(test_message){
+        await ctx.chat.sendMessage(`TEST POINT: Looking drivers for city '${city.data[0].name_ru}' id='${city.data[0].id_city}'`);
+    }
+    let drivers;
+    if (await isNightTime(latitude, longitude)) {
+        drivers = await getDriversForCityNight(
+            ctx.auth,
+            ctx.baseURL,
+            city.data[0].id_city,
+            ctx.api_u_id,
+        );
+    } else {
+        drivers = await getDriversForCity(
+            ctx.auth,
+            ctx.baseURL,
+            city.data[0].id_city,
+        );
+    }
+    if (!drivers.data) {
+        throw new Error("DRIVERS NOT FOUND");
+    }
+    return drivers.data;
+}
+
+// Универсальный парсер координат из текста
+/**
+ * Парсит координаты из строки в разных форматах. Примеры поддерживаемых форматов:
+ *
+ * 1. Десятичные координаты:
+ *    55.7558 37.6176
+ *    55.7558,37.6176
+ *    55.7558N 37.6176E
+ *    55.7558 S, 37.6176 W
+ *
+ * 2. Ссылки на Google Maps:
+ *    https://maps.google.com/?q=55.7558,37.6176
+ *    https://www.google.com/maps/place/55.7558,37.6176
+ *
+ * 3. Градусы, минуты, секунды (DMS):
+ *    55°45'21.0"N 37°37'03.4"E
+ *    55 45 21 N 37 37 03 E
+ *    55°45.350'N 37°37.057'E
+ *
+ * 4. DMS без секунд:
+ *    55 45 N 37 37 E
+ *
+ * 5. Смешанные варианты:
+ *    N55.7558 E37.6176
+ *    55.7558N, 37.6176E
+ *    55.7558;37.6176
+ *
+ * Если формат не распознан — строка будет обработана как обычный адрес.
+ */
+function parseCoordinatesFromText(
+    text: string,
+): { latitude: number; longitude: number; address: string } | null {
+    const original = text;
+    text = text.trim();
+
+    // 1. Ссылки на Google Maps
+    // Пример: https://maps.google.com/?q=55.7558,37.6176
+    let match = text.match(
+        /(?:[?&]q=|\/place\/)(-?\d{1,3}(?:[.,]\d+)?)[, ]+(-?\d{1,3}(?:[.,]\d+)?)/i,
+    );
+    if (match) {
+        const lat = parseFloat(match[1].replace(",", "."));
+        const lon = parseFloat(match[2].replace(",", "."));
+        if (!isNaN(lat) && !isNaN(lon))
+            return { latitude: lat, longitude: lon, address: original };
+    }
+
+    // 2. Десятичные координаты с пробелом или запятой, с/без N/S/E/W
+    // Пример: 55.7558 37.6176, 55.7558N 37.6176E, 55.7558,37.6176
+    match = text.match(
+        /(-?\d{1,3}(?:[.,]\d+)?)[°\s]*([NS])?[\s,]+(-?\d{1,3}(?:[.,]\d+)?)[°\s]*([EW])?/i,
+    );
+    if (match) {
+        let lat = parseFloat(match[1].replace(",", "."));
+        let lon = parseFloat(match[3].replace(",", "."));
+        if (match[2] && match[2].toUpperCase() === "S") lat = -lat;
+        if (match[4] && match[4].toUpperCase() === "W") lon = -lon;
+        if (!isNaN(lat) && !isNaN(lon))
+            return { latitude: lat, longitude: lon, address: original };
+    }
+
+    // 3. Градусы, минуты, секунды (DMS)
+    // Пример: 55°45'21.0"N 37°37'03.4"E
+    match = text.match(
+        /(\d{1,3})[°\s](\d{1,2})['′\s](\d{1,2}(?:\.\d+)?)["”\s]?([NS])?[,\s]+(\d{1,3})[°\s](\d{1,2})['′\s](\d{1,2}(?:\.\d+)?)["”\s]?([EW])?/i,
+    );
+    if (match) {
+        let lat = dmsToDecimal(match[1], match[2], match[3], match[4]);
+        let lon = dmsToDecimal(match[5], match[6], match[7], match[8]);
+        if (!isNaN(lat) && !isNaN(lon))
+            return { latitude: lat, longitude: lon, address: original };
+    }
+
+    // 4. DMS без секунд (только градусы и минуты)
+    // Пример: 55 45 N 37 37 E
+    match = text.match(
+        /(\d{1,3})[°\s](\d{1,2})['′\s]?([NS])?[,\s]+(\d{1,3})[°\s](\d{1,2})['′\s]?([EW])?/i,
+    );
+    if (match) {
+        let lat = dmsToDecimal(match[1], match[2], 0, match[3]);
+        let lon = dmsToDecimal(match[4], match[5], 0, match[6]);
+        if (!isNaN(lat) && !isNaN(lon))
+            return { latitude: lat, longitude: lon, address: original };
+    }
+
+    // 5. Координаты с точкой/запятой-разделителем
+    match = text.match(/(-?\d{1,3}(?:[.,]\d+)?)[;|, ]+(-?\d{1,3}(?:[.,]\d+)?)/);
+    if (match) {
+        const lat = parseFloat(match[1].replace(",", "."));
+        const lon = parseFloat(match[2].replace(",", "."));
+        if (!isNaN(lat) && !isNaN(lon))
+            return { latitude: lat, longitude: lon, address: original };
+    }
+
+    return null;
+}
+
+function dmsToDecimal(
+    deg: string,
+    min: string,
+    sec: string | number,
+    dir?: string,
+): number {
+    let d = parseFloat(deg);
+    let m = parseFloat(min);
+    let s = typeof sec === "string" ? parseFloat(sec) : sec;
+    let result = d + m / 60 + (s || 0) / 3600;
+    if (dir) {
+        dir = dir.toUpperCase();
+        if (dir === "S" || dir === "W") result = -result;
+    }
+    return result;
+}
+
+// Менеджер фонового поиска водителей с возможностью остановки
+import { Message } from "whatsapp-web.js";
+import { Context } from "../index";
+import {at, attempt} from "lodash";
+
+interface DriverSearchManagerType {
+    start: (
+        ctx: Context,
+        state: OrderMachine,
+        searchMsg: Message,
+        maxAttempts?: number,
+    ) => void;
+    stop: (userID: string) => void;
+}
+
+export class DriverSearchManager {
+    private timers: Map<string, NodeJS.Timeout> = new Map();
+
+    private async pollDrivers(
+        ctx: Context,
+        state: OrderMachine,
+        searchMsg: Message,
+        attempts = 0,
+        maxAttempts = -1
+    ) {
+        const freshState: OrderMachine = await ctx.storage.pull(ctx.userID);
+        // распределение интервалов и подсчет попыток
+        let interval;
+        if(freshState.data.when===undefined) {
+            await ctx.chat.sendMessage(getLocalizationText(ctx, localizationNames.errorNoTimeUndefined));
+            return
+        }
+        if(freshState.data.when === null)  /* значит сейчас или 4 часа максимум - берем shor interval*/ {
+            interval = ctx.gfp_constants.data.searchDriversPeriodShort;
+        } else {
+            if((Date.now() - freshState.data.when.getTime() + ctx.gfp_constants.data.maxDefaultDriveWaiting) > 1*60*60) {
+                interval = ctx.gfp_constants.data.searchDriversPeriodLong;
+            } else {
+                interval = ctx.gfp_constants.data.searchDriversPeriodShort;
+            }
+
+        }
+
+        if(maxAttempts === -1) {
+            maxAttempts = Math.floor((Date.now() - (freshState.data.when ? freshState.data.when.getTime() : Date.now()) + ctx.gfp_constants.data.maxDefaultDriveWaiting) / interval);
+        }
+
+        if(attempts===0){
+            await ctx.chat.sendMessage("TEST POINT: INTERVAL: " + interval + " TIME DELTA: " + (Date.now() - (freshState.data.when ? freshState.data.when.getTime() : Date.now())) + " MAX ATTEMPTS: " + maxAttempts);
+        }
+
+        if (
+            !freshState ||
+            !freshState.data ||
+            freshState.state !== "collectionOrderConfirm" ||
+            !freshState.data.waitingForDrivers
+        ) {
+            await searchMsg.edit(getLocalizationText(ctx, localizationNames.searchCancelled));
+            await ctx.chat.sendMessage(
+                getLocalizationText(ctx, localizationNames.defaultPrompt),
+            );
+            this.timers.delete(ctx.userID);
+            return;
+        }
+        if(!freshState.data.from.latitude || !freshState.data.from.longitude) {
+            await searchMsg.edit(getLocalizationText(ctx, localizationNames.errorNoCoordinates));
+            return;
+        }
+
+        const driverList = await getDriverList(
+            ctx,
+            freshState.data.from.latitude,
+            freshState.data.from.longitude,
+            attempts == 0,
+        );
+        if (driverList && driverList.length > 0) {
+            const formattedDriversList = await formatDriversList(driverList);
+            freshState.data.driversMap = formattedDriversList.drivers_map;
+            const text = getLocalizationText(
+                ctx,
+                localizationNames.selectBabySisterRange,
+            ).replace(
+                "%driversList%",
+                formattedDriversList.text ||
+                    getLocalizationText(ctx, localizationNames.noDrivers),
+            );
+            freshState.state = "children_collectionSelectBabySister";
+            freshState.data.nextStateForAI =
+                "children_collectionSelectBabySister";
+            freshState.data.nextMessageForAI = text;
+            freshState.data.waitingForDrivers = false;
+            await ctx.storage.push(ctx.userID, freshState);
+            await searchMsg.edit(text);
+            this.timers.delete(ctx.userID);
+            return;
+        }
+
+        if (attempts + 1 >= maxAttempts) {
+            await searchMsg.edit(
+                getLocalizationText(ctx, localizationNames.noDriversFoundOrderCancelled),
+            );
+            await ctx.chat.sendMessage(
+                getLocalizationText(ctx, localizationNames.defaultPrompt),
+            );
+            await ctx.storage.delete(ctx.userID);
+            this.timers.delete(ctx.userID);
+            return;
+        }
+
+        await searchMsg.edit(
+            getLocalizationText(ctx, localizationNames.noDriversAvailableAttempt).replace("%attempt%", (attempts + 1).toString()).replace("%maxAttempts%", maxAttempts.toString()),
+        );
+        const timer = setTimeout(async () => {
+            await this.pollDrivers(
+                ctx,
+                freshState,
+                searchMsg,
+                attempts + 1,
+                maxAttempts,
+            );
+        }, interval * 1000);
+        this.timers.set(ctx.userID, timer);
+    }
+
+    start(
+        ctx: Context,
+        state: OrderMachine,
+        searchMsg: Message,
+        maxAttempts = -1,
+    ) {
+        this.stop(ctx.userID); // На всякий случай остановить предыдущий поиск
+        this.pollDrivers(ctx, state, searchMsg, 0, maxAttempts);
+    }
+
+    stop(userID: string) {
+        if (this.timers.has(userID)) {
+            clearTimeout(this.timers.get(userID));
+            this.timers.delete(userID);
+        }
+    }
 }

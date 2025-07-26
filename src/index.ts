@@ -1,46 +1,38 @@
-import WAWebJS, {
-    Chat,
-    Client,
-    LocalAuth,
-    Message,
-    MessageContent,
-} from "whatsapp-web.js";
+import WAWebJS, { Chat, Client, LocalAuth, Message } from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
 import { RegisterHandler } from "./handlers/register";
 import dotenv from "dotenv";
 import { Storage } from "./storage/storage";
-import { AuthData, baseURL, createForm, postHeaders } from "./api/general";
+import { AuthData, postHeaders } from "./api/general";
 import { OrderHandler } from "./handlers/order";
-import { checkRegister } from "./api/user";
 import winston, { Logger } from "winston";
-import { localization, localizationNames } from "./l10n";
+import { localizationNames } from "./l10n";
 import { StateMachine } from "./states/types";
 import { RideHandler } from "./handlers/ride";
 import { MemoryStorage } from "./storage/mem";
-import { DrivesStorage } from "./storage/drivesStorage";
 import axios, { AxiosError } from "axios";
 import { UsersStorage } from "./storage/usersStorage";
 import { VotingHandler } from "./handlers/voting";
-import { Constants, ConstantsStorage } from "./api/constants";
+import {Constants, ConstantsStorage, GFPTaxiBotConstants} from "./api/constants";
 import { SettingsHandler } from "./handlers/settings";
 import { DefaultHandler } from "./handlers/default";
 import { HelpHandler } from "./handlers/help";
 import * as fs from "fs";
 import { ConfigsMap, ServiceMap } from "./ServiceMap";
 import { URLManager } from "./managers/URLManager";
-import * as url from "url";
 import { ConfigManager } from "./managers/ConfigManager";
-import {AIStorage} from "./storage/AIStorage";
-import {AIHandler} from "./handlers/ai";
-import {getWAQRHubConfig, GFPWAQRClient} from "./GFPWaQRHubConfig";
+import { AIStorage } from "./storage/AIStorage";
+import { AIHandler } from "./handlers/ai";
+import { GFPWAQRClient } from "./GFPWaQRHubConfig";
 import { createHash } from "crypto";
+import { ChildrenProfileHandler } from "./handlers/childrenProfile";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 1000; // 1 second
 const MESSAGE_FILTER = "c.us";
 const BLACKLIST = ["79999183175@c.us", "34614478119@c.us"];
-const GFPWAQRHubURL = 'http://188.225.44.153:8010/api';
+const GFPWAQRHubURL = "http://188.225.44.153:8010/api";
 
 // Создаем папку для сессий
 if (!fs.existsSync(SESSION_DIR)) {
@@ -112,6 +104,7 @@ export interface Context {
     userID: string;
     api_u_id: string;
     constants: Constants;
+    gfp_constants: GFPTaxiBotConstants;
     details?: any;
     usersList: UsersStorage;
     aiStorage: AIStorage;
@@ -132,7 +125,22 @@ async function router(
 ): Promise<Handler> {
     try {
         const user = await userList.pull(ctx.userID);
-        console.log("->Router. State=", (await ctx.storage.pull(ctx.userID))?.id + "." + (await ctx.storage.pull(ctx.userID))?.state + ". User=", user, ' Message=', ctx.message.body);
+        const stateForLog = await ctx.storage.pull(ctx.userID);
+        if (stateForLog && stateForLog.id && stateForLog.state) {
+            const orange = "\x1b[38;5;208m";
+            const reset = "\x1b[0m";
+            console.log(
+                `[ main ] <on-message> state: ${orange}${stateForLog.id}${reset}->${stateForLog.state}`,
+            );
+        } else if (stateForLog && stateForLog.id) {
+            const orange = "\x1b[38;5;208m";
+            const reset = "\x1b[0m";
+            console.log(
+                `[ main ] <on-message> state: ${orange}${stateForLog.id}${reset}`,
+            );
+        } else {
+            console.log(`[ main ] <on-message> state: unknown`);
+        }
 
         if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
             const userData = await fetchUserData(ctx, adminAuth);
@@ -155,8 +163,9 @@ async function router(
         ) {
             return HelpHandler;
         } else if (
-            (ctx.message.body === "9" &&
-            (state?.id === "order")) || state?.state === "aiQuestion" || state?.state === "aiAnswer"
+            (ctx.message.body === "9" && state?.id === "order") ||
+            state?.state === "aiQuestion" ||
+            state?.state === "aiAnswer"
         ) {
             return AIHandler;
         }
@@ -167,6 +176,7 @@ async function router(
             settings: SettingsHandler,
             order: OrderHandler,
             register: RegisterHandler,
+            childrenProfile: ChildrenProfileHandler,
         };
 
         return handlerMap[state?.id ?? ""] ?? DefaultHandler;
@@ -190,7 +200,6 @@ async function fetchUserData(
             },
             { headers: postHeaders },
         );
-        console.log("REQUESTING USER DATA RES:", userData.data);
 
         if (userData.data.status === "error") {
             return null;
@@ -227,55 +236,64 @@ async function fetchUserData(
 }
 function formatQRData(qr: any): string {
     // Если уже строка в base64
-    if (typeof qr === 'string' && !qr.startsWith('data:image')) {
+    if (typeof qr === "string" && !qr.startsWith("data:image")) {
         return qr;
     }
 
     // Если data URL
-    if (typeof qr === 'string' && qr.startsWith('data:image')) {
-        return qr
+    if (typeof qr === "string" && qr.startsWith("data:image")) {
+        return qr;
     }
 
     // Если Buffer или Uint8Array
     if (Buffer.isBuffer(qr) || qr instanceof Uint8Array) {
-        return Buffer.from(qr).toString('base64');
+        return Buffer.from(qr).toString("base64");
     }
 
     // Если объект с данными
-    if (typeof qr === 'object' && qr !== null) {
+    if (typeof qr === "object" && qr !== null) {
         if (qr.data) {
-            return Buffer.from(qr.data).toString('base64');
+            return Buffer.from(qr.data).toString("base64");
         }
         if (qr.base64) {
             return qr.base64;
         }
     }
 
-    throw new Error('Unsupported QR format');
+    throw new Error("Unsupported QR format");
 }
-async function safeLogout(client: WAWebJS.Client, maxRetries = 3, delayMs = 1000) {
+async function safeLogout(
+    client: WAWebJS.Client,
+    maxRetries = 3,
+    delayMs = 1000,
+) {
     let lastError: any = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             await client.logout();
-            console.log("Сессия успешно завершена и удалена.");
+            console.log("[ main ] Сессия успешно завершена и удалена.");
             return; // Успешный выход
         } catch (err: any) {
             lastError = err;
 
             if (err.message.includes("EBUSY")) {
-                console.log(`Попытка ${attempt}/${maxRetries}: Не удалось удалить сессию (файл занят). Повтор через ${delayMs} мс...`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                console.log(
+                    `[ main ] Попытка ${attempt}/${maxRetries}: Не удалось удалить сессию (файл занят). Повтор через ${delayMs} мс...`,
+                );
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
             } else {
-                console.error("Ошибка при выходе:", err.message);
+                console.error("[ main ] Ошибка при выходе:", err.message);
                 throw err; // Если ошибка не EBUSY, прерываем
             }
         }
     }
 
     // Если все попытки исчерпаны
-    console.error(`Не удалось удалить сессию после ${maxRetries} попыток. Последняя ошибка:`, lastError.message);
+    console.error(
+        `[ main ] Не удалось удалить сессию после ${maxRetries} попыток. Последняя ошибка:`,
+        lastError.message,
+    );
     throw lastError;
 }
 // Функция создания бота
@@ -312,47 +330,71 @@ async function createBot(botId: string) {
     const botInfo = {
         id: "",
         name: "Taxi MultiConfig Bot config=" + ServiceMap[botId],
-        description: "Config: " + ServiceMap[botId] + ",Phone: " + botId + ". Powered by GFP",
-    }
-    botInfo.id = createHash('md5').update(botInfo.name + ServiceMap[botId] + botId).digest('hex');
+        description:
+            "Config: " +
+            ServiceMap[botId] +
+            ",Phone: " +
+            botId +
+            ". Powered by GFP",
+    };
+    botInfo.id = createHash("md5")
+        .update(botInfo.name + ServiceMap[botId] + botId)
+        .digest("hex");
 
-    let isRegisteredOnGFPWAQRHub = false
+    let isRegisteredOnGFPWAQRHub = false;
     client.on("qr", async (qr) => {
-        console.log(`\nQR для Бота ${botId}:`);
+        console.log(`[ main ] \nQR для Бота ${botId}:`);
         qrcode.generate(qr, { small: true });
 
         if (!isRegisteredOnGFPWAQRHub) {
-            const response = await GFPWAQRClientInstance.checkRegistration(botInfo.id)
+            const response = await GFPWAQRClientInstance.checkRegistration(
+                botInfo.id,
+            )
             if (!response.success) {
-                console.log('⚠️ Bot not registered on GFPWAQRHub, try to register')
-                const registerResponse = await GFPWAQRClientInstance.registerBot(botInfo)
-                if(registerResponse.success) {
-                    console.log('✅ Bot registered on GFPWAQRHub')
-                    isRegisteredOnGFPWAQRHub = true
+                console.log(
+                    "[ main ] ⚠️ Bot not registered on GFPWAQRHub, try to register",
+                );
+                const registerResponse =
+                    await GFPWAQRClientInstance.registerBot(botInfo);
+                if (registerResponse.success) {
+                    console.log("[ main ] ✅ Bot registered on GFPWAQRHub");
+                    isRegisteredOnGFPWAQRHub = true;
                 }
             } else {
-                console.log("✅ Bot already registered on GFPWAQRHub")
-                const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, false)
-                console.log(response)
+                console.log("[ main ] ✅ Bot already registered on GFPWAQRHub");
+                const response = await GFPWAQRClientInstance.setAuthenticated(
+                    botInfo.id,
+                    false,
+                );
+                console.log("[ main ]", response);
             }
         } else {
-            console.log("✅ Bot already registered on GFPWAQRHub")
-            const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, false)
-            console.log(response)
+            console.log("[ main ] ✅ Bot already registered on GFPWAQRHub");
+            const response = await GFPWAQRClientInstance.setAuthenticated(
+                botInfo.id,
+                false,
+            );
+            console.log("[ main ]", response);
         }
 
         const qrCode = formatQRData(qr);
-        const response = await GFPWAQRClientInstance.sendQRCode(botInfo.id, qrCode)
-        console.log(response)
+        const response = await GFPWAQRClientInstance.sendQRCode(
+            botInfo.id,
+            qrCode,
+        );
+        console.log("[ main ]", response);
     });
-    client.on("authenticated", async (session) => {
-        console.log(`🔑Бот ${botId} успешно аутентифицирован`);
-        const response = await GFPWAQRClientInstance.setAuthenticated(botInfo.id, true)
-        console.log(response)
+    client.on("authenticated", async () => {
+        console.log(`[ main ] 🔑Бот ${botId} успешно аутентифицирован`);
+        const response = await GFPWAQRClientInstance.setAuthenticated(
+            botInfo.id,
+            true,
+        );
+        console.log("[ main ]", response);
     });
 
     client.on("ready", () => {
-        console.log(`🟢 Бот ${botId} готов к работе!`);
+        console.log(`[ main ] 🟢 Бот ${botId} готов к работе!`);
     });
 
     client.on("message", async (msg) => {
@@ -388,6 +430,7 @@ async function createBot(botId: string) {
             chat: await msg.getChat(),
             api_u_id: "-1",
             constants: API_CONSTANTS[botId],
+            gfp_constants: new GFPTaxiBotConstants(API_CONSTANTS[botId]),
             details: {},
             usersList: userList,
             aiStorage: aiStorage,
@@ -404,6 +447,7 @@ async function createBot(botId: string) {
             baseURL: urlManager[botId],
             configName: ServiceMap[botId],
         };
+        console.log(ctx.gfp_constants)
         const handler = await router(ctx, userList, aiStorage, adminAuth);
         await handler(ctx);
         try {
@@ -420,21 +464,21 @@ async function createBot(botId: string) {
     });
 
     client.on("disconnected", async (reason) => {
-        console.log(`Бот ${botId} отключен (причина: ${reason})`);
+        console.log(`[ main ] Бот ${botId} отключен (причина: ${reason})`);
         await GFPWAQRClientInstance.sendCustomNotification(
-            botInfo.id,'🔴 Bot disconnected: Whatsapp status: ' + reason, botInfo.name
-        )
-        console.log("poin1",reason==="LOGOUT")
-        if(reason === "LOGOUT"){
-
-            console.log('tryng to logout safety')
+            botInfo.id,
+            "🔴 Bot disconnected: Whatsapp status: " + reason,
+            botInfo.name,
+        );
+        console.log("[ main ] poin1", reason === "LOGOUT");
+        if (reason === "LOGOUT") {
+            console.log("[ main ] tryng to logout safety");
             try {
-
                 await safeLogout(client);
             } catch (err) {
-                console.error("Критическая ошибка при выходе:", err);
+                console.error("[ main ] Критическая ошибка при выходе:", err);
             }
-            return
+            return;
         }
         if (reconnectAttempts < maxReconnectAttempts) {
             const delay = Math.min(
@@ -444,25 +488,25 @@ async function createBot(botId: string) {
             reconnectAttempts++;
 
             console.log(
-                `Попытка переподключения ${reconnectAttempts} через ${delay}мс...`,
+                `[ main ] Попытка переподключения ${reconnectAttempts} через ${delay}мс...`,
             );
             await new Promise((resolve) => setTimeout(resolve, delay));
 
             await client.initialize(); // Перезапуск
         } else {
             console.error(
-                `Бот ${botId}: достигнут лимит попыток переподключения`,
+                `[ main ] Бот ${botId}: достигнут лимит попыток переподключения`,
             );
         }
     });
     client.on("auth_failure", async () => {
-        await client.initialize()
-    })
+        await client.initialize();
+    });
     client
         .initialize()
         .then((r) =>
             console.log(
-                `Бот ${botId} инициализирован, response: ${r === undefined ? "ok" : r}`,
+                `[ main ] Бот ${botId} инициализирован, response: ${r === undefined ? "ok" : r}`,
             ),
         );
     return client;
@@ -473,25 +517,25 @@ async function createBot(botId: string) {
 // 2. Start all bots
 
 Object.keys(API_CONSTANTS).forEach(async (key) => {
-    console.log(`Загрузка констант для ${key}...`);
+    console.log(`[ main ] Загрузка констант для ${key}...`);
     await API_CONSTANTS[key].getData(urlManager[key]);
-    console.log(`Константы для ${key} загружены`);
+    console.log(`[ main ] Константы для ${key} загружены`);
 });
 
 // Создаем N ботов
-const bots = Object.keys(ServiceMap).map((key, index) => {
+const bots = Object.keys(ServiceMap).map((key) => {
     return createBot(key);
 });
 
 // Обработка завершения работы
 process.on("SIGINT", async () => {
-    console.log("\nЗавершение работы...");
+    console.log("[ main ] \nЗавершение работы...");
     for (const bot of bots) {
         (await bot)
             .destroy()
             .then((r) =>
                 console.log(
-                    `Бот ${bot} завершен, response: ${r === undefined ? "ok" : r}`,
+                    `[ main ] Бот ${bot} завершен, response: ${r === undefined ? "ok" : r}`,
                 ),
             );
     }

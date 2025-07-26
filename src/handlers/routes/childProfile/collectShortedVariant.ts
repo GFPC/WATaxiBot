@@ -1,0 +1,39 @@
+import {
+    GetLocation,
+    parseGetLocationException,
+} from "../../../utils/orderUtils";
+import { localizationNames } from "../../../l10n";
+import { formatString } from "../../../utils/formatter";
+import { OrderMachine } from "../../../states/machines/orderMachine";
+import { Context } from "../../../index";
+import { HandlerRouteResponse, SuccessResponse } from "../format";
+import { ChildProfileMachine } from "../../../states/machines/childrenProfile";
+import { getLocalizationText } from "../../../utils/textUtils";
+export async function collectionShortedVariant(
+    ctx: Context,
+    state: ChildProfileMachine,
+): Promise<HandlerRouteResponse> {
+    // Собираем возраст ребенка
+    const childrenInfo =  ctx.message.body;
+
+    const orderState = state.data.orderState;
+    if (!orderState.data.childrenProfiles)
+        orderState.data.childrenProfiles = [];
+    orderState.data.childrenProfiles = childrenInfo;
+
+    orderState.state = "collectionShowCarClass";
+    orderState.data.nextMessageForAI = ctx.constants.getPrompt(
+        localizationNames.askShowCarClass,
+        ctx.user.settings.lang.api_id,
+    );
+    orderState.data.nextStateForAI = "collectionShowCarClass";
+    await ctx.storage.push(ctx.userID, orderState);
+    await ctx.chat.sendMessage(
+        ctx.constants.getPrompt(
+            localizationNames.askShowCarClass,
+            ctx.user.settings.lang.api_id,
+        ),
+    );
+
+    return SuccessResponse;
+}

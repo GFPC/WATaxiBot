@@ -1,16 +1,17 @@
-import 'crypto';
+import "crypto";
 // Конфигурация
-const API_URL = 'http://localhost:8010'; // URL вашего сервера
-const API_KEY = '123'; // API ключ из .env файла
-const BOT_NAME = 'Taxi MultiConfig Bot config='; // Имя вашего бота
-const BOT_DESCRIPTION = 'Optional bot description'; // Описание бота
+const API_URL = "http://localhost:8010"; // URL вашего сервера
+const API_KEY = "123"; // API ключ из .env файла
+const BOT_NAME = "Taxi MultiConfig Bot config="; // Имя вашего бота
+const BOT_DESCRIPTION = "Optional bot description"; // Описание бота
 
 export function getWAQRHubConfig(config_name: string, bot_phone: string) {
     return {
         API_URL,
         API_KEY,
-        BOT_NAME: BOT_NAME+config_name,
-        BOT_DESCRIPTION: BOT_DESCRIPTION+'CONFIG='+config_name+';PHONE='+bot_phone,
+        BOT_NAME: BOT_NAME + config_name,
+        BOT_DESCRIPTION:
+            BOT_DESCRIPTION + "CONFIG=" + config_name + ";PHONE=" + bot_phone,
     };
 }
 /**
@@ -20,15 +21,15 @@ export function getWAQRHubConfig(config_name: string, bot_phone: string) {
 
 // API Configuration
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:8010/api',
+    BASE_URL: "http://localhost:8010/api",
     ENDPOINTS: {
-        STATUS: '/status',
-        REGISTER: '/whatsapp/register',
-        CHECK_REGISTER: '/whatsapp/check_register',
-        UPDATE_QR: '/whatsapp/update_qr',
-        UPDATE_AUTH_STATE: '/whatsapp/update_auth_state',
-        NOTIFY: '/whatsapp/notify'
-    }
+        STATUS: "/status",
+        REGISTER: "/whatsapp/register",
+        CHECK_REGISTER: "/whatsapp/check_register",
+        UPDATE_QR: "/whatsapp/update_qr",
+        UPDATE_AUTH_STATE: "/whatsapp/update_auth_state",
+        NOTIFY: "/whatsapp/notify",
+    },
 } as const;
 
 // Types
@@ -53,7 +54,7 @@ interface WhatsAppBotUpdateQRRequest {
 
 interface WhatsAppBotAuthedStateRequest {
     bot_id: string;
-    state: 'authed' | 'not_authed';
+    state: "authed" | "not_authed";
 }
 
 interface WhatsAppBotResponse {
@@ -85,15 +86,15 @@ export class GFPWAQRClient {
      */
     private async makeRequest<T>(
         endpoint: string,
-        method: 'GET' | 'POST' = 'GET',
-        body?: any
+        method: "GET" | "POST" = "GET",
+        body?: any,
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
 
         const options: RequestInit = {
             method,
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         };
 
@@ -110,7 +111,16 @@ export class GFPWAQRClient {
 
             return await response.json();
         } catch (error) {
-            console.error(`API request failed for ${endpoint}:`, error);
+            let shortMsg = "";
+            if (error instanceof Error && typeof error.message === "string") {
+                shortMsg = error.message.slice(0, 80);
+            } else {
+                shortMsg = String(error).slice(0, 80);
+            }
+            console.error(
+                `[ gfpwaqrhub ] API request failed for ${endpoint}:`,
+                shortMsg,
+            );
             throw error;
         }
     }
@@ -119,7 +129,9 @@ export class GFPWAQRClient {
      * Check API health status
      */
     async checkHealth(): Promise<HealthCheckResponse> {
-        return this.makeRequest<HealthCheckResponse>(API_CONFIG.ENDPOINTS.STATUS);
+        return this.makeRequest<HealthCheckResponse>(
+            API_CONFIG.ENDPOINTS.STATUS,
+        );
     }
 
     /**
@@ -129,8 +141,8 @@ export class GFPWAQRClient {
         const request: WhatsAppBotCheckRegisterRequest = { bot_id: botId };
         return this.makeRequest<WhatsAppBotResponse>(
             API_CONFIG.ENDPOINTS.CHECK_REGISTER,
-            'POST',
-            request
+            "POST",
+            request,
         );
     }
 
@@ -141,23 +153,26 @@ export class GFPWAQRClient {
         const request: WhatsAppBotRegisterRequest = { bot: botData };
         return this.makeRequest<WhatsAppBotResponse>(
             API_CONFIG.ENDPOINTS.REGISTER,
-            'POST',
-            request
+            "POST",
+            request,
         );
     }
 
     /**
      * Update QR code for bot
      */
-    async updateQR(botId: string, qrData: string): Promise<WhatsAppBotResponse> {
+    async updateQR(
+        botId: string,
+        qrData: string,
+    ): Promise<WhatsAppBotResponse> {
         const request: WhatsAppBotUpdateQRRequest = {
             bot_id: botId,
-            qr_data: qrData
+            qr_data: qrData,
         };
         return this.makeRequest<WhatsAppBotResponse>(
             API_CONFIG.ENDPOINTS.UPDATE_QR,
-            'POST',
-            request
+            "POST",
+            request,
         );
     }
 
@@ -166,16 +181,16 @@ export class GFPWAQRClient {
      */
     async updateAuthState(
         botId: string,
-        state: 'authed' | 'not_authed'
+        state: "authed" | "not_authed",
     ): Promise<WhatsAppBotResponse> {
         const request: WhatsAppBotAuthedStateRequest = {
             bot_id: botId,
-            state: state
+            state: state,
         };
         return this.makeRequest<WhatsAppBotResponse>(
             API_CONFIG.ENDPOINTS.UPDATE_AUTH_STATE,
-            'POST',
-            request
+            "POST",
+            request,
         );
     }
 
@@ -184,30 +199,36 @@ export class GFPWAQRClient {
      */
     async initializeBot(botData: WhatsAppBotData): Promise<boolean> {
         try {
-            console.log('🔍 Checking bot registration...');
+            console.log("[ gfpwaqrhub ] 🔍 Checking bot registration...");
 
             // Check if bot is already registered
             const checkResponse = await this.checkRegistration(botData.id);
 
             if (checkResponse.success) {
-                console.log('✅ Bot is already registered');
+                console.log("[ gfpwaqrhub ] ✅ Bot is already registered");
                 return true;
             }
 
-            console.log('📝 Registering new bot...');
+            console.log("[ gfpwaqrhub ] 📝 Registering new bot...");
 
             // Register the bot
             const registerResponse = await this.registerBot(botData);
 
             if (registerResponse.success) {
-                console.log('✅ Bot registered successfully');
+                console.log("[ gfpwaqrhub ] ✅ Bot registered successfully");
                 return true;
             } else {
-                console.error('❌ Failed to register bot:', registerResponse.message);
+                console.error(
+                    "[ gfpwaqrhub ] ❌ Failed to register bot:",
+                    getShortErrorMessage(registerResponse),
+                );
                 return false;
             }
         } catch (error) {
-            console.error('❌ Bot initialization failed:', error);
+            console.error(
+                "[ gfpwaqrhub ] ❌ Bot initialization failed:",
+                getShortErrorMessage(error),
+            );
             return false;
         }
     }
@@ -217,19 +238,27 @@ export class GFPWAQRClient {
      */
     async sendQRCode(botId: string, qrData: string): Promise<boolean> {
         try {
-            console.log('📱 Sending QR code to Telegram users...');
+            console.log(
+                "[ gfpwaqrhub ] 📱 Sending QR code to Telegram users...",
+            );
 
             const response = await this.updateQR(botId, qrData);
 
             if (response.success) {
-                console.log('✅ QR code sent successfully');
+                console.log("[ gfpwaqrhub ] ✅ QR code sent successfully");
                 return true;
             } else {
-                console.error('❌ Failed to send QR code:', response.message);
+                console.error(
+                    "[ gfpwaqrhub ] ❌ Failed to send QR code:",
+                    getShortErrorMessage(response),
+                );
                 return false;
             }
         } catch (error) {
-            console.error('❌ QR code sending failed:', error);
+            console.error(
+                "[ gfpwaqrhub ] ❌ QR code sending failed:",
+                getShortErrorMessage(error),
+            );
             return false;
         }
     }
@@ -237,42 +266,60 @@ export class GFPWAQRClient {
     /**
      * Update bot authentication status
      */
-    async setAuthenticated(botId: string, isAuthenticated: boolean): Promise<boolean> {
+    async setAuthenticated(
+        botId: string,
+        isAuthenticated: boolean,
+    ): Promise<boolean> {
         try {
-            const state = isAuthenticated ? 'authed' : 'not_authed';
-            console.log(`🔐 Updating auth state to: ${state}`);
+            const state = isAuthenticated ? "authed" : "not_authed";
+            console.log(`[ gfpwaqrhub ] 🔐 Updating auth state to: ${state}`);
 
             const response = await this.updateAuthState(botId, state);
 
             if (response.success) {
-                console.log('✅ Auth state updated successfully');
+                console.log(
+                    "[ gfpwaqrhub ] ✅ Auth state updated successfully",
+                );
                 return true;
             } else {
-                console.error('❌ Failed to update auth state:', response.message);
+                console.error(
+                    "[ gfpwaqrhub ] ❌ Failed to update auth state:",
+                    getShortErrorMessage(response),
+                );
                 return false;
             }
         } catch (error) {
-            console.error('❌ Auth state update failed:', error);
+            console.error(
+                "[ gfpwaqrhub ] ❌ Auth state update failed:",
+                getShortErrorMessage(error),
+            );
             return false;
         }
     }
     async sendCustomNotification(
         botId: string, // Теперь bot_id обязателен и на первом месте
         message: string,
-        senderName: string = 'WhatsApp Bot'
+        senderName: string = "WhatsApp Bot",
     ): Promise<WhatsAppBotResponse> {
         const request: CustomNotificationRequest = {
             bot_id: botId,
             message: message,
-            sender_name: senderName
+            sender_name: senderName,
         };
 
         return this.makeRequest<WhatsAppBotResponse>(
             API_CONFIG.ENDPOINTS.NOTIFY,
-            'POST',
-            request
+            "POST",
+            request,
         );
     }
+}
+
+function getShortErrorMessage(obj: unknown): string {
+    if (!obj) return "";
+    const anyObj = obj as any;
+    const msg = Reflect.get(anyObj, "message");
+    return typeof msg === "string" ? msg.slice(0, 40) : "";
 }
 
 // Usage Examples

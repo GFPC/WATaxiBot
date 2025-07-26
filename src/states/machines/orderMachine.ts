@@ -1,6 +1,7 @@
 import { StateMachine, Location, PricingModel } from "../types";
 import { Order } from "../../api/order";
 import { Message } from "whatsapp-web.js";
+import { DriverSearchManager } from "../../utils/orderUtils";
 
 export interface OrderMachine extends StateMachine {
     id: "order";
@@ -16,7 +17,11 @@ export interface OrderMachine extends StateMachine {
         | "collectionShowCarClass"
         | "collectionCarClass"
         | "aiQuestion"
-        | "aiAnswer";
+        | "aiAnswer"
+        | "children_collectionTime"
+        | "children_collectionChildrenCount"
+        | "children_collectionSelectBabySisterRange"
+        | "children_collectionSelectBabySister";
     data: {
         handbookActive: boolean;
         topPlacesActive: boolean;
@@ -32,6 +37,23 @@ export interface OrderMachine extends StateMachine {
         nextStateForAI?: string | null;
         aiMessage?: Message;
         nextMessageForAI?: string | null;
+
+        // Children
+        childrenTime?: number;
+        //childrenCount?: number;
+        childrenSelectBabySisterRange?: string;
+        childrenSelectBabySister?: string;
+        childrenProfiles?: Array<{
+            name: string;
+            age: number;
+            gender: string;
+            details: string;
+        }> | string;
+        preferredDriversList?: string[];
+        driversMap?: { [key: string]: string };
+        selectedDrivers?: string[];
+        waitingForDrivers?: boolean;
+        driverSearchManager: DriverSearchManager;
     };
 }
 
@@ -55,6 +77,7 @@ export function newEmptyOrder(): OrderMachine {
                 },
             },
             carClass: null,
+            driverSearchManager: new DriverSearchManager(),
         },
     };
 }

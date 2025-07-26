@@ -25,7 +25,12 @@ export const postHeaders = {
 
 export function createForm(
     data: {
-        [key: string]: string | Blob | undefined | { [key: string]: string };
+        [key: string]:
+            | string
+            | Blob
+            | undefined
+            | { [key: string]: string }
+            | string[];
     },
     auth: AuthData,
 ): FormData {

@@ -1,5 +1,5 @@
 import { Storage } from "./storage";
-import {ai_instructions} from "../ai/ai";
+import { ai_instructions } from "../ai/ai";
 
 export class AIStorage implements Storage {
     table: {
@@ -9,7 +9,7 @@ export class AIStorage implements Storage {
     } = {};
 
     async pull(id: string): Promise<any | null> {
-        return this.table[id] !== undefined ? this.table[id] : null
+        return this.table[id] !== undefined ? this.table[id] : null;
     }
     async push(id: string, data: any) {
         this.table[id] = data;
