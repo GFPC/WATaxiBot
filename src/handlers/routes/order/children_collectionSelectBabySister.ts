@@ -99,9 +99,6 @@ export async function children_collectionSelectBabySister(
         observer.callback.bind(observer),
         async () => {},
     );
-    const newState = newRide(order);
-    await ctx.storage.push(ctx.userID, newState);
-
     try {
         if (state.data.when === undefined)
             return {
@@ -126,6 +123,9 @@ export async function children_collectionSelectBabySister(
             state.data.additionalOptions,
             state.data.priceModel,
         );
+
+        const newState = newRide(order);
+        await ctx.storage.push(ctx.userID, newState);
 
         await ctx.chat.sendMessage("TEST POINT: DRIVE ID=" + order.id);
     } catch (e) {

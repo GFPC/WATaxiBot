@@ -148,7 +148,6 @@ export class Order {
         if (this.id === undefined) throw "The order has not yet been created";
 
         const data = await this.getData();
-        console.log(data.data.booking[this.id]);
 
         var state = Number(data.data.booking[this.id].b_state);
 
@@ -466,7 +465,6 @@ export class Order {
             data.b_start_latitude = startLoc.latitude;
             data.b_start_longitude = startLoc.longitude;
         }
-        console.log(data)
 
         if (!endLoc.latitude || !endLoc.latitude) {
             data.b_destination_address = endLoc.address;
