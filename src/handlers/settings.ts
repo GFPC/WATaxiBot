@@ -1,4 +1,4 @@
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { Context } from "../index";
 import { changeLang, changeReferralCode } from "../api/user";
 import { UsersStorage } from "../storage/usersStorage";

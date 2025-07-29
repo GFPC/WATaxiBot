@@ -3,7 +3,7 @@ import {
     createEmptyRegistration,
     RegistrationMachine,
 } from "../states/machines/registerMachine";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { changeLang, register } from "../api/user";
 import { constants } from "../constants";
 import { formatString } from "../utils/formatter";

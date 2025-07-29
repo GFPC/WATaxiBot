@@ -1,6 +1,6 @@
 import { Context } from "../index";
 import { RideMachine } from "../states/machines/rideMachine";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { MessageMedia } from "whatsapp-web.js";

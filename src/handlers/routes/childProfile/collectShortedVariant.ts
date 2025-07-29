@@ -16,24 +16,23 @@ export async function collectionShortedVariant(
     // Собираем возраст ребенка
     const childrenInfo =  ctx.message.body;
 
-    const orderState = state.data.orderState;
+    const orderState: OrderMachine = state.data.orderState;
     if (!orderState.data.childrenProfiles)
         orderState.data.childrenProfiles = [];
     orderState.data.childrenProfiles = childrenInfo;
 
-    orderState.state = "collectionShowCarClass";
+    orderState.state = "collectionShowAdditionalOptions";
+    orderState.data.nextStateForAI = "collectionShowAdditionalOptions";
     orderState.data.nextMessageForAI = ctx.constants.getPrompt(
-        localizationNames.askShowCarClass,
+        localizationNames.needAdditionalOptionsQuestion,
         ctx.user.settings.lang.api_id,
     );
-    orderState.data.nextStateForAI = "collectionShowCarClass";
-    await ctx.storage.push(ctx.userID, orderState);
     await ctx.chat.sendMessage(
         ctx.constants.getPrompt(
-            localizationNames.askShowCarClass,
+            localizationNames.needAdditionalOptionsQuestion,
             ctx.user.settings.lang.api_id,
         ),
     );
-
+    await ctx.storage.push(ctx.userID, orderState);
     return SuccessResponse;
 }

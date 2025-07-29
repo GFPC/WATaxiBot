@@ -412,7 +412,7 @@ async function createBot(botId: string) {
             return;
         }
 
-        logger.info(`Received message from ${userId}`);
+        logger.info(`Received message from ${userId} messageType=${msg.type}`);
 
         const defaultLang =
             API_CONSTANTS[botId].data.data.langs[

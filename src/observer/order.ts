@@ -1,7 +1,7 @@
 import { ChatId, Client } from "whatsapp-web.js";
 import { Logger } from "winston";
 import { Order } from "../api/order";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { BookingState } from "../api/general";
 import { Storage } from "../storage/storage";
 import { RideMachine } from "../states/machines/rideMachine";

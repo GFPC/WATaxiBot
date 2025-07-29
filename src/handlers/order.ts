@@ -4,7 +4,7 @@ import {
     newVoting,
     OrderMachine,
 } from "../states/machines/orderMachine";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { OrderObserverCallback } from "../observer/order";
 import { Order } from "../api/order";
 import { constants } from "../constants";
@@ -34,6 +34,7 @@ import { children_collectionTime } from "./routes/order/children_collectionTime"
 import { children_collectionChildrenCount } from "./routes/order/children_collectionChildrenCount";
 import { children_collectionSelectBabySisterRange } from "./routes/order/children_collectionSelectBabySisterRange";
 import { children_collectionSelectBabySister } from "./routes/order/children_collectionSelectBabySister";
+import {getLocalizationText} from "../utils/textUtils";
 
 const logger = new Logger("OrderHandler", "#12b095");
 interface PriceCalculationParams {
@@ -375,7 +376,7 @@ export async function formatOrderConfirmation(
                                   " )",
                           )
                           .join(", ")
-                    : "",
+                    : getLocalizationText(ctx,localizationNames.noAdditionalOptions),
             price:
                 priceModel.price === "0"
                     ? "-"
@@ -435,7 +436,9 @@ export async function OrderHandler(ctx: Context) {
         "collectionAdditionalOptions",
         "collectionCarClass",
         "collectionOrderConfirm",
-        "children_collectionSelectBabySister"
+        "children_collectionSelectBabySister",
+        "children_collectionChildrenCount",
+        "children_collectionTime"
     ];
     console.log(state.state, state.data.priceModel);
     if (

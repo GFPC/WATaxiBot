@@ -99,6 +99,8 @@ export async function children_collectionSelectBabySister(
         observer.callback.bind(observer),
         async () => {},
     );
+    const newState = newRide(order);
+    await ctx.storage.push(ctx.userID, newState);
 
     try {
         if (state.data.when === undefined)
@@ -136,8 +138,7 @@ export async function children_collectionSelectBabySister(
         );
         return SuccessResponse;
     }
-    const newState = newRide(order);
-    await ctx.storage.push(ctx.userID, newState);
+
     await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
     await orderMsg.edit(
         ctx.constants.getPrompt(

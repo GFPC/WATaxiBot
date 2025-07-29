@@ -2,7 +2,7 @@ import {
     GetLocation,
     parseGetLocationException,
 } from "../../../utils/orderUtils";
-import { localization, localizationNames } from "../../../l10n";
+import { localizationNames } from "../../../l10n";
 import { formatString } from "../../../utils/formatter";
 import { OrderMachine } from "../../../states/machines/orderMachine";
 import { Context } from "../../../index";

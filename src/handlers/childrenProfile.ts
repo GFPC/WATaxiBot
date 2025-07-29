@@ -19,6 +19,7 @@ export async function ChildrenProfileHandler(ctx: Context) {
         "collectionAge",
         "collectionName",
         "collectionDetails",
+        "collectionShortedVariant",
     ];
     if (exitAvailableStates.includes(state.state) && ctx.message.body === "0") {
         // Отмена создания заказа доступная после задания начальной точки

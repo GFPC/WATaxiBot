@@ -7,6 +7,7 @@ import { formatString } from "../../../utils/formatter";
 import { OrderMachine } from "../../../states/machines/orderMachine";
 import { Context } from "../../../index";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
+import {getLocalizationText} from "../../../utils/textUtils";
 
 export async function collectionFrom(
     ctx: Context,
@@ -48,7 +49,7 @@ export async function collectionFrom(
             } else {
                 // Нет координат — отправляем ошибку
                 await ctx.chat.sendMessage(
-                    "Пожалуйста, укажите координаты в формате: 55.7558 37.6176 или отправьте геолокацию.",
+                    getLocalizationText(ctx,localizationNames.errorStartPoint),
                     { linkPreview: false },
                 );
                 return SuccessResponse;

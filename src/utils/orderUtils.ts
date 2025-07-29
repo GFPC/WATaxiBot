@@ -2,7 +2,7 @@ import WAWebJS from "whatsapp-web.js";
 import { Storage } from "../storage/storage";
 import { OrderMachine } from "../states/machines/orderMachine";
 import { Location } from "../states/types";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { constants } from "../constants";
 import { readQRCodeFromImage } from "./qr";
 import {

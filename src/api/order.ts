@@ -11,7 +11,7 @@ import { Chat, Message } from "whatsapp-web.js";
 import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { Context } from "../index";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -460,12 +460,13 @@ export class Order {
         // Формируем запрос
         const data: { [key: string]: any } = {};
 
-        if (!startLoc.latitude || !endLoc.latitude) {
+        if (!startLoc.latitude || !startLoc.latitude) {
             data.b_start_address = startLoc.address;
         } else {
             data.b_start_latitude = startLoc.latitude;
             data.b_start_longitude = startLoc.longitude;
         }
+        console.log(data)
 
         if (!endLoc.latitude || !endLoc.latitude) {
             data.b_destination_address = endLoc.address;

@@ -1,5 +1,5 @@
 import { Context } from "../index";
-import { localization, localizationNames } from "../l10n";
+import { localizationNames } from "../l10n";
 import { newEmptyOrder } from "../states/machines/orderMachine";
 import { newSettings } from "../states/machines/settingsMachine";
 import { addAbortListener } from "ws";
