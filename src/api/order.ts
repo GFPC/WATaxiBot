@@ -144,10 +144,13 @@ export class Order {
         }
     }
 
-    async getState(): Promise<BookingState> {
+    async getState(): Promise<BookingState | undefined> {
         if (this.id === undefined) throw "The order has not yet been created";
 
         const data = await this.getData();
+        if (data === undefined) {
+            return undefined
+        }
 
         var state = Number(data.data.booking[this.id].b_state);
 
@@ -338,6 +341,7 @@ export class Order {
             );
         }
         const state = await this.getState();
+        if(state === undefined) return
 
         if (
             state === BookingState.Canceled ||
@@ -375,13 +379,13 @@ export class Order {
                         response.data?.status != "success"
                     ) {
                         console.log("EXTRAPOINT 0x02: ", response.data);
-                        this.stopStateChecking();
+                        this.finish()
                         await this.ctx?.chat?.sendMessage("GFP debugger -> API is down, error: " + response.data + "Состояние сброшено, попробуйте еще раз создать заказ");
                         await this.ctx?.storage?.delete(this.ctx?.userID ? this.ctx.userID : "");
                         await this.ctx?.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? "error");
 
                     }
-                    return response.data;
+                    return undefined;
                 })
                 .catch(async (error) => {
                     console.log("EXTRAPOINT 0x00: ", error);
@@ -397,6 +401,8 @@ export class Order {
                             this.ctx?.user.settings.lang.api_id,
                         ) ?? "error",
                     );
+                    this.finish()
+                    return undefined
                     //throw `API Error: ${error}`;
                 });
         } catch (e) {
