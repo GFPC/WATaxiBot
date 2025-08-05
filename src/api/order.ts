@@ -369,17 +369,18 @@ export class Order {
                         timeout: 20000,
                     },
                 )
-                .then((response) => {
+                .then(async (response) => {
                     if (
                         response.status != 200 ||
-                        response.data.status != "success"
-                    )
+                        response.data?.status != "success"
+                    ) {
                         console.log("EXTRAPOINT 0x02: ", response.data);
-                    if (
-                        response.status != 200 ||
-                        response.data.status != "success"
-                    )
-                        throw `API Error: ${response.data}`;
+                        this.stopStateChecking();
+                        await this.ctx?.chat?.sendMessage("GFP debugger -> API is down, error: " + response.data + "Состояние сброшено, попробуйте еще раз создать заказ");
+                        await this.ctx?.storage?.delete(this.ctx?.userID ? this.ctx.userID : "");
+                        await this.ctx?.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? "error");
+
+                    }
                     return response.data;
                 })
                 .catch(async (error) => {
@@ -535,6 +536,7 @@ export class Order {
                 response.status,
                 JSON.stringify(response.data),
             );
+
 
         if (this.isVoting) {
             const confirmForm = createForm(
