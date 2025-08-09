@@ -160,12 +160,13 @@ export async function getDriverList(
         await ctx.chat.sendMessage(`TEST POINT: Looking drivers for city '${city.data[0].name_ru}' id='${city.data[0].id_city}'`);
     }
     let drivers;
+    const user = await ctx.usersList.pull(ctx.userID);
     if (await isNightTime(latitude, longitude)) {
         drivers = await getDriversForCityNight(
             ctx.auth,
             ctx.baseURL,
             city.data[0].id_city,
-            ctx.api_u_id,
+            user.api_u_id,
         );
     } else {
         drivers = await getDriversForCity(

@@ -98,9 +98,9 @@ export async function getDriversForCityNight(
             headers: postHeaders,
         },
     );
+    console.log(response.data,city_id,client_id);
     return response.data;
 }
-
 export async function isNightTime(lat: number, lng: number): Promise<boolean> {
     try {
         // 1. Получаем часовой пояс по координатам
@@ -120,3 +120,4 @@ export async function isNightTime(lat: number, lng: number): Promise<boolean> {
         return false;
     }
 }
+
