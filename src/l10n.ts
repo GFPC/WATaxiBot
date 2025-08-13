@@ -148,4 +148,5 @@ export const localizationNames = {
     noDriversAvailableAttempt: "wab_noDriversAvailableAttempt".toLowerCase(),
     noAdditionalOptions: "wab_noAdditionalOptions".toLowerCase(),
     errorStartPoint: "wab_errorStartPoint".toLowerCase(),
+    outOfTime: "wab_outOfTime".toLowerCase(),
 };

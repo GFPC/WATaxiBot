@@ -436,3 +436,22 @@ export class DriverSearchManager {
         }
     }
 }
+
+export function compareDateTimeWithWaitingList(
+    b_start_datetime: string,
+    b_max_waiting_list: { [key: string]: { additional: string; created: string } },
+): boolean {
+    try {
+        const startDate = new Date(b_start_datetime);
+        if (isNaN(startDate.getTime())) return false;
+        
+        const sumSeconds = (obj: any): number => 
+            <number>Object.values(obj).reduce((sum: number, item: any) =>
+                sum + (parseInt(item.additional) || 0) +
+                (Object.keys(item).some(k => k !== 'additional' && k !== 'created' && typeof item[k] === 'object') ? sumSeconds(item) : 0), 0);
+        
+        return new Date(startDate.getTime() + sumSeconds(b_max_waiting_list) * 1000) < new Date();
+    } catch {
+        return false;
+    }
+}

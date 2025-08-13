@@ -15,6 +15,7 @@ export enum BookingState {
     DriverArrived = "DURINGDRIVERARRIVED",
     DriverStarted = "DURINGDRIVERSTARTED",
     DriverCanceled = "DURINGDRIVERCANCELED",
+    OutOfTime = "OUTOFTIME",
 }
 
 export const postHeaders = {

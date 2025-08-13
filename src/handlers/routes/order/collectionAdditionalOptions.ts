@@ -25,31 +25,12 @@ export async function collectionAdditionalOptions(
     }
     const msg = ctx.message.body.replace(/\s{2,}/g, " ");
     let successFlag = true;
+
     for (let i = 0; i < msg.split(" ").length; i++) {
+        console.log(ctx.constants.data.data.booking_comments[msg.split(" ")[i]])
         if (
-            msg.split(" ")[i] in
-            [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "11",
-                "12",
-                "13",
-                "14",
-                "15",
-                "16",
-                "17",
-                "18",
-                "19",
-                "20",
-            ]
+            ctx.constants.data.data.booking_comments[msg.split(" ")[i]] !== undefined &&
+            !ctx.constants.data.data.booking_comments[msg.split(" ")[i]].options.hidden
         ) {
             state.data.additionalOptions.push(Number(msg.split(" ")[i]));
         } else {

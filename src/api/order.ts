@@ -12,6 +12,7 @@ import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { Context } from "../index";
 import { localizationNames } from "../l10n";
+import {compareDateTimeWithWaitingList} from "../utils/orderUtils";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -61,7 +62,7 @@ export class Order {
     private readonly adminAuth: AuthData;
     private readonly stateCallback: StateCallback;
     private readonly chatCallback: ChatCallback;
-    private readonly observerFrequency: number = 3000; // ms
+    private readonly observerFrequency: number = 5*1000; // ms
     isVoting: boolean;
     private socket?: WebSocket;
     id?: number;
@@ -73,7 +74,7 @@ export class Order {
     intervalId?: NodeJS.Timeout;
     state?: BookingState;
 
-    waitingTime: number = constants.maxWaitingTimeSecs;
+    waitingTime: number = 60;
     votingTimer: number = constants.maxVotingWaitingTimeSecs * 1000;
     timerMessage: Message | undefined;
     chat?: Chat | null;
@@ -148,9 +149,11 @@ export class Order {
         if (this.id === undefined) throw "The order has not yet been created";
 
         const data = await this.getData();
+        console.log('Data:', data)
         if (data === undefined) {
             return undefined
         }
+        console.log(data.data.booking[this.id])
 
         var state = Number(data.data.booking[this.id].b_state);
 
@@ -181,6 +184,14 @@ export class Order {
             if (data.data.booking[this.id].drivers?.length > 0) {
                 driver_state = 3;
             }
+        }
+
+        if(compareDateTimeWithWaitingList(
+            data.data.booking[this.id].b_start_datetime,
+            data.data.booking[this.id].b_max_waiting_list)
+        ) {
+            this.finish();
+            return BookingState.OutOfTime
         }
 
         if (state === 1 || state === 6) {
@@ -341,6 +352,7 @@ export class Order {
             );
         }
         const state = await this.getState();
+        console.log("STATE: ", state);
         if(state === undefined) return
 
         if (
@@ -383,9 +395,9 @@ export class Order {
                         await this.ctx?.chat?.sendMessage("GFP debugger -> API is down, error: " + response.data + "Состояние сброшено, попробуйте еще раз создать заказ");
                         await this.ctx?.storage?.delete(this.ctx?.userID ? this.ctx.userID : "");
                         await this.ctx?.chat?.sendMessage(this.ctx?.constants.getPrompt(localizationNames.defaultPrompt, this.ctx?.user.settings.lang.api_id) ?? "error");
-
+                        return undefined;
                     }
-                    return undefined;
+                    return response.data;
                 })
                 .catch(async (error) => {
                     console.log("EXTRAPOINT 0x00: ", error);
@@ -456,6 +468,7 @@ export class Order {
         }
         this.ctx = ctx;
         this.pricingModel = pricingModel;
+        this.waitingTime = maxWaitingSecs;
 
         const user_state: OrderMachine = await ctx.storage.pull(ctx.userID);
         console.log("APIORDER new priceModel", pricingModel);
@@ -573,8 +586,8 @@ export class Order {
         if (isNaN(this.id)) throw "Invalid id";
 
         await new Promise((f) => setTimeout(f, 1000));
-
-        this.startStateChecking();
+        console.log('startStateChecking');
+        await this.startStateChecking();
         if (this.isVoting) return b_driver_code;
         if (user_state.data.preferredDriversList) {
             await this.addOffer(user_state.data.preferredDriversList);

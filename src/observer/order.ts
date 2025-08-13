@@ -1,13 +1,15 @@
-import { ChatId, Client } from "whatsapp-web.js";
-import { Logger } from "winston";
-import { Order } from "../api/order";
-import { localizationNames } from "../l10n";
-import { BookingState } from "../api/general";
-import { Storage } from "../storage/storage";
-import { RideMachine } from "../states/machines/rideMachine";
-import { Constants } from "../api/constants";
-import { calculatePrice, formatPriceFormula } from "../handlers/order";
+import {ChatId, Client} from "whatsapp-web.js";
+import {Logger} from "winston";
+import {Order} from "../api/order";
+import {localizationNames} from "../l10n";
+import {BookingState} from "../api/general";
+import {Storage} from "../storage/storage";
+import {RideMachine} from "../states/machines/rideMachine";
+import {Constants} from "../api/constants";
+import {calculatePrice, formatPriceFormula} from "../handlers/order";
 import moment from "moment";
+import {getLocalizationText} from "../utils/textUtils";
+import {Context} from "../index";
 
 export class OrderObserverCallback {
     client: Client;
@@ -277,6 +279,15 @@ export class OrderObserverCallback {
                     );
                     state.state = "rate";
                     await this.storage.push(this.userId, state);
+                    break;
+                case BookingState.OutOfTime:
+                    await chat.sendMessage(
+                        getLocalizationText(order.ctx ?? {} as Context, localizationNames.outOfTime)
+                    )
+                    await chat.sendMessage(
+                        getLocalizationText(order.ctx ?? {} as Context,localizationNames.defaultPrompt)
+                    )
+                    await this.storage.delete(this.userId);
                     break;
                 default:
                     await chat.sendMessage(

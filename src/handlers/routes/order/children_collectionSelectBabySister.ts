@@ -112,12 +112,13 @@ export async function children_collectionSelectBabySister(
                     error: "when is undefined",
                 },
             };
+        console.log('Creating drive with b_waiting='+ctx.gfp_constants.data.maxDefaultDriveWaiting)
         await order.new(
             state.data.from,
             state.data.to,
             state.data.when,
             state.data.peopleCount,
-            constants.maxWaitingTimeSecs,
+            ctx.gfp_constants.data.maxDefaultDriveWaiting,
             ctx.chat,
             ctx,
             state.data.additionalOptions,
