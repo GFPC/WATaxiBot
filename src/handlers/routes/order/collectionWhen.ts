@@ -55,6 +55,7 @@ export async function collectionWhen(
         state.data.nextMessageForAI = response;
         state.data.nextStateForAI = "collectionOrderConfirm";
         await ctx.storage.push(ctx.userID, state);
+        await ctx.chat.sendMessage(response);
         return SuccessResponse;
     }
 
