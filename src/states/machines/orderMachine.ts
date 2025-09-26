@@ -37,6 +37,14 @@ export interface OrderMachine extends StateMachine {
         nextStateForAI?: string | null;
         aiMessage?: Message;
         nextMessageForAI?: string | null;
+        locationClasses?: string[];
+        carClassesRebase?: {
+            [key: string]: {
+                id: string;
+                locationClasses: string[];
+            };
+        }
+
 
         // Children
         childrenTime?: number;

@@ -363,6 +363,7 @@ export class Order {
         }
 
         if (state !== this.state) {
+            console.log("Old state: ", this.state, "New state: ", state);
             const oldState = this.state;
             this.state = state;
             await this.stateCallback(this, oldState ?? state, state);
@@ -515,6 +516,10 @@ export class Order {
         }
         if (user_state.data.carClass) {
             data.b_car_class = user_state.data.carClass;
+            console.log("Using car classes: " + user_state.data.carClass)
+        } else if (user_state.data.locationClasses) {
+            data.b_location_class = user_state.data.locationClasses;
+            console.log("Using location classes: " + user_state.data.locationClasses)
         }
         if (user_state.data.preferredDriversList) {
             data.b_only_offer = 1;

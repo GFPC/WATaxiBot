@@ -37,7 +37,11 @@ export class Constants {
             lang_vls: {
                 [key: string] : { [key: string]: string }
             };
-            car_classes: { [key: string]: any };
+            car_classes: { [key: string]: {
+                ru: string;
+                booking_location_classes: string[];
+                [key: string]: any
+            } };
             booking_comments: { [key: string]: any };
             car_makes: { [key: string]: any };
             site_constants: { gfp_taxi_bot_settings: { value: string }; pricingModels: { value: string }; waiting_interval_or?: any };

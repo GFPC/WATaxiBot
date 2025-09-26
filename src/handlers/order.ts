@@ -434,13 +434,13 @@ export async function OrderHandler(ctx: Context) {
         "collectionCarCode",
         "collectionShowAdditionalOptions",
         "collectionAdditionalOptions",
-        "collectionCarClass",
+        //"collectionCarClass",
         "collectionOrderConfirm",
         "children_collectionSelectBabySister",
         "children_collectionChildrenCount",
         "children_collectionTime"
     ];
-    console.log(state.state, state.data.priceModel);
+    //console.log(state.state, state.data.priceModel);
     if (
         exitAvailableStates.includes(state.state) &&
         ctx.message.body.toLowerCase() === "0"

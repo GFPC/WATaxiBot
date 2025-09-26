@@ -7,23 +7,16 @@ export async function collectionCarClass(
     ctx: Context,
     state: OrderMachine,
 ): Promise<HandlerRouteResponse> {
-    if (ctx.message.body === "00") {
-        state.state = "collectionShowAdditionalOptions";
-        state.data.nextStateForAI = "collectionShowAdditionalOptions";
-        state.data.nextMessageForAI = ctx.constants.getPrompt(
-            localizationNames.needAdditionalOptionsQuestion,
-            ctx.user.settings.lang.api_id,
-        );
-        await ctx.chat.sendMessage(
-            ctx.constants.getPrompt(
-                localizationNames.needAdditionalOptionsQuestion,
-                ctx.user.settings.lang.api_id,
-            ),
-        );
-        await ctx.storage.push(ctx.userID, state);
-        return SuccessResponse;
-    }
-    if (!ctx.constants.data.data.car_classes[ctx.message.body]) {
+    console.log('received classes', state.data.locationClasses)
+    if(ctx.message.body === "00" && state.data.carClassesRebase){
+        if (JSON.stringify(state.data.locationClasses) === JSON.stringify(['1','2','3'])) {
+            state.data.carClass = null;
+            state.data.locationClasses = undefined;
+        } else if (JSON.stringify(state.data.locationClasses) === JSON.stringify(['2','3'])) {
+            state.data.carClass = null;
+            state.data.locationClasses = ['2','3'];
+        }
+    } else if (state.data.carClassesRebase && !state.data.carClassesRebase[ctx.message.body]) {
         await ctx.chat.sendMessage(
             ctx.constants.getPrompt(
                 localizationNames.commandNotFound,
@@ -31,8 +24,9 @@ export async function collectionCarClass(
             ),
         );
         return SuccessResponse;
+    } else {
+        state.data.carClass = ctx.message.body;
     }
-    state.data.carClass = ctx.message.body;
     state.state = "collectionShowAdditionalOptions";
     state.data.nextMessageForAI = ctx.constants.getPrompt(
         localizationNames.needAdditionalOptionsQuestion,
@@ -45,5 +39,6 @@ export async function collectionCarClass(
             ctx.user.settings.lang.api_id,
         ),
     );
+    console.log('TEST-CCCL-MAP:\ncarClasses: ' + state.data.carClass + '\nlocationClasses: ' + state.data.locationClasses);
     return SuccessResponse;
 }

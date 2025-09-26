@@ -131,6 +131,7 @@ export async function collectionOrderConfirm(
         const newState = newVote(order);
 
         await ctx.storage.push(ctx.userID, newState);
+        return SuccessResponse;
     }
 
     const order = new Order(

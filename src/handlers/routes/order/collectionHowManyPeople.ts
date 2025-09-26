@@ -70,21 +70,36 @@ export async function collectionHowManyPeople(
             ),
         );
         return SuccessResponse;
-    }
-
-    state.state = "collectionShowAdditionalOptions";
-    state.data.nextMessageForAI = ctx.constants.getPrompt(
-        localizationNames.needAdditionalOptionsQuestion,
-        ctx.user.settings.lang.api_id,
-    );
-    state.data.nextStateForAI = "collectionShowAdditionalOptions";
-    await ctx.storage.push(ctx.userID, state);
-
-    await ctx.chat.sendMessage(
-        ctx.constants.getPrompt(
+    } else if(ctx.configName === "gruzvill") {
+        state.state = "collectionShowCarClass";
+        state.data.nextMessageForAI = ctx.constants.getPrompt(
+            localizationNames.askShowCarClass,
+            ctx.user.settings.lang.api_id,
+        );
+        state.data.nextStateForAI = "collectionShowCarClass";
+        await ctx.storage.push(ctx.userID, state);
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.askShowCarClass,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        return SuccessResponse;
+    } else {
+        state.state = "collectionShowAdditionalOptions";
+        state.data.nextMessageForAI = ctx.constants.getPrompt(
             localizationNames.needAdditionalOptionsQuestion,
             ctx.user.settings.lang.api_id,
-        ),
-    );
-    return SuccessResponse;
+        );
+        state.data.nextStateForAI = "collectionShowAdditionalOptions";
+        await ctx.storage.push(ctx.userID, state);
+
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.needAdditionalOptionsQuestion,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        return SuccessResponse;
+    }
 }
