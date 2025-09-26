@@ -334,7 +334,7 @@ export async function calculateOrderPrice(
         };
     } catch (error) {
         console.error("Price calculation error:", error);
-        throw new Error("ROUTE_SERVICE_UNAVAILABLE");
+        throw new Error("ROUTE_SERVICE_UNAVAILABLE, " + error);
     }
 }
 
