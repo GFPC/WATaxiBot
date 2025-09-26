@@ -300,7 +300,8 @@ export async function calculateOrderPrice(
         const timeRatio = isDayTime
             ? priceModel.constants.time_ratio.day
             : priceModel.constants.time_ratio.night;
-        const carClassRatio = carClass
+        console.log(`searching ${carClass} in ${JSON.stringify(priceModel)}`);
+        const carClassRatio = carClass && priceModel.constants.car_class_ratio
             ? priceModel.constants.car_class_ratio[carClass]
             : 1;
         const params = {

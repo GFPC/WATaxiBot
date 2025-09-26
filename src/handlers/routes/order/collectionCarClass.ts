@@ -25,7 +25,11 @@ export async function collectionCarClass(
         );
         return SuccessResponse;
     } else {
-        state.data.carClass = ctx.message.body;
+        if (state.data.carClassesRebase) {
+            state.data.carClass = state.data.carClassesRebase[ctx.message.body].id;
+        } else {
+            state.data.carClass = ctx.message.body;
+        }
     }
     state.state = "collectionShowAdditionalOptions";
     state.data.nextMessageForAI = ctx.constants.getPrompt(
