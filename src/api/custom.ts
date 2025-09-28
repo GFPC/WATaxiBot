@@ -18,7 +18,7 @@ export async function isRouteInCity(
     // Нормализуем возможные варианты структуры ответа
     const startData = (startPointPolygons && startPointPolygons.data) ? startPointPolygons.data : startPointPolygons;
     const endData = (endPointPolygons && endPointPolygons.data) ? endPointPolygons.data : endPointPolygons;
-    console.log('Polygons: ',startData.data.map_place_polygons, endData.data.map_place_polygons);
+    console.log('Polygons: ',startData.data.map_place_polygons, endData.data.map_place_polygons,start, end);
 
     if (!startData || !endData) {
         return false;
