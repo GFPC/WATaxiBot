@@ -21,7 +21,7 @@ export async function isRouteInCity(
     console.log('Polygons: ',startData.data.map_place_polygons, endData.data.map_place_polygons);
 
     if (!startData || !endData) {
-        throw "Не удалось получить полигон";
+        return false;
     }
 
     const citiesIdStart = Object.values(startData.data.map_place_polygons || {}).map((polygon: any) => polygon.city) || [];
