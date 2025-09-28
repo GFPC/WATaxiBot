@@ -49,23 +49,33 @@ export async function collectionShowCarClass(
             await ctx.storage.push(ctx.userID, state);
             await ctx.chat.sendMessage(text);
         }
-        } else if (ctx.message.body === "2") {
-            state.state = "collectionShowAdditionalOptions";
-            state.data.nextStateForAI = "collectionShowAdditionalOptions";
-            await ctx.chat.sendMessage(
-                ctx.constants.getPrompt(
-                    localizationNames.needAdditionalOptionsQuestion,
-                    ctx.user.settings.lang.api_id,
-                ),
-            );
-        } else {
-            await ctx.chat.sendMessage(
-                ctx.constants.getPrompt(
-                    localizationNames.commandNotFound,
-                    ctx.user.settings.lang.api_id,
-                ),
-            );
-            return SuccessResponse;
+    } else if (ctx.message.body === "2") {state.state = "collectionShowAdditionalOptions";
+        if(ctx.configName === "gruzvill") {
+            if(state.data.locationClasses && '1' in state.data.locationClasses){
+                //petti
+                state.data.carClass = '50'
+            } else {
+                //grand
+                state.data.carClass = '51'
+            }
+
         }
+        state.state = "collectionShowAdditionalOptions";
+        state.data.nextStateForAI = "collectionShowAdditionalOptions";
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.needAdditionalOptionsQuestion,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+    } else {
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.commandNotFound,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
         return SuccessResponse;
+    }
+    return SuccessResponse;
 }
