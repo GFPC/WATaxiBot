@@ -149,4 +149,8 @@ export const localizationNames = {
     noAdditionalOptions: "wab_noAdditionalOptions".toLowerCase(),
     errorStartPoint: "wab_errorStartPoint".toLowerCase(),
     outOfTime: "wab_outOfTime".toLowerCase(),
+
+    public_offers_settings: "wab_public_offers_settings".toLowerCase(),
+    privacy_policy_settings: "wab_privacy_policy_settings".toLowerCase(),
+    legal_information_settings: "wab_legal_information_settings".toLowerCase(),
 };

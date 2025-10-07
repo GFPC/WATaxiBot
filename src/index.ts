@@ -447,7 +447,6 @@ async function createBot(botId: string) {
             baseURL: urlManager[botId],
             configName: ServiceMap[botId],
         };
-        console.log(ctx.gfp_constants)
         const handler = await router(ctx, userList, aiStorage, adminAuth);
         await handler(ctx);
         try {

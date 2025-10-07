@@ -5,9 +5,7 @@ import {
 } from "../states/machines/registerMachine";
 import { localizationNames } from "../l10n";
 import { changeLang, register } from "../api/user";
-import { constants } from "../constants";
 import { formatString } from "../utils/formatter";
-import { readFileSync } from "fs";
 
 type LanguageCodeData = {
     id: string;
@@ -21,26 +19,56 @@ const languages: LanguageCodeListData = [
         id: "1",
         native: "Русский",
         api_id: "1",
-        iso: "ru",
+        iso: "ru"
     },
     {
         id: "2",
         native: "English",
         api_id: "2",
-        iso: "en",
+        iso: "en"
     },
     {
         id: "3",
-        native: "العربية",
+        native: "español",
         api_id: "3",
-        iso: "ar",
+        iso: "es"
     },
     {
         id: "4",
         native: "Français",
         api_id: "4",
-        iso: "fr",
+        iso: "fr"
     },
+    {
+        id: "5",
+        native: "الدارجة المغربية",
+        api_id: "24",
+        iso: "ary-Arab"
+    },
+    {
+        id: "6",
+        native: "Darija Maġribiya",
+        api_id: "25",
+        iso: "ary-Latn"
+    },
+    {
+        id: "7",
+        native: "ⵜⴰⵎⴰⵣⵉⵖⵜ",
+        api_id: "26",
+        iso: "zgh-Tfng"
+    },
+    {
+        id: "8",
+        native: "Tamazight",
+        api_id: "27",
+        iso: "zgh-Latn"
+    },
+    {
+        id: "9",
+        native: "العربية",
+        api_id: "28",
+        iso: "ar-Arab"
+    }
 ];
 
 export async function RegisterHandler(ctx: Context) {
@@ -408,8 +436,6 @@ export async function RegisterHandler(ctx: Context) {
 
         case "collectionLanguage":
             if (languages.map((item) => item.id).includes(ctx.message.body)) {
-                state.state = "collectionPublicOffers";
-
                 const selectedLang = languages.find(
                     (item) => item.id == ctx.message.body,
                 );
@@ -423,23 +449,35 @@ export async function RegisterHandler(ctx: Context) {
                 }
                 state.data.lang.iso = selectedLang?.iso ?? "en";
                 state.data.lang.api_id = selectedLang?.api_id ?? "2";
-                state.data.docs.publicOffersMessage =
+
+                if(ctx.configName === "gruzvill") {
+                    state.state = "collectionFullName";
                     await ctx.chat.sendMessage(
-                        ctx.constants
-                            .getPrompt(
-                                localizationNames.public_offers,
-                                state.data.lang.api_id,
-                            )
-                            .replace("%doc%", "")
-                            .replace(
-                                "%action%",
-                                ctx.constants.getPrompt(
-                                    localizationNames.expand_doc,
-                                    state.data.lang.api_id,
-                                ),
-                            )
-                            .replace("%accept%", ""),
+                        ctx.constants.getPrompt(
+                            localizationNames.sendFullName,
+                            state.data.lang.api_id,
+                        ),
                     );
+                } else {
+                    state.state = "collectionPublicOffers";
+                    state.data.docs.publicOffersMessage =
+                        await ctx.chat.sendMessage(
+                            ctx.constants
+                                .getPrompt(
+                                    localizationNames.public_offers,
+                                    state.data.lang.api_id,
+                                )
+                                .replace("%doc%", "")
+                                .replace(
+                                    "%action%",
+                                    ctx.constants.getPrompt(
+                                        localizationNames.expand_doc,
+                                        state.data.lang.api_id,
+                                    ),
+                                )
+                                .replace("%accept%", ""),
+                        );
+                }
                 await ctx.storage.push(ctx.userID, state);
                 break;
             } else {

@@ -20,27 +20,105 @@ const languages: LanguageCodeListData = [
         id: "1",
         native: "Русский",
         api_id: "1",
-        iso: "ru",
+        iso: "ru"
     },
     {
         id: "2",
         native: "English",
         api_id: "2",
-        iso: "en",
+        iso: "en"
     },
     {
         id: "3",
-        native: "العربية",
+        native: "español",
         api_id: "3",
-        iso: "ar",
+        iso: "es"
     },
     {
         id: "4",
         native: "Français",
         api_id: "4",
-        iso: "fr",
+        iso: "fr"
     },
+    {
+        id: "5",
+        native: "الدارجة المغربية",
+        api_id: "24",
+        iso: "ary-Arab"
+    },
+    {
+        id: "6",
+        native: "Darija Maġribiya",
+        api_id: "25",
+        iso: "ary-Latn"
+    },
+    {
+        id: "7",
+        native: "ⵜⴰⵎⴰⵣⵉⵖⵜ",
+        api_id: "26",
+        iso: "zgh-Tfng"
+    },
+    {
+        id: "8",
+        native: "Tamazight",
+        api_id: "27",
+        iso: "zgh-Latn"
+    },
+    {
+        id: "9",
+        native: "العربية",
+        api_id: "28",
+        iso: "ar-Arab"
+    }
 ];
+async function sendSettingMenu(ctx: Context, user: any) {
+    await ctx.chat.sendMessage(
+        ctx.constants
+            .getPrompt(
+                localizationNames.settingsMenu,
+                ctx.user.settings.lang.api_id,
+            )
+            .replace(
+                "%language%",
+                user.settings.lang.native +
+                "(" +
+                user.settings.lang.iso +
+                ")",
+            )
+            .replace(
+                "%refCode%",
+                searchRefCodeByREfID(user.referrer_u_id, ctx) ??
+                "---",
+            )
+            .replace("%selfRefCode%", user.ref_code ?? "---")
+            .replace(
+                "%prevRefCodeHint%",
+                user.referrer_u_id === "666"
+                    ? ctx.constants
+                    .getPrompt(
+                        localizationNames.settingsPreviousReferralCode,
+                        ctx.user.settings.lang.api_id,
+                    )
+                    .replace(
+                        "%code%",
+                        user.u_details?.refCodeBackup,
+                    ) + "\n"
+                    : "",
+            )
+            .replace(
+                "%testModeHint%",
+                user.referrer_u_id === "666"
+                    ? ctx.constants.getPrompt(
+                        localizationNames.settingsTestModeActive,
+                        ctx.user.settings.lang.api_id,
+                    )
+                    : ctx.constants.getPrompt(
+                        localizationNames.settingsTestModeHint,
+                        ctx.user.settings.lang.api_id,
+                    ),
+            ),
+    );
+}
 
 export async function SettingsHandler(ctx: Context): Promise<void> {
     const state = await ctx.storage.pull(ctx.userID);
@@ -106,7 +184,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     await ctx.chat.sendMessage(
                         ctx.constants
                             .getPrompt(
-                                localizationNames.legal_information,
+                                localizationNames.legal_information_settings,
                                 ctx.user.settings.lang.api_id,
                             )
                             .replace("%doc%", "")
@@ -117,13 +195,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                                     ctx.user.settings.lang.api_id,
                                 ),
                             )
-                            .replace(
-                                "%accept%",
+                            .replace("%next%",
                                 ctx.constants.getPrompt(
                                     localizationNames.next_step,
                                     ctx.user.settings.lang.api_id,
-                                ),
-                            ),
+                                )
+                            )
                     );
                 state.state = "collectionLegalInformation";
                 await ctx.storage.push(ctx.userID, state);
@@ -263,6 +340,58 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ),
                 );
                 state.state = "deleteAccount";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            case "5":
+                state.data.docs.privacyPolicyMessage =
+                    await ctx.chat.sendMessage(
+                        ctx.constants
+                            .getPrompt(
+                                localizationNames.privacy_policy_settings,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            .replace("%doc%", "")
+                            .replace(
+                                "%action%",
+                                ctx.constants.getPrompt(
+                                    localizationNames.expand_doc,
+                                    ctx.user.settings.lang.api_id,
+                                ),
+                            )
+                            .replace("%next%",
+                                ctx.constants.getPrompt(
+                                    localizationNames.next_step,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                            )
+                    );
+                state.state = "collectionPrivacyPolicy";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            case "6":
+                state.data.docs.publicOffersMessage =
+                    await ctx.chat.sendMessage(
+                        ctx.constants
+                            .getPrompt(
+                                localizationNames.public_offers_settings,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            .replace("%doc%", "")
+                            .replace(
+                                "%action%",
+                                ctx.constants.getPrompt(
+                                    localizationNames.expand_doc,
+                                    ctx.user.settings.lang.api_id,
+                                ),
+                            )
+                            .replace("%next%",
+                                ctx.constants.getPrompt(
+                                    localizationNames.next_step,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                            )
+                    );
+                state.state = "collectionPublicOffers";
                 await ctx.storage.push(ctx.userID, state);
                 break;
             default:
@@ -798,52 +927,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             }
         case "collectionLegalInformation":
             if (ctx.message.body === "1") {
-                await ctx.chat.sendMessage(
-                    ctx.constants
-                        .getPrompt(
-                            localizationNames.settingsMenu,
-                            ctx.user.settings.lang.api_id,
-                        )
-                        .replace(
-                            "%language%",
-                            user.settings.lang.native +
-                                "(" +
-                                user.settings.lang.iso +
-                                ")",
-                        )
-                        .replace(
-                            "%refCode%",
-                            searchRefCodeByREfID(user.referrer_u_id, ctx) ??
-                                "---",
-                        )
-                        .replace("%selfRefCode%", user.ref_code ?? "---")
-                        .replace(
-                            "%prevRefCodeHint%",
-                            user.referrer_u_id === "666"
-                                ? ctx.constants
-                                      .getPrompt(
-                                          localizationNames.settingsPreviousReferralCode,
-                                          ctx.user.settings.lang.api_id,
-                                      )
-                                      .replace(
-                                          "%code%",
-                                          user.u_details?.refCodeBackup,
-                                      ) + "\n"
-                                : "",
-                        )
-                        .replace(
-                            "%testModeHint%",
-                            user.referrer_u_id === "666"
-                                ? ctx.constants.getPrompt(
-                                      localizationNames.settingsTestModeActive,
-                                      ctx.user.settings.lang.api_id,
-                                  )
-                                : ctx.constants.getPrompt(
-                                      localizationNames.settingsTestModeHint,
-                                      ctx.user.settings.lang.api_id,
-                                  ),
-                        ),
-                );
+                await sendSettingMenu(ctx,user);
 
                 await ctx.storage.push(ctx.userID, newSettings());
                 break;
@@ -854,7 +938,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await state.data.docs.legalInformationMessage?.edit(
                     ctx.constants
                         .getPrompt(
-                            localizationNames.legal_information,
+                            localizationNames.legal_information_settings,
                             ctx.user.settings.lang.api_id,
                         )
                         .replace(
@@ -876,7 +960,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                             ),
                         )
                         .replace(
-                            "%accept%",
+                            "%next%",
                             ctx.constants.getPrompt(
                                 localizationNames.next_step,
                                 ctx.user.settings.lang.api_id,
@@ -891,6 +975,127 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ctx.constants.getPrompt(
                         localizationNames.commandNotFound,
                         state.data.lang.api_id,
+                    ),
+                );
+            }
+            break;
+
+        case "collectionPrivacyPolicy":
+            if (ctx.message.body === "1") {
+                await sendSettingMenu(ctx,user);
+
+                await ctx.storage.push(ctx.userID, newSettings());
+                break;
+            } else if (ctx.message.body === "3") {
+                state.data.docs.privacyPolicyExpanded =
+                    !state.data.docs.privacyPolicyExpanded;
+                await new Promise((f) =>
+                    setTimeout(
+                        f,
+                        state?.data.docs.privacyPolicyExpanded ? 500 : 500,
+                    ),
+                );
+
+                await state.data.docs.privacyPolicyMessage?.edit(
+                    ctx.constants
+                        .getPrompt(
+                            localizationNames.privacy_policy_settings,
+                            ctx.user.settings.lang.api_id,
+                        )
+                        .replace(
+                            "%doc%",
+                            state.data.docs.privacyPolicyExpanded
+                                ? ctx.constants.getPrompt(
+                                    localizationNames.privacy_policy_big,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                                : "",
+                        )
+                        .replace(
+                            "%action%",
+                            ctx.constants.getPrompt(
+                                state.data.docs.privacyPolicyExpanded
+                                    ? localizationNames.collapse_doc
+                                    : localizationNames.expand_doc,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        )
+                        .replace("%next%",
+                            ctx.constants.getPrompt(
+                                localizationNames.next_step,
+                                ctx.user.settings.lang.api_id,
+                            )
+                        )
+                );
+
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            } else {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.commandNotFound,
+                        ctx.user.settings.lang.api_id,
+                    ),
+                );
+            }
+            break;
+
+        case "collectionPublicOffers":
+            if (ctx.message.body === "1") {
+                await sendSettingMenu(ctx,user);
+
+                await ctx.storage.push(ctx.userID, newSettings());
+                break;
+            } else if (ctx.message.body === "3") {
+                state.data.docs.publicOffersExpanded =
+                    !state.data.docs.publicOffersExpanded;
+                await new Promise((f) =>
+                    setTimeout(
+                        f,
+                        state?.data.docs.publicOffersExpanded ? 500 : 500,
+                    ),
+                );
+                console.log('111111111',state.data.docs.publicOffersMessage)
+
+                await state.data.docs.publicOffersMessage?.edit(
+                    ctx.constants
+                        .getPrompt(
+                            localizationNames.public_offers_settings,
+                            ctx.user.settings.lang.api_id,
+                        )
+                        .replace(
+                            "%doc%",
+                            state.data.docs.publicOffersExpanded
+                                ? ctx.constants.getPrompt(
+                                    localizationNames.public_offers_big,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                                : "",
+                        )
+                        .replace(
+                            "%action%",
+                            ctx.constants.getPrompt(
+                                state.data.docs.publicOffersExpanded
+                                    ? localizationNames.collapse_doc
+                                    : localizationNames.expand_doc,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        )
+                        .replace("%next%",
+                            ctx.constants.getPrompt(
+                                localizationNames.next_step,
+                                ctx.user.settings.lang.api_id,
+                            )
+                        )
+                );
+
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            } else {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.commandNotFound,
+                        ctx.user.settings.lang.api_id,
                     ),
                 );
             }

@@ -52,10 +52,10 @@ export async function collectionShowCarClass(
     } else if (ctx.message.body === "2") {state.state = "collectionShowAdditionalOptions";
         if(ctx.configName === "gruzvill") {
             if(state.data.locationClasses && '1' in state.data.locationClasses){
-                //petti
+                // petti
                 state.data.carClass = '50'
             } else {
-                //grand
+                // grand
                 state.data.carClass = '51'
             }
 
