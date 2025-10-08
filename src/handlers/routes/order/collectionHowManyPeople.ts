@@ -72,19 +72,21 @@ export async function collectionHowManyPeople(
         );
         return SuccessResponse;
     } else if(ctx.configName === "gruzvill") {
+        let inCityFlag;
         if (!state.data.from.latitude || !state.data.from.longitude || !state.data.to.latitude || !state.data.to.longitude) {
             console.log(state.data.from, state.data.to)
-            throw "Не указаны координаты";
+            inCityFlag = false;
+        } else {
+            const startPointCoords = {
+                lat: state.data.from.latitude,
+                lon: state.data.from.longitude,
+            };
+            const endPointCoords = {
+                lat: state.data.to.latitude,
+                lon: state.data.to.longitude,
+            };
+            inCityFlag = await isRouteInCity(startPointCoords, endPointCoords);
         }
-        const startPointCoords = {
-            lat: state.data.from.latitude,
-            lon: state.data.from.longitude,
-        };
-        const endPointCoords = {
-            lat: state.data.to.latitude,
-            lon: state.data.to.longitude,
-        };
-        const inCityFlag = await isRouteInCity(startPointCoords, endPointCoords);
         //
 
         if(inCityFlag){
