@@ -75,7 +75,7 @@ export async function collectionHowManyPeople(
         let inCityFlag;
         if (!state.data.from.latitude || !state.data.from.longitude || !state.data.to.latitude || !state.data.to.longitude) {
             console.log(state.data.from, state.data.to)
-            inCityFlag = false;
+            inCityFlag = true;
         } else {
             const startPointCoords = {
                 lat: state.data.from.latitude,
