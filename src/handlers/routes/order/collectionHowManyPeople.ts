@@ -98,6 +98,7 @@ export async function collectionHowManyPeople(
         }
 
         console.log('CITY FLAG: '+inCityFlag, state.data.locationClasses);
+        console.log('Coords not recognized: '+coordsNotRecognized);
 
         const car_classes = Object.fromEntries(
             Object.entries(ctx.constants.data.data.car_classes).filter(([key, value]) => {
@@ -105,7 +106,7 @@ export async function collectionHowManyPeople(
                 return state.data.locationClasses.some(lc => value.booking_location_classes.includes(lc));
             })
         );
-        if(Object.values(car_classes).length > 1 || coordsNotRecognized) {
+        if(Object.values(car_classes).length > 1 && !coordsNotRecognized) {
             state.state = "collectionShowCarClass";
             state.data.nextMessageForAI = ctx.constants.getPrompt(
                 localizationNames.askShowCarClass,
@@ -118,6 +119,43 @@ export async function collectionHowManyPeople(
                     ctx.user.settings.lang.api_id,
                 ),
             );
+        } else if(coordsNotRecognized) {
+            const car_classes = Object.fromEntries(
+                Object.entries(ctx.constants.data.data.car_classes).filter(([key, value]) => {
+                    if (!state.data.locationClasses) return false;
+                    return state.data.locationClasses.some(lc => value.booking_location_classes.includes(lc));
+                })
+            );
+
+            var carClassesRebase: {
+                [key: string]: {
+                    id: string;
+                    locationClasses: string[];
+                };
+            } = {}
+            let text = ctx.constants.getPrompt(
+                localizationNames.selectCarClass,
+                ctx.user.settings.lang.api_id,
+            );
+            var counter = 1
+            for (let i in car_classes) {
+                carClassesRebase[counter.toString()] = {
+                    id: i,
+                    locationClasses: car_classes[i].booking_location_classes
+                }
+                text +=
+                    counter.toString() +
+                    ". " +
+                    car_classes[i][ctx.user.settings.lang.iso] +
+                    "\n";
+                counter++
+            }
+            state.data.carClassesRebase = carClassesRebase
+            state.state = "collectionCarClass";
+            state.data.nextStateForAI = "collectionCarClass";
+            state.data.nextMessageForAI = text;
+            await ctx.storage.push(ctx.userID, state);
+            await ctx.chat.sendMessage(text);
         } else {
             if(Object.values(car_classes).length === 1) {
                 state.data.carClass = Object.keys(car_classes)[0];
