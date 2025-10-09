@@ -73,9 +73,11 @@ export async function collectionHowManyPeople(
         return SuccessResponse;
     } else if(ctx.configName === "gruzvill") {
         let inCityFlag;
+        let coordsNotRecognized = false;
         if (!state.data.from.latitude || !state.data.from.longitude || !state.data.to.latitude || !state.data.to.longitude) {
             console.log(state.data.from, state.data.to)
             inCityFlag = true;
+            coordsNotRecognized = true;
         } else {
             const startPointCoords = {
                 lat: state.data.from.latitude,
@@ -103,7 +105,7 @@ export async function collectionHowManyPeople(
                 return state.data.locationClasses.some(lc => value.booking_location_classes.includes(lc));
             })
         );
-        if(Object.values(car_classes).length > 1) {
+        if(Object.values(car_classes).length > 1 || coordsNotRecognized) {
             state.state = "collectionShowCarClass";
             state.data.nextMessageForAI = ctx.constants.getPrompt(
                 localizationNames.askShowCarClass,
