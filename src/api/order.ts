@@ -819,12 +819,39 @@ export class Order {
             this.ctx?.user.settings.lang.api_id,
         );
         if (driver.data.data.user[driver_u_id].u_details?.carMark) {
-            makeAndModel = `${this.ctx?.constants.data.data.car_makes[driver.data.data.user[driver_u_id].u_details?.carMark][this.ctx?.user.settings.lang.iso]}`;
+
+            let rootLang: string | undefined = undefined;
+            if(this.ctx?.constants.data.data.langs){
+                for(let i in Object.keys(this.ctx?.constants.data.data.langs)){
+                    if(this.ctx?.constants.data.data.langs[i].iso==="en"){
+                        rootLang = i
+                        break
+                    }
+                }
+            }
+            if(!rootLang){
+                rootLang = this.ctx?.constants.data.default_lang ?? "0"
+            }
+
+            let make = this.ctx?.constants.data.data.car_makes[driver.data.data.user[driver_u_id].u_details?.carMark][this.ctx?.user.settings.lang.iso] ??
+                this.ctx?.constants.data.data.car_makes[driver.data.data.user[driver_u_id].u_details?.carMark][rootLang];
+            let model = this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][this.ctx?.user.settings.lang.iso] ??
+                this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][rootLang];
+
+            makeAndModel = `${make}`;
             if (driver.data.data.user[driver_u_id].u_details?.carModel) {
-                makeAndModel += ` ${this.ctx?.constants.data.data.car_models[driver.data.data.user[driver_u_id].u_details?.carModel][this.ctx?.user.settings.lang.iso]}`;
+                makeAndModel += ` ${model}`;
             } else {
                 makeAndModel += "";
             }
+        }
+        let phone = driver.data.data.user[driver_u_id].u_phone;
+        if(!phone){
+            phone = "-"
+        } else if (phone.startsWith("+11")) {
+            phone = phone.replace("+11", "+34");
+        } else if (!phone.startsWith("+")) {
+            phone = "+" + phone;
         }
 
         const data = {
@@ -845,13 +872,8 @@ export class Order {
                   ),
             plate: car.data.data.car[car_u_id].registration_plate,
             model: makeAndModel || "",
-            phone: driver.data.data.user[driver_u_id].u_phone.startsWith("+")
-                ? driver.data.data.user[driver_u_id].u_phone
-                : "+" + driver.data.data.user[driver_u_id].u_phone,
+            phone: phone
         };
-        if (data.phone.startsWith("+11")) {
-            data.phone = data.phone.replace("+11", "+34");
-        }
         return data;
     }
 }
