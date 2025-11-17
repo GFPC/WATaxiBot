@@ -62,6 +62,12 @@ export interface OrderMachine extends StateMachine {
         selectedDrivers?: string[];
         waitingForDrivers?: boolean;
         driverSearchManager: DriverSearchManager;
+
+        //truck
+        truck_sizetype?: string;
+        truck_drivetype?: string;
+        truck_floornumber?: string;
+        truck_count?: string;
     };
 }
 

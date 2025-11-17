@@ -16,7 +16,8 @@ export interface RideMachine extends StateMachine {
         | "rate"
         | "cancelReason"
         | "comment"
-        | "extendStartTips";
+        | "extendStartTips"
+        | "truckSelectPrefer";
     data: {
         isCollectionReason: boolean;
         chatModeActive: boolean;

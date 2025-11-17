@@ -5,6 +5,7 @@ import { OrderObserverCallback } from "../observer/order";
 import { Order } from "../api/order";
 import { constants } from "../constants";
 import { RideHandler } from "./ride";
+import {getLocalizationText} from "../utils/textUtils";
 
 export async function VotingHandler(ctx: Context) {
     let state = await ctx.storage.pull(ctx.userID);
@@ -78,6 +79,22 @@ export async function VotingHandler(ctx: Context) {
                     ),
                 );
                 state.state = "extendStartTips";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            } else if(ctx.message.body.trim() == "4") {
+                if (ctx.configName !== "truck") {
+                    await ctx.chat.sendMessage(
+                        ctx.constants.getPrompt(
+                            localizationNames.enterStartPriceCommandNotFoundRide,
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    );
+                    return;
+                }
+                await ctx.chat.sendMessage(
+                    getLocalizationText(ctx, localizationNames.truckEnterDriverNumber)
+                );
+                state.state = "truckSelectPrefer";
                 await ctx.storage.push(ctx.userID, state);
                 break;
             } else {
@@ -277,6 +294,38 @@ export async function VotingHandler(ctx: Context) {
                     ctx.user.settings.lang.api_id,
                 ),
             );
+            break;
+        case "truckSelectPrefer":
+            if (ctx.message.body == "отмена") {
+                await ctx.chat.sendMessage(
+                    getLocalizationText(ctx, localizationNames.truckContinueSearchDriversResponses)
+                );
+                state.state = "searchCar";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            }
+            if (ctx.configName !== "truck") {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.enterStartPriceCommandNotFoundRide,
+                        ctx.user.settings.lang.api_id,
+                    ),
+                );
+                break
+            }
+            const select = ctx.message.body;
+            if(!state.data.order.truckDriversWatcher.driversMap[select]) {
+                await ctx.chat.sendMessage(
+                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
+                )
+                break
+            }
+
+            await ctx.chat.sendMessage(
+                getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
+            );
+            state.data.order.truckDriversWatcher?.stop()
+            await state.data.order.setPerformerAsDriver(select);
             break;
         default:
             break;

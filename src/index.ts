@@ -116,6 +116,8 @@ export interface Context {
     configName: string;
 }
 
+
+
 export type Handler = (ctx: Context) => Promise<void>;
 async function router(
     ctx: Context,
@@ -148,6 +150,7 @@ async function router(
             if (!userData) {
                 return RegisterHandler;
             }
+            console.log(userData)
             await userList.push(ctx.userID, userData);
             ctx.api_u_id = Object.keys(userData)[0];
         }
@@ -405,6 +408,7 @@ async function createBot(botId: string) {
             return;
         }
         let userId = msg.from;
+        //userId="3532523513515213465134513@c.us";
         if (Object.values(ServiceMap).includes(userId)) {
             return;
         } // hide messages from other bots

@@ -13,6 +13,8 @@ import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { Context } from "../index";
 import { localizationNames } from "../l10n";
 import {compareDateTimeWithWaitingList} from "../utils/orderUtils";
+import {TruckDriverWatcher} from "../utils/specific/truck/truckDriverWatcher";
+import {getLocalizationText} from "../utils/textUtils";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -85,6 +87,10 @@ export class Order {
     pricingModel: PricingModel;
     isDriveStartedTimestampSpecified: boolean = false;
 
+    startDatetime: Date = new Date();
+    truckListMessage?: Message;
+    truckDriversWatcher?: TruckDriverWatcher;
+
     constructor(
         clientTg: string,
         adminAuth: AuthData,
@@ -149,11 +155,11 @@ export class Order {
         if (this.id === undefined) throw "The order has not yet been created";
 
         const data = await this.getData();
-        console.log('Data:', data)
+        //console.log('Data:', data)
         if (data === undefined) {
             return undefined
         }
-        console.log(data.data.booking[this.id])
+        //console.log(data.data.booking[this.id])
 
         var state = Number(data.data.booking[this.id].b_state);
 
@@ -188,7 +194,7 @@ export class Order {
 
         if(compareDateTimeWithWaitingList(
             data.data.booking[this.id].b_start_datetime,
-            data.data.booking[this.id].b_max_waiting_list)
+            data.data.booking[this.id].b_max_waiting_list) && (driver_state === -1 )
         ) {
             this.finish();
             return BookingState.OutOfTime
@@ -494,12 +500,7 @@ export class Order {
             data.b_destination_longitude = endLoc.longitude;
         }
 
-        if (startDatetime) {
-            data.b_start_datetime = formatDateAPI(startDatetime);
-        } else {
-            data.b_start_datetime = "now";
-        }
-
+        data.b_start_datetime = startDatetime ? formatDateAPI(startDatetime) : "now";
         data.b_passengers_count = peopleCount;
         data.b_max_waiting = maxWaitingSecs;
         data.b_payment_way = 1;
@@ -593,11 +594,21 @@ export class Order {
         await new Promise((f) => setTimeout(f, 1000));
         console.log('startStateChecking');
         await this.startStateChecking();
+
+        if(ctx.configName === "truck") {
+            this.truckListMessage = await ctx.chat.sendMessage(
+                getLocalizationText(ctx,localizationNames.truckDriversList)
+            )
+            this.truckDriversWatcher = new TruckDriverWatcher();
+            await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString());
+        }
+
         if (this.isVoting) return b_driver_code;
         if (user_state.data.preferredDriversList) {
             await this.addOffer(user_state.data.preferredDriversList);
             console.log("ADDED OFFER");
         }
+
     }
 
     async addOffer(driverList: string[]) {
@@ -677,6 +688,26 @@ export class Order {
         }
 
         this.finish(true);
+    }
+
+    async setPerformerAsDriver(u_id: string) {
+        if (this.id === undefined) throw "The order has not yet been created";
+        if (this.isCanceled) throw "Trip been canceled";
+
+        const form = createForm(
+            {
+                action: "set_performer",
+                u_id: u_id,
+                u_a_role: "1",
+                u_a_phone: this.clientTg.split("@")[0],
+            },
+            this.adminAuth,
+        );
+        const response = await axios.post(`${this.ctx?.baseURL}/drive/get/${this.id}`, form, {
+            headers: postHeaders, timeout: 10000
+        });
+        if (response.status != 200 || response.data.status != "success")
+            throw `API Error: ${JSON.stringify(response.data)}`;
     }
 
     async setRate(value: number) {
@@ -790,9 +821,10 @@ export class Order {
                 : undefined;
         if (!suitable_driver)
             throw "No driver found" + "\n" + JSON.stringify(drive.data);
-
+        console.log(suitable_driver);
         const driver_u_id = drive.data.booking[this.id].drivers[0]?.u_id;
         const car_u_id = drive.data.booking[this.id].drivers[0]?.c_id;
+        console.log(driver_u_id, car_u_id);
 
         const driver = await axios.post(
             `${this.ctx?.baseURL}user/${driver_u_id}`,

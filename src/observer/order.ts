@@ -157,6 +157,15 @@ export class OrderObserverCallback {
                     state.state = "rate";
                     await this.storage.push(this.userId, state);
                     break;
+                case BookingState.OutOfTime:
+                    await chat.sendMessage(
+                        getLocalizationText(order.ctx ?? {} as Context, localizationNames.outOfTime)
+                    )
+                    await chat.sendMessage(
+                        getLocalizationText(order.ctx ?? {} as Context,localizationNames.defaultPrompt)
+                    )
+                    await this.storage.delete(this.userId);
+                    break;
                 default:
                     await chat.sendMessage(
                         this.constants

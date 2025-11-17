@@ -153,6 +153,7 @@ export async function getDriverList(
         latitude: latitude,
         longitude: longitude,
     });
+    console.log(city);
     if (!city.data) {
         throw new Error("CITY NOT FOUND");
     }
@@ -318,7 +319,8 @@ export class DriverSearchManager {
         state: OrderMachine,
         searchMsg: Message,
         attempts = 0,
-        maxAttempts = -1
+        maxAttempts = -1,
+        configName = "children"
     ) {
         const freshState: OrderMachine = await ctx.storage.pull(ctx.userID);
         // распределение интервалов и подсчет попыток
@@ -363,7 +365,6 @@ export class DriverSearchManager {
             await searchMsg.edit(getLocalizationText(ctx, localizationNames.errorNoCoordinates));
             return;
         }
-
         const driverList = await getDriverList(
             ctx,
             freshState.data.from.latitude,

@@ -153,4 +153,11 @@ export const localizationNames = {
     public_offers_settings: "wab_public_offers_settings".toLowerCase(),
     privacy_policy_settings: "wab_privacy_policy_settings".toLowerCase(),
     legal_information_settings: "wab_legal_information_settings".toLowerCase(),
+
+    truckDriversList: "wab_truckdriverslist".toLowerCase(),
+    truckDriversResponsesNotFound: "wab_truckdriversresponsesnotfound".toLowerCase(),
+    truckEnterDriverNumber: "wab_truckenterdrivernumber".toLowerCase(),
+    truckDriverNumberIncorrect: "wab_truckdrivernumberincorrect".toLowerCase(),
+    truckYourSelectedDriver: "wab_truckyourselcteddriver".toLowerCase(),
+    truckContinueSearchDriversResponses: "wab_truckContinueSearchDriversResponse".toLowerCase(),
 };

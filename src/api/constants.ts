@@ -44,7 +44,13 @@ export class Constants {
             } };
             booking_comments: { [key: string]: any };
             car_makes: { [key: string]: any };
-            site_constants: { gfp_taxi_bot_settings: { value: string }; pricingModels: { value: string }; waiting_interval_or?: any };
+            site_constants: {
+                gfp_taxi_bot_settings: { value: string };
+                pricingModels: { value: string };
+                waiting_interval_or?: any ;
+                type_size: any;
+                type_weight: any;
+            };
             langs: { [key: string]: any },
         };
         default_lang: string;
@@ -72,7 +78,13 @@ export class Constants {
                         searchDriversPeriodLong: 300,
                         maxPeoplesCount: 5,
                     })
-                }
+                },
+                type_size: {
+                    value: "",
+                },
+                type_weight: {
+                    value: "",
+                },
             },
         },
         default_lang: "2",

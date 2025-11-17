@@ -1,12 +1,13 @@
 import { Context } from "../index";
-import { RideMachine } from "../states/machines/rideMachine";
+import {RideMachine, VoteMachine} from "../states/machines/rideMachine";
 import { localizationNames } from "../l10n";
 import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { MessageMedia } from "whatsapp-web.js";
+import {getLocalizationText} from "../utils/textUtils";
 
 export async function RideHandler(ctx: Context) {
-    var state = await ctx.storage.pull(ctx.userID);
+    var state  = await ctx.storage.pull(ctx.userID);
     console.log("RIDE HANDLER: ", ctx.message.body, state.state);
     if (ctx.message.body.toLowerCase() === "0") {
         ctx.message.body = "отмена";
@@ -63,6 +64,22 @@ export async function RideHandler(ctx: Context) {
                         ),
                     );
                     state.state = "extendStartTips";
+                    await ctx.storage.push(ctx.userID, state);
+                    break;
+                case "3":
+                    if (ctx.configName !== "truck") {
+                        await ctx.chat.sendMessage(
+                            ctx.constants.getPrompt(
+                                localizationNames.enterStartPriceCommandNotFoundRide,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        );
+                        return;
+                    }
+                    await ctx.chat.sendMessage(
+                        getLocalizationText(ctx, localizationNames.truckEnterDriverNumber)
+                    );
+                    state.state = "truckSelectPrefer";
                     await ctx.storage.push(ctx.userID, state);
                     break;
                 default:
@@ -302,6 +319,39 @@ export async function RideHandler(ctx: Context) {
                     ctx.user.settings.lang.api_id,
                 ),
             );
+            break;
+            
+        case "truckSelectPrefer":
+            if (ctx.message.body == "отмена") {
+                await ctx.chat.sendMessage(
+                    getLocalizationText(ctx, localizationNames.truckContinueSearchDriversResponses)
+                );
+                state.state = "searchCar";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            }
+            if (ctx.configName !== "truck") {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.enterStartPriceCommandNotFoundRide,
+                        ctx.user.settings.lang.api_id,
+                    ),
+                );
+                break
+            }
+            const select = ctx.message.body;
+            if(!state.data.order.truckDriversWatcher.driversMap[select]) {
+                await ctx.chat.sendMessage(
+                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
+                )
+                break
+            }
+
+            await ctx.chat.sendMessage(
+                getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
+            );
+            state.data.order.truckDriversWatcher?.stop()
+            await state.data.order.setPerformerAsDriver(select);
             break;
 
         default:

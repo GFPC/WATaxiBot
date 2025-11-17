@@ -300,7 +300,6 @@ export async function calculateOrderPrice(
         const timeRatio = isDayTime
             ? priceModel.constants.time_ratio.day
             : priceModel.constants.time_ratio.night;
-        console.log(`searching ${carClass} in ${JSON.stringify(priceModel)}`);
         const carClassRatio = carClass && priceModel.constants.car_class_ratio
             ? priceModel.constants.car_class_ratio[carClass]
             : 1;
@@ -321,7 +320,6 @@ export async function calculateOrderPrice(
             submit_price: 0 || submitPrice,
             car_class_ratio: carClassRatio,
         };
-        console.log("PARAMS", params);
 
         const price = calculatePrice(priceModel.model.expression, params);
 
@@ -344,7 +342,6 @@ export async function formatOrderConfirmation(
     state: OrderMachine,
     priceModel: PriceModel,
 ): Promise<string> {
-    console.log("formatOrderConfirmation", state, priceModel);
     const user = await ctx.usersList.pull(ctx.userID);
     return formatString(
         ctx.constants.getPrompt(

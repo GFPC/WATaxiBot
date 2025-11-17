@@ -21,8 +21,6 @@ export async function collectionWhen(
     ctx: Context,
     state: OrderMachine,
 ): Promise<HandlerRouteResponse> {
-    // Собираем информацию о времени.
-    // В этот стейт также попадает активация режима голосования
     if (ctx.message.body === "3" && ctx.configName === "children") {
         await ctx.chat.sendMessage(
             getLocalizationText(ctx, localizationNames.commandNotFound),

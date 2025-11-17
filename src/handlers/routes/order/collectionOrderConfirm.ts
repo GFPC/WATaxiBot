@@ -50,12 +50,6 @@ export async function collectionOrderConfirm(
     }
 
     if (ctx.configName === "children") {
-        const latitude = 43.26275; //await input("LATITUDE? ");
-        const longitude = -2.92528; //await input("LONGITUDE? ");
-        console.log("INJECTED: " + latitude + " " + longitude);
-        //state.data.from.latitude = latitude;
-        //state.data.from.longitude = longitude;
-
         state.data.waitingForDrivers = true;
         await ctx.storage.push(ctx.userID, state);
         const searchMsg = await ctx.chat.sendMessage(
@@ -105,7 +99,7 @@ export async function collectionOrderConfirm(
             state.data.to,
             timestamp,
             state.data.peopleCount,
-            constants.maxWaitingTimeSecs,
+            ctx.gfp_constants.data.maxVotingDriveWaiting,
             ctx.chat,
             ctx,
             state.data.additionalOptions,
@@ -159,7 +153,7 @@ export async function collectionOrderConfirm(
             state.data.to,
             state.data.when,
             state.data.peopleCount,
-            constants.maxWaitingTimeSecs,
+            ctx.gfp_constants.data.maxDefaultDriveWaiting,
             ctx.chat,
             ctx,
             state.data.additionalOptions,
