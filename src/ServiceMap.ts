@@ -34,9 +34,9 @@ export const MultiUsersRefCodes: {
         [key: string]: string;
     };
 } = {
-    "79135550015": {
+    /*"79135550015": {
         test: "666",
-    },
+    },*/
     "79999183175": {
         test: "666",
     },
