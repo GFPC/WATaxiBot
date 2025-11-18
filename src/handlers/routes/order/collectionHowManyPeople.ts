@@ -215,7 +215,7 @@ async function handleGruzvillConfig(ctx: Context, state: OrderMachine) : Promise
     return SuccessResponse;
 }
 async function handleTruckConfig(ctx: Context, state: OrderMachine) : Promise<HandlerRouteResponse>  {
-    const data = ctx.message.body.split(' ');
+    const data = ctx.message.body.trim().replace('  ', ' ').split(' ');
     if( data.length !== 4) {
         await ctx.chat.sendMessage(
             ctx.constants.getPrompt(

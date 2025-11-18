@@ -79,7 +79,7 @@ export class TruckDriverWatcher {
         // Проверяем флаг после асинхронной операции
         if (this.isStopped) return;
 
-        if(['3', '4'].includes(res.data.data.booking[this.b_id].b_state)) {
+        if(['2','3', '4'].includes(res.data.data.booking[this.b_id].b_state)) {
             console.log('drive closed or completed -> stop');
             this.stop()
             return

@@ -325,7 +325,7 @@ export async function VotingHandler(ctx: Context) {
                 getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
             );
             state.data.order.truckDriversWatcher?.stop()
-            await state.data.order.setPerformerAsDriver(select);
+            await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
             break;
         default:
             break;
