@@ -974,7 +974,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.commandNotFound,
-                        state.data.lang.api_id,
+                        ctx.user.settings.lang.api_id,
                     ),
                 );
             }
