@@ -68,6 +68,7 @@ export interface OrderMachine extends StateMachine {
         truck_drivetype?: string;
         truck_floornumber?: string;
         truck_count?: string;
+        truck_gross_weight?: string;
     };
 }
 

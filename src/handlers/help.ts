@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { localizationNames } from "../l10n";
 import { newEmptyOrder } from "../states/machines/orderMachine";
 import { newSettings } from "../states/machines/settingsMachine";

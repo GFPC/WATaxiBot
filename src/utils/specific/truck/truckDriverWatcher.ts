@@ -1,12 +1,13 @@
 // Менеджер фонового поиска водителей с возможностью остановки
 import WAWebJS, {Message} from "whatsapp-web.js";
 import {OrderMachine} from "../../../states/machines/orderMachine";
-import {Context} from "../../../index";
+import {Context} from "../../../types/Context";
 import axios from "axios";
 import {AuthData} from "../../../api/general";
 import {getLocalizationText} from "../../textUtils";
 import {localizationNames} from "../../../l10n";
 import {countBy} from "lodash";
+import {getDistanceAndDuration, getPrice, initPriceModelForTruck} from "./priceUtils";
 export async function getPerformersList(
     ctx: Context,
     b_id: string
@@ -56,6 +57,14 @@ export class TruckDriverWatcher {
     private auth: AuthData = {token: '', hash: ''} as AuthData;
     private b_id: string = '';
     private isStopped: boolean = false; // Добавляем флаг остановки
+
+    private order_form: OrderMachine = {} as OrderMachine;
+    private isVoting: boolean = false;
+    private distanceAndDuration: {
+        distance: number;
+        duration: number;
+        calculationType: string;
+    } = {} as {distance: number; duration: number; calculationType: string};
     driversMap: {
         [key: string]: string
     } = {};
@@ -79,8 +88,8 @@ export class TruckDriverWatcher {
         // Проверяем флаг после асинхронной операции
         if (this.isStopped) return;
 
-        if(['2','3', '4'].includes(res.data.data.booking[this.b_id].b_state)) {
-            console.log('drive closed or completed -> stop');
+        if(['3', '4'].includes(res.data.data.booking[this.b_id].b_state)) {
+            console.log('drive closed or completed -> stop, b_state', res.data.data.booking[this.b_id].b_state);
             this.stop()
             return
         }
@@ -107,6 +116,9 @@ export class TruckDriverWatcher {
         if(!drivers){
             // Проверяем флаг перед планированием следующего вызова
             if (!this.isStopped) {
+
+                await this.message.edit(getLocalizationText(ctx, localizationNames.truckDriversList) + getLocalizationText(ctx, localizationNames.truckDriversResponsesNotFound));
+
                 this.timer = setTimeout(() => {
                     this.pollPerformers(ctx);
                 }, interval);
@@ -150,9 +162,12 @@ export class TruckDriverWatcher {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         })
+        console.log('cars', cars.data, Object.keys(cars.data.data));
+
+        const distanceAndDuration = this.distanceAndDuration;
 
         const drivers_profiles_formatted = drivers_profiles.data.data.user
-            ? Object.values(drivers_profiles.data.data.user).map((x: any, index: number) => {
+            ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any, index: number) => {
                 this.driversMap[(index+1).toString()] = x.u_id;
                 drivers_cars[x.u_id] = x.c_id
                 const car = cars.data.data.car[drivers_cars_link[x.u_id]];
@@ -163,13 +178,45 @@ export class TruckDriverWatcher {
                 const rating = x.u_rating || 'RNS';
                 console.log(drivers.find((d: any) => d.u_id === x.u_id));
                 console.log(x)
-                const fullText = `${index+1}.${rating} | ${car_mark || ''} ${car.cm_id || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${text} | ${price}`.trim().replace('  ', ' ');
+
+                if(!this.order_form.data.truck_floornumber || !this.order_form.data.truck_gross_weight || !this.order_form.data.truck_count){
+                    return
+                }
+
+                const estimatedPriceParams = await initPriceModelForTruck(
+                    ctx,
+                    drivers_cars_link[x.u_id],
+                    distanceAndDuration.calculationType,
+                    distanceAndDuration.distance,
+                    distanceAndDuration.duration,
+                    JSON.parse(
+                        ctx.constants.data.data.site_constants.pricingModels.value,
+                    ).pricing_models,
+                    this.isVoting,
+                    this.order_form.data.additionalOptions,
+                    res.data.data.booking[this.b_id].b_options.submitPrice,
+                    this.order_form.data.truck_floornumber,
+                    this.order_form.data.truck_gross_weight,
+                    this.order_form.data.truck_count,
+                )
+                //console.log('estimatedPriceParams', estimatedPriceParams);
+                let estimatedPrice = await getPrice(
+                    estimatedPriceParams.formula,
+                    estimatedPriceParams.options,
+                    distanceAndDuration.calculationType,
+                );
+                if(distanceAndDuration.calculationType === "incomplete"){
+                    estimatedPrice += " + ?";
+                }
+                //console.log('estimatedPrice', estimatedPrice); // return
+
+                const fullText = `${index+1}.${rating} | ${car_mark || ''} ${car.cm_id || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
                 return fullText || '-';
-            })
+            }))
             : [getLocalizationText(ctx,localizationNames.truckDriversResponsesNotFound)];
 
         const drivers_text = drivers_profiles_formatted.join('\n');
-
+        //console.log(drivers_text);
         await this.message.edit(`${drivers_text}`);
 
         // Проверяем флаг перед планированием следующего вызова
@@ -184,12 +231,21 @@ export class TruckDriverWatcher {
         ctx: Context,
         msg: Message,
         b_id: string,
+        order_form: OrderMachine,
+        isVoting?: boolean,
+        distanceAndDuration?: {
+            distance: number;
+            duration: number;
+            calculationType: string;
+        },
     ) {
         this.isStopped = false; // Сбрасываем флаг при старте
         this.message = msg;
         this.auth = ctx.auth;
         this.url = ctx.baseURL;
         this.b_id = b_id;
+        this.order_form = order_form;
+        this.isVoting = isVoting || false;
 
         this.stop(); // На всякий случай остановить предыдущий поиск
         this.isStopped = false;

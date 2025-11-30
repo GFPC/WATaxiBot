@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { ChildProfileMachine } from "../states/machines/childrenProfile";
 import { collectionDetails } from "./routes/childProfile/collectionDetails";
 import { handleRoute } from "./routes/format";

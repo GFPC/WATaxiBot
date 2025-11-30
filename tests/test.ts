@@ -20,7 +20,8 @@ import { ChildrenProfileHandler } from "../src/handlers/childrenProfile";
 import { DefaultHandler } from "../src/handlers/default";
 
 // Type imports
-import { Context, Handler } from "../src";
+import {Context} from "../src/types/Context";
+import { Handler } from "../src";
 import { AuthData, baseURL, postHeaders} from "../src/api/general";
 import { StateMachine } from "../src/states/types";
 import { localizationNames } from "../src/l10n";
@@ -393,6 +394,7 @@ async function initializeTestContext(): Promise<{ ctx: TestContext; usersList: U
     });
 
     // Configure context
+    ctx.botID = '79999183175'
     ctx.userID = '79135550015';
     ctx.configName = 'truck';
     ctx.baseURL = 'https://ibronevik.ru/taxi/c/truck/api/v1/';

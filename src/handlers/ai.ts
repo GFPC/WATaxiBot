@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { localizationNames } from "../l10n";
 import { ai_instructions, getCompletionForChat } from "../ai/ai";
 export async function AIHandler(ctx: Context): Promise<void> {

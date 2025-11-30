@@ -26,6 +26,8 @@ import { AIHandler } from "./handlers/ai";
 import { GFPWAQRClient } from "./GFPWaQRHubConfig";
 import { createHash } from "crypto";
 import { ChildrenProfileHandler } from "./handlers/childrenProfile";
+import {Context} from "./types/Context";
+import {UserSettings} from "./types/User/UserSettings";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -78,13 +80,7 @@ const API_CONSTANTS = ConstantsStorage(urlManager);
 
 const GFPWAQRClientInstance = new GFPWAQRClient(GFPWAQRHubURL);
 
-interface UserSettings {
-    lang: {
-        iso: string;
-        api_id: string;
-        native: string;
-    };
-}
+
 
 interface UserData {
     api_u_id: string;
@@ -94,27 +90,7 @@ interface UserData {
     ref_code: string | null;
 }
 
-export interface Context {
-    message: Message;
-    chat: Chat;
-    storage: Storage;
-    auth: AuthData;
-    logger: Logger;
-    client: Client;
-    userID: string;
-    api_u_id: string;
-    constants: Constants;
-    gfp_constants: GFPTaxiBotConstants;
-    details?: any;
-    usersList: UsersStorage;
-    aiStorage: AIStorage;
-    user: {
-        settings: UserSettings;
-    };
-    botID: string;
-    baseURL: string;
-    configName: string;
-}
+
 
 
 

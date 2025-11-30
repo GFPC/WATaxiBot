@@ -9,7 +9,7 @@ import {Constants} from "../api/constants";
 import {calculatePrice, formatPriceFormula} from "../handlers/order";
 import moment from "moment";
 import {getLocalizationText} from "../utils/textUtils";
-import {Context} from "../index";
+import {Context} from "../types/Context";
 
 export class OrderObserverCallback {
     client: Client;

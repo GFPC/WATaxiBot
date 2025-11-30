@@ -1,5 +1,5 @@
 import { StateMachine } from "../../states/types";
-import type { Context } from "../../index";
+import type { Context } from "../../types/Context";
 
 export type HandlerRouteResponse = {
     status: "success" | "error" | "warning";

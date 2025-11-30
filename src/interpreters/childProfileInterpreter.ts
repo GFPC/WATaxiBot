@@ -1,6 +1,6 @@
 // Интерпретатор сценария childProfile
-import { Context } from "../index";
-import { localization } from "../l10n";
+import { Context } from "../types/Context";
+import { localizationNames } from "../l10n";
 
 // Типы для JSON-машины состояний
 export type StateMachine = {
@@ -32,7 +32,7 @@ function getLocalizedText(
     key: string,
     params?: Record<string, string | number>,
 ): string {
-    const dict = localization as Record<string, string>;
+    const dict = localizationNames as Record<string, string>;
     let text = dict[key] || key;
     if (params) {
         for (const k in params) {

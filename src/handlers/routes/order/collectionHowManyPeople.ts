@@ -1,6 +1,6 @@
 import { localizationNames } from "../../../l10n";
 import { OrderMachine } from "../../../states/machines/orderMachine";
-import { Context } from "../../../index";
+import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 import { constants } from "../../../constants";
 import {isRouteInCity} from "../../../api/custom";
@@ -215,7 +215,7 @@ async function handleGruzvillConfig(ctx: Context, state: OrderMachine) : Promise
     return SuccessResponse;
 }
 async function handleTruckConfig(ctx: Context, state: OrderMachine) : Promise<HandlerRouteResponse>  {
-    const data = ctx.message.body.trim().replace('  ', ' ').split(' ');
+    const data = ctx.message.body.trim().replace('  ', ' ').replace('  ', ' ').split(' ');
     if( data.length !== 4) {
         await ctx.chat.sendMessage(
             ctx.constants.getPrompt(
@@ -268,6 +268,8 @@ async function handleTruckConfig(ctx: Context, state: OrderMachine) : Promise<Ha
         return SuccessResponse;
     }
 
+
+
     console.log('Volume API ID:', volume_id);
     console.log('Weight API ID:', weight_id);
 
@@ -275,7 +277,9 @@ async function handleTruckConfig(ctx: Context, state: OrderMachine) : Promise<Ha
     state.data.truck_drivetype = weight_id;
     state.data.truck_floornumber = data[2];
     state.data.truck_count = data[3];
-
+    const max_weight = (JSON.parse(ctx.constants.data.data.site_constants.type_weight.value)[state.data.truck_drivetype].maxWeight || undefined);
+    const min_weight = (JSON.parse(ctx.constants.data.data.site_constants.type_weight.value)[state.data.truck_drivetype].minWeight || undefined);
+    state.data.truck_gross_weight = (Number(state.data.truck_count) * (max_weight || min_weight)).toString();
 
     let inCityFlag;
     let coordsNotRecognized = false;

@@ -5,6 +5,7 @@ export const ServiceMap: {
     "79999183175": "gruzvill",  //79999183175
     "34614478119": "children",
     "212778382140": "truck",
+    //"639309965886": "children"
 };
 export const ConfigsMap: {
     [key: string]: {
@@ -46,5 +47,7 @@ export const MultiUsersRefCodes: {
     "212778382140": {
         test: "666",
     },
-
+    "639309965886": {
+        test: "666",
+    },
 };

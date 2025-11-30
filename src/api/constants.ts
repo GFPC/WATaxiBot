@@ -48,8 +48,12 @@ export class Constants {
                 gfp_taxi_bot_settings: { value: string };
                 pricingModels: { value: string };
                 waiting_interval_or?: any ;
-                type_size: any;
-                type_weight: any;
+                type_size: {
+                    value: string;
+                };
+                type_weight: {
+                    value: string;
+                };
             };
             langs: { [key: string]: any },
         };

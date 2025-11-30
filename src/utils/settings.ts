@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { MultiUsersRefCodes } from "../ServiceMap";
 
 export default function searchRefCodeByREfID(

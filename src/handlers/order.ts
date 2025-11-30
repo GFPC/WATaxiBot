@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import {
     newEmptyOrder,
     newVoting,
@@ -35,25 +35,16 @@ import { children_collectionChildrenCount } from "./routes/order/children_collec
 import { children_collectionSelectBabySisterRange } from "./routes/order/children_collectionSelectBabySisterRange";
 import { children_collectionSelectBabySister } from "./routes/order/children_collectionSelectBabySister";
 import {getLocalizationText} from "../utils/textUtils";
+import {getPriceParams} from "../utils/getCarPriceParams";
+import PriceModel from "../types/Price/PriceModel";
+import PriceCalculationParams from "../types/Price/PriceCalculationParams";
+
+
 
 const logger = new Logger("OrderHandler", "#12b095");
-interface PriceCalculationParams {
-    /*    base_price: number;
-    distance: number;
-    price_per_km: number;
-    duration: number;
-    price_per_minute: number;
-    time_ratio: number;
-    options_sum: number;*/
-    [key: string]: any;
-}
 
-interface PriceModel {
-    formula: string;
-    price: string;
-    options: PriceCalculationParams;
-    calculationType?: string;
-}
+
+
 
 function simplifyExpression(expr: string): string {
     // Удаляем пробелы для удобства обработки
@@ -101,6 +92,12 @@ export function calculatePrice(
         options_sum: 0,
         submit_price: 0,
         car_class_ratio: null,
+
+        floors: null,
+        weight: null,
+        units: null,
+        price_per_unit: 0,
+        price_per_kg: 0,
     },
     calculationType: string = "full",
 ): string {
@@ -144,7 +141,7 @@ export function formatPriceFormula(
     try {
         // Сначала заменим все переменные на их значения
         let formattedFormula = formula;
-        const variables = [
+        let variables = [
             "base_price",
             "distance",
             "price_per_km",
@@ -154,6 +151,13 @@ export function formatPriceFormula(
             "options_sum",
             "submit_price",
             "car_class_ratio",
+
+            "floors",
+            "weight",
+            "units",
+            "price_per_kg",
+            "price_per_unit",
+            "price_per_floor"
         ];
         const incompleteteVariables = ["distance", "duration"];
 
@@ -233,6 +237,9 @@ export async function calculateOrderPrice(
     additionalOptions: number[],
     submitPrice?: number,
     carClass?: string | null,
+    floors?: string | null,
+    weight?: string | null,
+    entities_count?: string | null,
 ): Promise<PriceModel> {
     /*if (!from?.latitude || !to?.latitude) {
         console.log('Skipping price calculation due to missing location');
@@ -303,7 +310,17 @@ export async function calculateOrderPrice(
         const carClassRatio = carClass && priceModel.constants.car_class_ratio
             ? priceModel.constants.car_class_ratio[carClass]
             : 1;
-        const params = {
+
+        const courier_fare_per_km = carClass && ctx.constants.data.data.car_classes[carClass].courier_fare_per_1_km
+            ? ctx.constants.data.data.car_classes[carClass].courier_fare_per_1_km
+            : 0;
+
+        const courier_call_rate = carClass && ctx.constants.data.data.car_classes[carClass].courier_call_rate
+            ? ctx.constants.data.data.car_classes[carClass].courier_call_rate
+            : 0;
+        let params : {
+            [key: string]: any
+        } = {
             base_price: priceModel.constants.base_price,
             distance: (distance || 0) / 1000,
             price_per_km: priceModel.constants.price_per_km,
@@ -320,6 +337,36 @@ export async function calculateOrderPrice(
             submit_price: 0 || submitPrice,
             car_class_ratio: carClassRatio,
         };
+
+
+
+        if(ctx.configName === "truck") {
+            //const carPriceParams = await getPriceParams(ctx, carClass);
+            params = {
+                base_price: courier_call_rate,
+                distance: (distance || 0) / 1000,
+                price_per_km: courier_fare_per_km,
+                duration: (duration || 0) / 60,
+                price_per_minute: priceModel.constants.price_per_minute,
+                time_ratio: timeRatio,
+                options_sum: additionalOptions.reduce(
+                    (sum, option) =>
+                        sum +
+                        ctx.constants.data.data.booking_comments[String(option)]
+                            .options.price,
+                    0,
+                ),
+                submit_price: 0 || submitPrice,
+                car_class_ratio: carClassRatio,
+
+                price_per_unit: priceModel.constants.price_per_unit,
+                price_per_floor:priceModel.constants.price_per_floor,
+                price_per_kg:priceModel.constants.price_per_kg,
+                weight:weight,
+                floors:floors,
+                units:entities_count
+            };
+        }
 
         const price = calculatePrice(priceModel.model.expression, params);
 
@@ -405,6 +452,11 @@ export async function formatOrderConfirmation(
                   ),
             childrenInfo: typeof state.data.childrenProfiles === "string" ? state.data.childrenProfiles :
             (state.data.childrenProfiles || []).join("\n"),
+
+            floors: (Math.abs(Number(state.data.truck_floornumber))).toString(),
+            units: typeof state.data.truck_count === "string" ? state.data.truck_count :
+            (state.data.truck_count || []).join(", "),
+            weight: ctx.configName === "truck" ? (Number(state.data.truck_count)*(JSON.parse(ctx.constants.data.data.site_constants.type_weight.value)[state.data.truck_drivetype || -1].maxWeight || JSON.parse(ctx.constants.data.data.site_constants.type_weight.value)[state.data.truck_drivetype || -1].minWeight)).toString() : '',
         },
     );
 }

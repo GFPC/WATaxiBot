@@ -1,6 +1,6 @@
 import { localizationNames } from "../../../l10n";
 import { OrderMachine } from "../../../states/machines/orderMachine";
-import { Context } from "../../../index";
+import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 import { makeCurrencySymbol } from "../../order";
 

@@ -298,7 +298,7 @@ function dmsToDecimal(
 
 // Менеджер фонового поиска водителей с возможностью остановки
 import { Message } from "whatsapp-web.js";
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import {at, attempt} from "lodash";
 
 interface DriverSearchManagerType {

@@ -5,7 +5,7 @@ import {
 import { localizationNames } from "../../../l10n";
 import { formatString } from "../../../utils/formatter";
 import { OrderMachine } from "../../../states/machines/orderMachine";
-import { Context } from "../../../index";
+import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 import {getLocalizationText} from "../../../utils/textUtils";
 
@@ -49,12 +49,13 @@ export async function collectionFrom(
             } else {
                 // Нет координат — отправляем ошибку
                 await ctx.chat.sendMessage(
-                    getLocalizationText(ctx,localizationNames.errorStartPoint),
-                    { linkPreview: false },
+                    getLocalizationText(ctx, localizationNames.errorStartPoint),
+                    {linkPreview: false},
                 );
                 return SuccessResponse;
             }
         }
+
         state.data.from = location;
         state.state = "collectionTo";
         state.data.nextStateForAI = "collectionTo";

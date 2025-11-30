@@ -1,5 +1,5 @@
 import { localizationNames } from "../l10n";
-import { Context } from "../index";
+import { Context } from "../types/Context";
 
 export function formatString(
     text: string,

@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import {RideMachine, VoteMachine} from "../states/machines/rideMachine";
 import { localizationNames } from "../l10n";
 import { constants } from "../constants";
@@ -14,84 +14,141 @@ export async function RideHandler(ctx: Context) {
     }
     switch (state.state) {
         case "searchCar":
-            switch (ctx.message.body.toLowerCase()) {
-                case "отмена":
-                    state.data.isCollectionReason = true;
-                    const text = {
-                        mistakenlyOrder: ctx.constants.getPrompt(
-                            "mistakenly_ordered",
-                            ctx.user.settings.lang.api_id,
-                        ),
-                        waitingForLonger: ctx.constants.getPrompt(
-                            "waiting_for_long",
-                            ctx.user.settings.lang.api_id,
-                        ),
-                        conflictWithRider: ctx.constants.getPrompt(
-                            "conflict_with_rider",
-                            ctx.user.settings.lang.api_id,
-                        ),
-                        veryExpensive: ctx.constants.getPrompt(
-                            "very_expensive",
-                            ctx.user.settings.lang.api_id,
-                        ),
-                    };
-                    const reasonContainer =
-                        "\n*1* - " +
-                        text.mistakenlyOrder +
-                        "\n*2* - " +
-                        text.waitingForLonger +
-                        "\n*3* - " +
-                        text.conflictWithRider +
-                        "\n*4* - " +
-                        text.veryExpensive +
-                        "";
-                    await ctx.chat.sendMessage(
-                        ctx.constants
-                            .getPrompt(
-                                localizationNames.collectionCancelReason,
+            if(ctx.configName === "truck") {
+                switch (ctx.message.body.toLowerCase()) {
+                    case "отмена":
+                        state.data.isCollectionReason = true;
+                        const text = {
+                            mistakenlyOrder: ctx.constants.getPrompt(
+                                "mistakenly_ordered",
                                 ctx.user.settings.lang.api_id,
+                            ),
+                            waitingForLonger: ctx.constants.getPrompt(
+                                "waiting_for_long",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                            conflictWithRider: ctx.constants.getPrompt(
+                                "conflict_with_rider",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                            veryExpensive: ctx.constants.getPrompt(
+                                "very_expensive",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        };
+                        const reasonContainer =
+                            "\n*1* - " +
+                            text.mistakenlyOrder +
+                            "\n*2* - " +
+                            text.waitingForLonger +
+                            "\n*3* - " +
+                            text.conflictWithRider +
+                            "\n*4* - " +
+                            text.veryExpensive +
+                            "";
+                        await ctx.chat.sendMessage(
+                            ctx.constants
+                                .getPrompt(
+                                    localizationNames.collectionCancelReason,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                                .replace("%reasons%", reasonContainer),
+                        );
+                        state.state = "cancelReason";
+                        await ctx.storage.push(ctx.userID, state);
+                        break;
+                    case "02":
+                        await ctx.chat.sendMessage(
+                            ctx.constants.getPrompt(
+                                localizationNames.enterStartPriceSum,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        );
+                        state.state = "extendStartTips";
+                        await ctx.storage.push(ctx.userID, state);
+                        break;
+                    default:
+                        const select = ctx.message.body;
+                        if(!state.data.order.truckDriversWatcher.driversMap[select]) {
+                            await ctx.chat.sendMessage(
+                                getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
                             )
-                            .replace("%reasons%", reasonContainer),
-                    );
-                    state.state = "cancelReason";
-                    await ctx.storage.push(ctx.userID, state);
-                    break;
-                case "2":
-                    await ctx.chat.sendMessage(
-                        ctx.constants.getPrompt(
-                            localizationNames.enterStartPriceSum,
-                            ctx.user.settings.lang.api_id,
-                        ),
-                    );
-                    state.state = "extendStartTips";
-                    await ctx.storage.push(ctx.userID, state);
-                    break;
-                case "3":
-                    if (ctx.configName !== "truck") {
+                            break
+                        }
+
+                        await ctx.chat.sendMessage(
+                            getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
+                        );
+                        state.data.order.truckDriversWatcher?.stop()
+                        await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
+                        break;
+                }
+                break;
+            } else {
+                switch (ctx.message.body.toLowerCase()) {
+                    case "отмена":
+                        state.data.isCollectionReason = true;
+                        const text = {
+                            mistakenlyOrder: ctx.constants.getPrompt(
+                                "mistakenly_ordered",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                            waitingForLonger: ctx.constants.getPrompt(
+                                "waiting_for_long",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                            conflictWithRider: ctx.constants.getPrompt(
+                                "conflict_with_rider",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                            veryExpensive: ctx.constants.getPrompt(
+                                "very_expensive",
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        };
+                        const reasonContainer =
+                            "\n*1* - " +
+                            text.mistakenlyOrder +
+                            "\n*2* - " +
+                            text.waitingForLonger +
+                            "\n*3* - " +
+                            text.conflictWithRider +
+                            "\n*4* - " +
+                            text.veryExpensive +
+                            "";
+                        await ctx.chat.sendMessage(
+                            ctx.constants
+                                .getPrompt(
+                                    localizationNames.collectionCancelReason,
+                                    ctx.user.settings.lang.api_id,
+                                )
+                                .replace("%reasons%", reasonContainer),
+                        );
+                        state.state = "cancelReason";
+                        await ctx.storage.push(ctx.userID, state);
+                        break;
+                    case "2":
+                        await ctx.chat.sendMessage(
+                            ctx.constants.getPrompt(
+                                localizationNames.enterStartPriceSum,
+                                ctx.user.settings.lang.api_id,
+                            ),
+                        );
+                        state.state = "extendStartTips";
+                        await ctx.storage.push(ctx.userID, state);
+                        break;
+                    default:
                         await ctx.chat.sendMessage(
                             ctx.constants.getPrompt(
                                 localizationNames.enterStartPriceCommandNotFoundRide,
                                 ctx.user.settings.lang.api_id,
                             ),
                         );
-                        return;
-                    }
-                    await ctx.chat.sendMessage(
-                        getLocalizationText(ctx, localizationNames.truckEnterDriverNumber)
-                    );
-                    state.state = "truckSelectPrefer";
-                    await ctx.storage.push(ctx.userID, state);
-                    break;
-                default:
-                    await ctx.chat.sendMessage(
-                        ctx.constants.getPrompt(
-                            localizationNames.enterStartPriceCommandNotFoundRide,
-                            ctx.user.settings.lang.api_id,
-                        ),
-                    );
-                    break;
+                        break;
+                }
+                break;
             }
-            break;
+
         case "extendStartTips":
             if (ctx.message.body.replace(" ", "") === "00") {
                 await ctx.chat.sendMessage(
@@ -320,40 +377,6 @@ export async function RideHandler(ctx: Context) {
                 ),
             );
             break;
-            
-        case "truckSelectPrefer":
-            if (ctx.message.body == "отмена") {
-                await ctx.chat.sendMessage(
-                    getLocalizationText(ctx, localizationNames.truckContinueSearchDriversResponses)
-                );
-                state.state = "searchCar";
-                await ctx.storage.push(ctx.userID, state);
-                break;
-            }
-            if (ctx.configName !== "truck") {
-                await ctx.chat.sendMessage(
-                    ctx.constants.getPrompt(
-                        localizationNames.enterStartPriceCommandNotFoundRide,
-                        ctx.user.settings.lang.api_id,
-                    ),
-                );
-                break
-            }
-            const select = ctx.message.body;
-            if(!state.data.order.truckDriversWatcher.driversMap[select]) {
-                await ctx.chat.sendMessage(
-                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
-                )
-                break
-            }
-
-            await ctx.chat.sendMessage(
-                getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
-            );
-            state.data.order.truckDriversWatcher?.stop()
-            await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
-            break;
-
         default:
             console.log("GFP POINT 0x02, state: ", state.state);
             await ctx.chat.sendMessage("RIDE HANDLER -> GFP POINT 0x02");

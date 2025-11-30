@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 
 export function getLocalizationText(
     ctx: Context,

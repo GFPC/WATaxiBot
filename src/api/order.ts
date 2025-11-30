@@ -10,11 +10,12 @@ import axios from "axios";
 import { Chat, Message } from "whatsapp-web.js";
 import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { localizationNames } from "../l10n";
 import {compareDateTimeWithWaitingList} from "../utils/orderUtils";
 import {TruckDriverWatcher} from "../utils/specific/truck/truckDriverWatcher";
 import {getLocalizationText} from "../utils/textUtils";
+import {getDistanceAndDuration} from "../utils/specific/truck/priceUtils";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -167,7 +168,7 @@ export class Order {
         var suitable_driver: any | undefined =
             data.data.booking[this.id].drivers?.length > 0
                 ? (data.data.booking[this.id].drivers.find(
-                      (driver: any) => driver?.c_canceled === null,
+                      (driver: any) => driver?.c_canceled === null && driver?.c_appointed !== null
                   ) ?? undefined)
                 : undefined;
         if (suitable_driver) {
@@ -187,9 +188,10 @@ export class Order {
                 driver_state = 4;
             }
         } else {
+            /*
             if (data.data.booking[this.id].drivers?.length > 0) {
                 driver_state = 3;
-            }
+            }*/
         }
 
         if(compareDateTimeWithWaitingList(
@@ -223,7 +225,7 @@ export class Order {
         } else if (state === 4) {
             return BookingState.Completed;
         }
-        return BookingState.Approved;
+        return BookingState.Processing;
         /*
     switch (state) {
       case 1:
@@ -600,7 +602,13 @@ export class Order {
                 getLocalizationText(ctx,localizationNames.truckDriversList)
             )
             this.truckDriversWatcher = new TruckDriverWatcher();
-            await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString());
+
+            const distanceAndDuration = await getDistanceAndDuration(
+                user_state.data.from,
+                user_state.data.to,
+            )
+
+            await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString(), user_state, this.isVoting, distanceAndDuration);
         }
 
         if (this.isVoting) return b_driver_code;

@@ -1,5 +1,5 @@
 import { StateMachine } from "../types";
-import { Context } from "../../index";
+import { Context } from "../../types/Context";
 import { Message } from "whatsapp-web.js";
 
 export interface RegistrationMachine extends StateMachine {

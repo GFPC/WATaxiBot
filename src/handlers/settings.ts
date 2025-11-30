@@ -1,5 +1,5 @@
 import { localizationNames } from "../l10n";
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { changeLang, changeReferralCode } from "../api/user";
 import { UsersStorage } from "../storage/usersStorage";
 import { REFCODES } from "../api/constants";

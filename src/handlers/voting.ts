@@ -1,4 +1,4 @@
-import { Context } from "../index";
+import { Context } from "../types/Context";
 import { localizationNames } from "../l10n";
 import { newEmptyOrder } from "../states/machines/orderMachine";
 import { OrderObserverCallback } from "../observer/order";
@@ -12,101 +12,174 @@ export async function VotingHandler(ctx: Context) {
     console.log("VOTING HANDLER: ", ctx.message.body, state.state);
     switch (state.state) {
         case "voting":
-            if (
-                ctx.message.body.toLowerCase() === "2" ||
-                ctx.message.body.toLowerCase() ===
+            if( ctx.configName === "truck") {
+                if (
+                    ctx.message.body.toLowerCase() === "02" ||
+                    ctx.message.body.toLowerCase() ===
                     ctx.constants.getPrompt(
                         localizationNames.extendVotingTimeLower,
                         ctx.user.settings.lang.api_id,
                     )
-            ) {
-                //addTime - Продлить
-                await state.data.order.addVotingTime();
-                break;
-            } else if (
-                ctx.message.body.toLowerCase() === "0" ||
-                ctx.message.body.toLowerCase() ===
+                ) {
+                    //addTime - Продлить
+                    await state.data.order.addVotingTime();
+                    break;
+                } else if (
+                    ctx.message.body.toLowerCase() === "0" ||
+                    ctx.message.body.toLowerCase() ===
                     ctx.constants.getPrompt(
                         localizationNames.cancelLower,
                         ctx.user.settings.lang.api_id,
                     )
-            ) {
-                //Отмена
-                const text = {
-                    mistakenlyOrder: ctx.constants.getPrompt(
-                        "mistakenly_ordered",
-                        ctx.user.settings.lang.api_id,
-                    ),
-                    waitingForLonger: ctx.constants.getPrompt(
-                        "waiting_for_long",
-                        ctx.user.settings.lang.api_id,
-                    ),
-                    conflictWithRider: ctx.constants.getPrompt(
-                        "conflict_with_rider",
-                        ctx.user.settings.lang.api_id,
-                    ),
-                    veryExpensive: ctx.constants.getPrompt(
-                        "very_expensive",
-                        ctx.user.settings.lang.api_id,
-                    ),
-                };
-                const reasonContainer =
-                    "\n" +
-                    text.mistakenlyOrder +
-                    " - 1\n" +
-                    text.waitingForLonger +
-                    " - 2\n" +
-                    text.conflictWithRider +
-                    " - 3\n" +
-                    text.veryExpensive +
-                    " - 4";
-                await ctx.chat.sendMessage(
-                    ctx.constants
-                        .getPrompt(
-                            localizationNames.collectionCancelReason,
+                ) {
+                    //Отмена
+                    const text = {
+                        mistakenlyOrder: ctx.constants.getPrompt(
+                            "mistakenly_ordered",
                             ctx.user.settings.lang.api_id,
+                        ),
+                        waitingForLonger: ctx.constants.getPrompt(
+                            "waiting_for_long",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                        conflictWithRider: ctx.constants.getPrompt(
+                            "conflict_with_rider",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                        veryExpensive: ctx.constants.getPrompt(
+                            "very_expensive",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    };
+                    const reasonContainer =
+                        "\n" +
+                        text.mistakenlyOrder +
+                        " - 1\n" +
+                        text.waitingForLonger +
+                        " - 2\n" +
+                        text.conflictWithRider +
+                        " - 3\n" +
+                        text.veryExpensive +
+                        " - 4";
+                    await ctx.chat.sendMessage(
+                        ctx.constants
+                            .getPrompt(
+                                localizationNames.collectionCancelReason,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            .replace("%reasons%", reasonContainer),
+                    );
+                    state.state = "cancelReason";
+                    await ctx.storage.push(ctx.userID, state);
+                    break;
+                } else if (ctx.message.body.trim() == "03") {
+                    await ctx.chat.sendMessage(
+                        ctx.constants.getPrompt(
+                            localizationNames.enterStartPriceSum,
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    );
+                    state.state = "extendStartTips";
+                    await ctx.storage.push(ctx.userID, state);
+                    break;
+                } else {
+                    const select = ctx.message.body;
+                    if(!state.data.order.truckDriversWatcher.driversMap[select]) {
+                        await ctx.chat.sendMessage(
+                            getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
                         )
-                        .replace("%reasons%", reasonContainer),
-                );
-                state.state = "cancelReason";
-                await ctx.storage.push(ctx.userID, state);
+                        break
+                    }
+
+                    await ctx.chat.sendMessage(
+                        getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
+                    );
+                    state.data.order.truckDriversWatcher?.stop()
+                    await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
+                    break;
+                }
                 break;
-            } else if (ctx.message.body.trim() == "3") {
-                await ctx.chat.sendMessage(
+            } else {
+                if (
+                    ctx.message.body.toLowerCase() === "2" ||
+                    ctx.message.body.toLowerCase() ===
                     ctx.constants.getPrompt(
-                        localizationNames.enterStartPriceSum,
+                        localizationNames.extendVotingTimeLower,
                         ctx.user.settings.lang.api_id,
-                    ),
-                );
-                state.state = "extendStartTips";
-                await ctx.storage.push(ctx.userID, state);
-                break;
-            } else if(ctx.message.body.trim() == "4") {
-                if (ctx.configName !== "truck") {
+                    )
+                ) {
+                    //addTime - Продлить
+                    await state.data.order.addVotingTime();
+                    break;
+                } else if (
+                    ctx.message.body.toLowerCase() === "0" ||
+                    ctx.message.body.toLowerCase() ===
+                    ctx.constants.getPrompt(
+                        localizationNames.cancelLower,
+                        ctx.user.settings.lang.api_id,
+                    )
+                ) {
+                    //Отмена
+                    const text = {
+                        mistakenlyOrder: ctx.constants.getPrompt(
+                            "mistakenly_ordered",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                        waitingForLonger: ctx.constants.getPrompt(
+                            "waiting_for_long",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                        conflictWithRider: ctx.constants.getPrompt(
+                            "conflict_with_rider",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                        veryExpensive: ctx.constants.getPrompt(
+                            "very_expensive",
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    };
+                    const reasonContainer =
+                        "\n" +
+                        text.mistakenlyOrder +
+                        " - 1\n" +
+                        text.waitingForLonger +
+                        " - 2\n" +
+                        text.conflictWithRider +
+                        " - 3\n" +
+                        text.veryExpensive +
+                        " - 4";
+                    await ctx.chat.sendMessage(
+                        ctx.constants
+                            .getPrompt(
+                                localizationNames.collectionCancelReason,
+                                ctx.user.settings.lang.api_id,
+                            )
+                            .replace("%reasons%", reasonContainer),
+                    );
+                    state.state = "cancelReason";
+                    await ctx.storage.push(ctx.userID, state);
+                    break;
+                } else if (ctx.message.body.trim() == "3") {
+                    await ctx.chat.sendMessage(
+                        ctx.constants.getPrompt(
+                            localizationNames.enterStartPriceSum,
+                            ctx.user.settings.lang.api_id,
+                        ),
+                    );
+                    state.state = "extendStartTips";
+                    await ctx.storage.push(ctx.userID, state);
+                    break;
+                } else {
                     await ctx.chat.sendMessage(
                         ctx.constants.getPrompt(
                             localizationNames.enterStartPriceCommandNotFoundRide,
                             ctx.user.settings.lang.api_id,
                         ),
                     );
-                    return;
+                    break;
                 }
-                await ctx.chat.sendMessage(
-                    getLocalizationText(ctx, localizationNames.truckEnterDriverNumber)
-                );
-                state.state = "truckSelectPrefer";
-                await ctx.storage.push(ctx.userID, state);
-                break;
-            } else {
-                await ctx.chat.sendMessage(
-                    ctx.constants.getPrompt(
-                        localizationNames.enterStartPriceCommandNotFoundRide,
-                        ctx.user.settings.lang.api_id,
-                    ),
-                );
                 break;
             }
-            break;
         case "extendStartTips":
             if (ctx.message.body.replace(" ", "") === "00") {
                 await ctx.chat.sendMessage(
@@ -294,38 +367,6 @@ export async function VotingHandler(ctx: Context) {
                     ctx.user.settings.lang.api_id,
                 ),
             );
-            break;
-        case "truckSelectPrefer":
-            if (ctx.message.body == "отмена") {
-                await ctx.chat.sendMessage(
-                    getLocalizationText(ctx, localizationNames.truckContinueSearchDriversResponses)
-                );
-                state.state = "searchCar";
-                await ctx.storage.push(ctx.userID, state);
-                break;
-            }
-            if (ctx.configName !== "truck") {
-                await ctx.chat.sendMessage(
-                    ctx.constants.getPrompt(
-                        localizationNames.enterStartPriceCommandNotFoundRide,
-                        ctx.user.settings.lang.api_id,
-                    ),
-                );
-                break
-            }
-            const select = ctx.message.body;
-            if(!state.data.order.truckDriversWatcher.driversMap[select]) {
-                await ctx.chat.sendMessage(
-                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
-                )
-                break
-            }
-
-            await ctx.chat.sendMessage(
-                getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
-            );
-            state.data.order.truckDriversWatcher?.stop()
-            await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
             break;
         default:
             break;

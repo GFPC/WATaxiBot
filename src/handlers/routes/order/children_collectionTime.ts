@@ -5,7 +5,7 @@ import {
 import { localizationNames } from "../../../l10n";
 import { formatString } from "../../../utils/formatter";
 import { OrderMachine } from "../../../states/machines/orderMachine";
-import { Context } from "../../../index";
+import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 
 export async function children_collectionTime(

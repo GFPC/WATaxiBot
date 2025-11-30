@@ -1,6 +1,6 @@
 import { localizationNames } from "../../../l10n";
 import { OrderMachine } from "../../../states/machines/orderMachine";
-import { Context } from "../../../index";
+import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 import { calculateOrderPrice, formatOrderConfirmation } from "../../order";
 import { GetTimestamp } from "../../../utils/orderUtils";
@@ -40,6 +40,9 @@ export async function collectionWhen(
             state.data.additionalOptions ?? [],
             0,
             state.data.carClass,
+            state.data.truck_floornumber,
+            state.data.truck_gross_weight,
+            state.data.truck_count
         );
 
         state.data.voting = true;
@@ -101,6 +104,9 @@ export async function collectionWhen(
         state.data.additionalOptions ?? [],
         0,
         state.data.carClass,
+        state.data.truck_floornumber,
+        state.data.truck_gross_weight,
+        state.data.truck_count
     );
 
     const response = await formatOrderConfirmation(
