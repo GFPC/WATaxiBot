@@ -217,7 +217,7 @@ export class TruckDriverWatcher {
 
         const drivers_text = drivers_profiles_formatted.join('\n');
         //console.log(drivers_text);
-        await this.message.edit(`${drivers_text}`);
+        await this.message.edit(`${getLocalizationText(ctx, localizationNames.truckDriversList)}${drivers_text}`);
 
         // Проверяем флаг перед планированием следующего вызова
         if (!this.isStopped) {

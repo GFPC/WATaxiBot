@@ -168,8 +168,8 @@ export class Order {
         var suitable_driver: any | undefined =
             data.data.booking[this.id].drivers?.length > 0
                 ? (data.data.booking[this.id].drivers.find(
-                      (driver: any) => driver?.c_canceled === null && driver?.c_appointed !== null
-                  ) ?? undefined)
+                    (driver: any) => driver?.c_canceled === null,
+                ) ?? undefined)
                 : undefined;
         if (suitable_driver) {
             if (suitable_driver?.c_appointed !== null) {
@@ -188,15 +188,14 @@ export class Order {
                 driver_state = 4;
             }
         } else {
-            /*
             if (data.data.booking[this.id].drivers?.length > 0) {
                 driver_state = 3;
-            }*/
+            }
         }
 
         if(compareDateTimeWithWaitingList(
             data.data.booking[this.id].b_start_datetime,
-            data.data.booking[this.id].b_max_waiting_list) && (driver_state === -1 )
+            data.data.booking[this.id].b_max_waiting_list)
         ) {
             this.finish();
             return BookingState.OutOfTime
@@ -225,7 +224,7 @@ export class Order {
         } else if (state === 4) {
             return BookingState.Completed;
         }
-        return BookingState.Processing;
+        return BookingState.Approved;
         /*
     switch (state) {
       case 1:
