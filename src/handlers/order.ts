@@ -411,6 +411,7 @@ export async function formatOrderConfirmation(
                     ? state.data.additionalOptions
                           .map(
                               (i) =>
+                                  (ctx.configName === "children" ? '_' : '') +
                                   ctx.constants.data.data.booking_comments[i][
                                       ctx.user.settings.lang.iso
                                   ] +
@@ -418,7 +419,7 @@ export async function formatOrderConfirmation(
                                   ctx.constants.data.data.booking_comments[i]
                                       .options.price +
                                   ctx.constants.data.default_currency +
-                                  " )",
+                                  " )" + (ctx.configName === "children" ? '_' : ''),
                           )
                           .join(", ")
                     : getLocalizationText(ctx,localizationNames.noAdditionalOptions),
