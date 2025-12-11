@@ -255,8 +255,10 @@ export class OrderObserverCallback {
                             ) +
                             "\n",
                     );
+                    type driver_type = {c_arrived: string}
+                    const driver = orderOnApi.drivers.find( (x: driver_type) => !!x.c_arrived);
                     state.data.pricingModel.options.duration = moment(
-                        orderOnApi.b_completed,
+                        driver.c_arrived,
                     ).diff(moment(orderOnApi.b_start_datetime), "minutes");
                     state.data.pricingModel.options.submit_price =
                         order.submitPrice;

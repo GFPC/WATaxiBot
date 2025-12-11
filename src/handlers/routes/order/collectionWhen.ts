@@ -11,6 +11,8 @@ import {
     getDriversForCityNight,
     isNightTime,
 } from "../../../api/sql_templates";
+import {MultiUsersRefCodes} from "../../../ServiceMap";
+import {formatDateHuman} from "../../../utils/formatter";
 
 function getMaroccoTime() {
     return new Date(new Date().getTime() + 3600 * 1000)
@@ -104,9 +106,9 @@ export async function collectionWhen(
     state.state = "collectionOrderConfirm";
 
     if(ctx.configName === "truck") {
-        state.data.nextMessageForAI = '=Данные по заказу, подтверждаете?';
+        state.data.nextMessageForAI = await truck_formatOrderConfirmation(ctx,state);
         state.data.nextStateForAI = "collectionOrderConfirm";
-        await ctx.chat.sendMessage('=Данные по заказу, подтверждаете?');
+        await ctx.chat.sendMessage(await truck_formatOrderConfirmation(ctx,state));
         await ctx.storage.push(ctx.userID, state);
         return SuccessResponse;
     }
@@ -138,4 +140,48 @@ export async function collectionWhen(
     await ctx.chat.sendMessage(response);
     await ctx.storage.push(ctx.userID, state);
     return SuccessResponse;
+}
+
+async function truck_formatOrderConfirmation(
+    ctx: Context,
+    state: OrderMachine,
+) : Promise<string> {
+    const user = await ctx.usersList.pull(ctx.userID);
+    let template = ctx.constants.getPrompt(
+        user.referrer_u_id === MultiUsersRefCodes[ctx.botID].test
+            ? localizationNames.collectionOrderConfirmTestMode
+            : localizationNames.collectionOrderConfirm,
+        ctx.user.settings.lang.api_id,
+    )
+    template = template.replace('%from%', `${state.data.from.latitude} ${state.data.from.longitude}`)
+    template = template.replace('%to%', `${state.data.to.latitude} ${state.data.to.longitude}`)
+    template = template.replace('%units%', (state.data.truck_count || 0).toString())
+    template = template.replace("%weight%", (state.data.truck_gross_weight || 0).toString() + ' ' + ctx.constants.getPrompt(localizationNames.kg, ctx.user.settings.lang.api_id))
+    template = template.replace("%floors%", (state.data.truck_floornumber || 0).toString())
+    template = template.replace("%when%", formatDateHuman(state.data.when ?? null, ctx))
+    template = template.replace("%class%", state.data.carClass
+        ? ctx.constants.data.data.car_classes[state.data.carClass][
+            ctx.user.settings.lang.iso
+            ]
+        : ctx.constants.getPrompt(
+            localizationNames.anyClass,
+            ctx.user.settings.lang.api_id,
+        ))
+    template = template.replace("%options%", state.data.additionalOptions.length > 0
+        ? state.data.additionalOptions
+            .map(
+                (i) =>
+                    ctx.constants.data.data.booking_comments[i][
+                        ctx.user.settings.lang.iso
+                        ] +
+                    " ( " +
+                    ctx.constants.data.data.booking_comments[i]
+                        .options.price +
+                    ctx.constants.data.default_currency +
+                    " )" + (ctx.configName === "children" ? '_' : ''),
+            )
+            .join(', ')
+        : getLocalizationText(ctx,localizationNames.noAdditionalOptions))
+
+    return template
 }

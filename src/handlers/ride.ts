@@ -5,6 +5,7 @@ import { constants } from "../constants";
 import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
 import { MessageMedia } from "whatsapp-web.js";
 import {getLocalizationText} from "../utils/textUtils";
+import {initPriceModelForTruck} from "../utils/specific/truck/priceUtils";
 
 export async function RideHandler(ctx: Context) {
     var state  = await ctx.storage.pull(ctx.userID);
@@ -68,6 +69,12 @@ export async function RideHandler(ctx: Context) {
                         await ctx.storage.push(ctx.userID, state);
                         break;
                     default:
+                        if(state.data.order.truck_driverSelected){
+                            await ctx.chat.sendMessage(
+                                getLocalizationText(ctx, localizationNames.truckDriverAlreadySelected)
+                            )
+                            break
+                        }
                         const select = ctx.message.body;
                         if(!state.data.order.truckDriversWatcher.driversMap[select]) {
                             await ctx.chat.sendMessage(
@@ -75,12 +82,16 @@ export async function RideHandler(ctx: Context) {
                             )
                             break
                         }
+                        const estimatedPriceParams = state.data.order.truckDriversWatcher.driversMap[select].priceModel
+                        state.data.order.pricingModel = estimatedPriceParams;
+                        state.data.pricingModel = estimatedPriceParams;
 
                         await ctx.chat.sendMessage(
                             getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
                         );
                         state.data.order.truckDriversWatcher?.stop()
-                        await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select]);
+                        state.data.order.truck_driverSelected = true
+                        await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select].id);
                         break;
                 }
                 break;

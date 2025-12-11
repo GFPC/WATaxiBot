@@ -14,6 +14,11 @@ export async function getPriceParams(ctx: Context, c_id: string): Promise<{base_
     }
 
     if(!car.data.car[c_id].courier_call_rate || !car.data.car[c_id].courier_fare_per_1_km){
+        if(!ctx.constants.data.data.car_classes[car.data.car[c_id].cc_id]){
+            return {
+                status: "error",
+            }
+        }
         return {
             base_price: ctx.constants.data.data.car_classes[car.data.car[c_id].cc_id].courier_call_rate,
             price_per_km: ctx.constants.data.data.car_classes[car.data.car[c_id].cc_id].courier_fare_per_1_km,

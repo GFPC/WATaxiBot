@@ -94,6 +94,7 @@ export class Order {
     truckDriversWatcher?: TruckDriverWatcher;
     truckTripWatcher?: TripWatcher;
     truckTripWatcherMessage?: Message;
+    truck_driverSelected?: boolean;
 
     constructor(
         clientTg: string,
@@ -617,12 +618,19 @@ export class Order {
                     user_state.data.to,
                 )
 
-                await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString(), user_state, this.isVoting, distanceAndDuration);
+                await this.truckDriversWatcher.start(ctx,
+                    this.truckListMessage,
+                    this.id.toString(),
+                    user_state,
+                    this.isVoting,
+                    distanceAndDuration
+                );
             } else {
+                this.truckTripWatcher = new TripWatcher(ctx, this.id.toString());
                 this.truckTripWatcherMessage = await ctx.chat.sendMessage(
                     'Список trips:\n'
                 )
-                await this.truckTripWatcher?.start()
+                await this.truckTripWatcher?.start(this.truckTripWatcherMessage)
             }
 
         }

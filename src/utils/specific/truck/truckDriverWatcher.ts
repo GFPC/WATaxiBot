@@ -8,6 +8,7 @@ import {getLocalizationText} from "../../textUtils";
 import {localizationNames} from "../../../l10n";
 import {countBy} from "lodash";
 import {getDistanceAndDuration, getPrice, initPriceModelForTruck} from "./priceUtils";
+import PriceModel from "../../../types/Price/PriceModel";
 export async function getPerformersList(
     ctx: Context,
     b_id: string
@@ -66,7 +67,10 @@ export class TruckDriverWatcher {
         calculationType: string;
     } = {} as {distance: number; duration: number; calculationType: string};
     driversMap: {
-        [key: string]: string
+        [key: string]: {
+            id: string;
+            priceModel: PriceModel;
+        }
     } = {};
 
     private async pollPerformers(
@@ -76,14 +80,19 @@ export class TruckDriverWatcher {
         if (this.isStopped) return;
         console.log('Polling...');
 
-        const res = await axios.post(`${this.url}drive/get/${this.b_id}?fields=00000000u1`, {
-            token: this.auth.token,
-            u_hash: this.auth.hash,
-        }, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }
-        });
+        let res;
+        try {
+            res = await axios.post(`${this.url}drive/get/${this.b_id}?fields=00000000u1`, {
+                token: this.auth.token,
+                u_hash: this.auth.hash,
+            }, {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            });
+        } catch (e) {
+            return
+        }
 
         // Проверяем флаг после асинхронной операции
         if (this.isStopped) return;
@@ -168,11 +177,17 @@ export class TruckDriverWatcher {
 
         const drivers_profiles_formatted = drivers_profiles.data.data.user
             ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any, index: number) => {
-                this.driversMap[(index+1).toString()] = x.u_id;
+                if(!this.driversMap[(index+1).toString()]) {
+                    this.driversMap[(index+1).toString()] = {
+                        id: x.u_id,
+                        priceModel: {} as PriceModel
+                    }
+                }
                 drivers_cars[x.u_id] = x.c_id
                 const car = cars.data.data.car[drivers_cars_link[x.u_id]];
-                const car_model = ctx.constants.data.data.car_models[car.cm_id][ctx.user.settings.lang.iso]
-                const car_mark = ctx.constants.data.data.car_makes[ctx.constants.data.data.car_models[car.cm_id].make][ctx.user.settings.lang.iso];
+                console.log(car)
+                const car_model = car.cm_id ? ctx.constants.data.data.car_models[car.cm_id][ctx.user.settings.lang.iso] : '-'
+                const car_mark = car.cm_id ? ctx.constants.data.data.car_makes[ctx.constants.data.data.car_models[car.cm_id].make][ctx.user.settings.lang.iso] : '-';
                 const text = drivers.find((d: any) => d.u_id === x.u_id).c_options.text || 'Текст отклика отсутствует';
                 const price = drivers.find((d: any) => d.u_id === x.u_id).c_options.price || 'Цена не назначена';
                 const rating = x.u_rating || 'RNS';
@@ -183,35 +198,41 @@ export class TruckDriverWatcher {
                     return
                 }
 
-                const estimatedPriceParams = await initPriceModelForTruck(
-                    ctx,
-                    drivers_cars_link[x.u_id],
-                    distanceAndDuration.calculationType,
-                    distanceAndDuration.distance,
-                    distanceAndDuration.duration,
-                    JSON.parse(
-                        ctx.constants.data.data.site_constants.pricingModels.value,
-                    ).pricing_models,
-                    this.isVoting,
-                    this.order_form.data.additionalOptions,
-                    res.data.data.booking[this.b_id].b_options.submitPrice,
-                    this.order_form.data.truck_floornumber,
-                    this.order_form.data.truck_gross_weight,
-                    this.order_form.data.truck_count,
-                )
-                //console.log('estimatedPriceParams', estimatedPriceParams);
-                let estimatedPrice = await getPrice(
-                    estimatedPriceParams.formula,
-                    estimatedPriceParams.options,
-                    distanceAndDuration.calculationType,
-                );
-                if(distanceAndDuration.calculationType === "incomplete"){
-                    estimatedPrice += " + ?";
-                }
-                //console.log('estimatedPrice', estimatedPrice); // return
+                try{
+                    const estimatedPriceParams = await initPriceModelForTruck(
+                        ctx,
+                        drivers_cars_link[x.u_id],
+                        distanceAndDuration.calculationType,
+                        distanceAndDuration.distance,
+                        distanceAndDuration.duration,
+                        JSON.parse(
+                            ctx.constants.data.data.site_constants.pricingModels.value,
+                        ).pricing_models,
+                        this.isVoting,
+                        this.order_form.data.additionalOptions,
+                        res.data.data.booking[this.b_id].b_options.submitPrice,
+                        this.order_form.data.truck_floornumber,
+                        this.order_form.data.truck_gross_weight,
+                        this.order_form.data.truck_count,
+                    )
+                    this.driversMap[(index+1).toString()].priceModel = estimatedPriceParams;
+                    console.log('estimatedPriceParams', estimatedPriceParams);
+                    let estimatedPrice = await getPrice(
+                        estimatedPriceParams.formula,
+                        estimatedPriceParams.options,
+                        distanceAndDuration.calculationType,
+                    );
+                    if(distanceAndDuration.calculationType === "incomplete"){
+                        estimatedPrice += " + ?";
+                    }
+                    //console.log('estimatedPrice', estimatedPrice); // return
 
-                const fullText = `${index+1}.${rating} | ${car_mark || ''} ${car.cm_id || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
-                return fullText || '-';
+                    const fullText = `${index+1}.${rating} | ${car_mark || ''} ${car_model || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
+                    return fullText || '-';
+                } catch (e){
+                    return '-'
+                }
+
             }))
             : [getLocalizationText(ctx,localizationNames.truckDriversResponsesNotFound)];
 

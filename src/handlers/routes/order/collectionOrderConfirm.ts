@@ -13,6 +13,7 @@ import { constants } from "../../../constants";
 import { newRide, newVote } from "../../../states/machines/rideMachine";
 import { getLocalizationText } from "../../../utils/textUtils";
 import { Message } from "whatsapp-web.js";
+import TripWatcher from "../../../utils/specific/truck/TripWatcher";
 
 export async function formatDriversList(
     drivers: {
