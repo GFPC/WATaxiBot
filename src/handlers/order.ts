@@ -415,7 +415,7 @@ export async function formatOrderConfirmation(
         : (ctx.configName === "children" ? '' : getLocalizationText(ctx,localizationNames.noAdditionalOptions))
 
     if(ctx.configName === "children" && state.data.additionalOptions.length == 0){
-        template = template.replace(/###START###.*?###END###\s?/, '')
+        template = template.replace(/###START###[\s\S]*?###END###/g, '')
     }
     return formatString(
         template,
