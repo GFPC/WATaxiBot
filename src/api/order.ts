@@ -16,6 +16,7 @@ import {compareDateTimeWithWaitingList} from "../utils/orderUtils";
 import {TruckDriverWatcher} from "../utils/specific/truck/truckDriverWatcher";
 import {getLocalizationText} from "../utils/textUtils";
 import {getDistanceAndDuration} from "../utils/specific/truck/priceUtils";
+import TripWatcher from "../utils/specific/truck/TripWatcher";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -91,6 +92,8 @@ export class Order {
     startDatetime: Date = new Date();
     truckListMessage?: Message;
     truckDriversWatcher?: TruckDriverWatcher;
+    truckTripWatcher?: TripWatcher;
+    truckTripWatcherMessage?: Message;
 
     constructor(
         clientTg: string,
@@ -463,6 +466,7 @@ export class Order {
         ctx: Context,
         b_comments: number[],
         pricingModel: PricingModel,
+        truck_TripWatcher?: TripWatcher,
     ) {
         /* Создание нового заказа */
         if (this.id) throw "The order has already been created";
@@ -477,6 +481,7 @@ export class Order {
         this.ctx = ctx;
         this.pricingModel = pricingModel;
         this.waitingTime = maxWaitingSecs;
+        this.truckTripWatcher = truck_TripWatcher;
 
         const user_state: OrderMachine = await ctx.storage.pull(ctx.userID);
         console.log("APIORDER new priceModel", pricingModel);
@@ -520,7 +525,11 @@ export class Order {
             data.b_car_class = user_state.data.carClass;
             console.log("Using car classes: " + user_state.data.carClass)
         } else if (user_state.data.locationClasses) {
-            data.b_location_class = user_state.data.locationClasses;
+            if (typeof user_state.data.locationClasses === "string") {
+                data.b_location_class = user_state.data.locationClasses
+            } else if (Array.isArray(user_state.data.locationClasses)) {
+                data.b_location_class = user_state.data.locationClasses[0]
+            }
             console.log("Using location classes: " + user_state.data.locationClasses)
         }
         if (user_state.data.preferredDriversList) {
@@ -597,17 +606,25 @@ export class Order {
         await this.startStateChecking();
 
         if(ctx.configName === "truck") {
-            this.truckListMessage = await ctx.chat.sendMessage(
-                getLocalizationText(ctx,localizationNames.truckDriversList)
-            )
-            this.truckDriversWatcher = new TruckDriverWatcher();
+            if(!user_state.data.truck_flags?.isTripMode) {
+                this.truckListMessage = await ctx.chat.sendMessage(
+                    getLocalizationText(ctx,localizationNames.truckDriversList)
+                )
+                this.truckDriversWatcher = new TruckDriverWatcher();
 
-            const distanceAndDuration = await getDistanceAndDuration(
-                user_state.data.from,
-                user_state.data.to,
-            )
+                const distanceAndDuration = await getDistanceAndDuration(
+                    user_state.data.from,
+                    user_state.data.to,
+                )
 
-            await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString(), user_state, this.isVoting, distanceAndDuration);
+                await this.truckDriversWatcher.start(ctx, this.truckListMessage, this.id.toString(), user_state, this.isVoting, distanceAndDuration);
+            } else {
+                this.truckTripWatcherMessage = await ctx.chat.sendMessage(
+                    'Список trips:\n'
+                )
+                await this.truckTripWatcher?.start()
+            }
+
         }
 
         if (this.isVoting) return b_driver_code;
