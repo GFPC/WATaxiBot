@@ -421,7 +421,7 @@ export async function formatOrderConfirmation(
                                   ctx.constants.data.default_currency +
                                   " )" + (ctx.configName === "children" ? '_' : ''),
                           )
-                          .join(", ")
+                          .join(ctx.configName === "children" ? '\n' : ', ')
                     : getLocalizationText(ctx,localizationNames.noAdditionalOptions),
             price:
                 priceModel.price === "0"
