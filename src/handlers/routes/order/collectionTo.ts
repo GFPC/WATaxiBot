@@ -105,7 +105,7 @@ export async function collectionTo(
                     ctx.constants.getPrompt(
                         localizationNames.collectionPeopleCount,
                         ctx.user.settings.lang.api_id,
-                    ) +  formatRanges(type_sizes.newData as Record<string, { maxVolume: number }>, '\nТиповые размеры(м³)') + formatRanges(type_weights.newData as Record<string, { maxWeight: number }>, 'Типовые веса(кг)', 2)
+                    ) +  formatRanges(type_sizes.newData as Record<string, { maxVolume: number }>, '\n\nТиповые размеры(м³)') + formatRanges(type_weights.newData as Record<string, { maxWeight: number }>, 'Типовые веса(кг)', 2)
                 )
 
             } else {
