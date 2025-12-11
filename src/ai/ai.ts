@@ -3,7 +3,7 @@ import { RunCreateResponse } from "openai/resources/evals";
 
 const ai_url = "https://openrouter.ai/api/v1";
 const ai_token =
-    "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";
+    "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";
 const model = "deepseek/deepseek-r1-0528-qwen3-8b:free";
 
 const openai = new OpenAI({

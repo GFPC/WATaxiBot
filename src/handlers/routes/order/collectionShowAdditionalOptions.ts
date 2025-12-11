@@ -62,8 +62,7 @@ export async function collectionShowAdditionalOptions(
                               .price,
                           ctx.constants.data.default_currency,
                       ) +
-                      " )") +
-                "\n";
+                      " )") + "\n";
         }
     }
     await ctx.chat.sendMessage(text);

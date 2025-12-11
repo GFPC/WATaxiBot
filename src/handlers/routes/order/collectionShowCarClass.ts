@@ -50,7 +50,7 @@ export async function collectionShowCarClass(
             await ctx.chat.sendMessage(text);
         }
     } else if (ctx.message.body === "2") {state.state = "collectionShowAdditionalOptions";
-        if(ctx.configName === "gruzvill" || ctx.configName === "truck") {
+        if(ctx.configName === "gruzvill" ) {
             if(state.data.locationClasses && '1' in state.data.locationClasses){
                 // petti
                 state.data.carClass = '50'
