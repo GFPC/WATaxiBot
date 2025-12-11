@@ -27,7 +27,17 @@ export async function collectionWhen(
         );
         return SuccessResponse;
     }
-    if (ctx.message.body.toLowerCase() === "3") {
+    if(ctx.message.body === "3" && ctx.configName === "truck") {
+        state.data.voting = true;
+        state.data.when = null;
+        state.state = "collectionOrderConfirm";
+        await ctx.storage.push(ctx.userID, state);
+        await ctx.chat.sendMessage(
+            "=Данные по заказу voting, подтверждаете?"
+        )
+        return SuccessResponse;
+    }
+    if (ctx.message.body === "3"&& ctx.configName !== "truck") {
         const pricingModels = JSON.parse(
             ctx.constants.data.data.site_constants.pricingModels.value,
         ).pricing_models;
@@ -92,6 +102,15 @@ export async function collectionWhen(
 
     state.data.when = timestamp;
     state.state = "collectionOrderConfirm";
+
+    if(ctx.configName === "truck") {
+        state.data.nextMessageForAI = '=Данные по заказу, подтверждаете?';
+        state.data.nextStateForAI = "collectionOrderConfirm";
+        await ctx.chat.sendMessage('=Данные по заказу, подтверждаете?');
+        await ctx.storage.push(ctx.userID, state);
+        return SuccessResponse;
+    }
+
     const pricingModels = JSON.parse(
         ctx.constants.data.data.site_constants.pricingModels.value,
     ).pricing_models;
