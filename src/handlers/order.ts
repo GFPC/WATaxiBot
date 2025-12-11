@@ -175,7 +175,7 @@ export function formatPriceFormula(
                 value = "?";
             } else {
                 if (variable.endsWith("ratio") && value % 1 !== 0) {
-                    value = value.toFixed(2);
+                    value = (value || 0).toFixed(2);
                 } else {
                     value = Math.trunc(value);
                 }
@@ -390,13 +390,35 @@ export async function formatOrderConfirmation(
     priceModel: PriceModel,
 ): Promise<string> {
     const user = await ctx.usersList.pull(ctx.userID);
+
+    let template = ctx.constants.getPrompt(
+        user.referrer_u_id === MultiUsersRefCodes[ctx.botID].test
+            ? localizationNames.collectionOrderConfirmTestMode
+            : localizationNames.collectionOrderConfirm,
+        ctx.user.settings.lang.api_id,
+    )
+    const options_text = state.data.additionalOptions.length > 0
+        ? state.data.additionalOptions
+            .map(
+                (i) =>
+                    (ctx.configName === "children" ? '_' : '') +
+                    ctx.constants.data.data.booking_comments[i][
+                        ctx.user.settings.lang.iso
+                        ] +
+                    " ( " +
+                    ctx.constants.data.data.booking_comments[i]
+                        .options.price +
+                    ctx.constants.data.default_currency +
+                    " )" + (ctx.configName === "children" ? '_' : ''),
+            )
+            .join(ctx.configName === "children" ? '\n' : ', ')
+        : (ctx.configName === "children" ? '' : getLocalizationText(ctx,localizationNames.noAdditionalOptions))
+
+    if(ctx.configName === "children" && state.data.additionalOptions.length == 0){
+        template = template.replace(/###START###.*?###END###\s?/, '')
+    }
     return formatString(
-        ctx.constants.getPrompt(
-            user.referrer_u_id === MultiUsersRefCodes[ctx.botID].test
-                ? localizationNames.collectionOrderConfirmTestMode
-                : localizationNames.collectionOrderConfirm,
-            ctx.user.settings.lang.api_id,
-        ),
+        template,
         {
             from:
                 state.data.from?.address ??
