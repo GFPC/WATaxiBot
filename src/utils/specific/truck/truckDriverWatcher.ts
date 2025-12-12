@@ -174,11 +174,16 @@ export class TruckDriverWatcher {
         console.log('cars', cars.data, Object.keys(cars.data.data));
 
         const distanceAndDuration = this.distanceAndDuration;
+        let counter = 0
 
         const drivers_profiles_formatted = drivers_profiles.data.data.user
-            ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any, index: number) => {
-                if(!this.driversMap[(index+1).toString()]) {
-                    this.driversMap[(index+1).toString()] = {
+            ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any) => {
+                if(!ctx.constants.data.data.car_classes[cars.data.data.car[drivers_cars_link[x.u_id]].cc_id]){
+                    return 'er-'
+                }
+
+                if(!this.driversMap[(counter+1).toString()]) {
+                    this.driversMap[(counter+1).toString()] = {
                         id: x.u_id,
                         priceModel: {} as PriceModel
                     }
@@ -215,7 +220,7 @@ export class TruckDriverWatcher {
                         this.order_form.data.truck_gross_weight,
                         this.order_form.data.truck_count,
                     )
-                    this.driversMap[(index+1).toString()].priceModel = estimatedPriceParams;
+                    this.driversMap[(counter+1).toString()].priceModel = estimatedPriceParams;
                     console.log('estimatedPriceParams', estimatedPriceParams);
                     let estimatedPrice = await getPrice(
                         estimatedPriceParams.formula,
@@ -227,16 +232,19 @@ export class TruckDriverWatcher {
                     }
                     //console.log('estimatedPrice', estimatedPrice); // return
 
-                    const fullText = `${index+1}.${rating} | ${car_mark || ''} ${car_model || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
+                    const fullText = `${counter+1}.${rating} | ${car_mark || ''} ${car_model || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
+                    counter++;
                     return fullText || '-';
                 } catch (e){
-                    return '-'
+                    console.log('Error in truckDriverWatcher', e);
+                    return 'er-'
                 }
+
 
             }))
             : [getLocalizationText(ctx,localizationNames.truckDriversResponsesNotFound)];
 
-        const drivers_text = drivers_profiles_formatted.join('\n');
+        const drivers_text = drivers_profiles_formatted.filter(x => x!=='er-').join('\n');
         //console.log(drivers_text);
         await this.message.edit(`${getLocalizationText(ctx, localizationNames.truckDriversList)}${drivers_text}`);
 

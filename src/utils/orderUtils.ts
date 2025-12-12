@@ -174,6 +174,7 @@ export async function getDriverList(
             ctx.auth,
             ctx.baseURL,
             city.data[0].id_city,
+
         );
     }
     if (!drivers.data) {

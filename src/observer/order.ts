@@ -51,6 +51,9 @@ export class OrderObserverCallback {
             "Observer pricing model: ",
             JSON.stringify(state.data.pricingModel),
         );
+        if(order.isCanceled) {
+            return
+        }
 
         // TODO: Approved -> Processing => водитель отказался от заказа
 
