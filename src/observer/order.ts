@@ -51,9 +51,6 @@ export class OrderObserverCallback {
             "Observer pricing model: ",
             JSON.stringify(state.data.pricingModel),
         );
-        if(order.isCanceled) {
-            return
-        }
 
         // TODO: Approved -> Processing => водитель отказался от заказа
 
@@ -221,6 +218,10 @@ export class OrderObserverCallback {
                     );
                     break;
                 case BookingState.DriverCanceled:
+                    if(order.ctx?.configName === "truck") {
+                        console.log("Driver canceled, updating list")
+                        await order.truckDriversWatcher?.start()
+                    }
                     await chat.sendMessage(
                         this.constants.getPrompt(
                             localizationNames.driverCanceled,
