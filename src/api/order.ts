@@ -412,7 +412,7 @@ export class Order {
                 })
                 .catch(async (error) => {
                     console.log("EXTRAPOINT 0x00: ", error);
-                    await this.chat?.sendMessage(
+                    await this.ctx?.chat.sendMessage(
                         "TEMPORARY MSG(EXFA POINT 0x00): Не удалось соединиться с апи, откат к стартовому состоянию",
                     );
                     await this.ctx?.storage.delete(
