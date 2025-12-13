@@ -418,7 +418,7 @@ export class Order {
                     await this.ctx?.storage.delete(
                         this.ctx?.userID ? this.ctx.userID : "",
                     );
-                    await this.chat?.sendMessage(
+                    await this.ctx?.chat.sendMessage(
                         this.ctx?.constants.getPrompt(
                             localizationNames.defaultPrompt,
                             this.ctx?.user.settings.lang.api_id,
