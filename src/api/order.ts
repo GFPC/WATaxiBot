@@ -1,17 +1,11 @@
-import {
-    AuthData,
-    BookingState,
-    builderException,
-    createForm,
-    postHeaders,
-} from "./general";
-import { Location, PricingModel } from "../states/types";
+import {AuthData, BookingState, builderException, createForm, postHeaders,} from "./general";
+import {Location, PricingModel} from "../states/types";
 import axios from "axios";
-import { Chat, Message } from "whatsapp-web.js";
-import { constants } from "../constants";
-import { newEmptyOrder, OrderMachine } from "../states/machines/orderMachine";
-import { Context } from "../types/Context";
-import { localizationNames } from "../l10n";
+import {Chat, Message} from "whatsapp-web.js";
+import {constants} from "../constants";
+import {OrderMachine} from "../states/machines/orderMachine";
+import {Context} from "../types/Context";
+import {localizationNames} from "../l10n";
 import {compareDateTimeWithWaitingList} from "../utils/orderUtils";
 import {TruckDriverWatcher} from "../utils/specific/truck/truckDriverWatcher";
 import {getLocalizationText} from "../utils/textUtils";
@@ -373,6 +367,11 @@ export class Order {
             this.finish();
         }
 
+        if(this.ctx?.configName === "truck" && state === BookingState.DriverCanceled){
+            await this.truckDriversWatcher?.start();
+        }
+
+
         if (state !== this.state) {
             console.log("Old state: ", this.state, "New state: ", state);
             const oldState = this.state;
@@ -611,20 +610,17 @@ export class Order {
                 this.truckListMessage = await ctx.chat.sendMessage(
                     getLocalizationText(ctx,localizationNames.truckDriversList)
                 )
-                this.truckDriversWatcher = new TruckDriverWatcher();
-
                 const distanceAndDuration = await getDistanceAndDuration(
                     user_state.data.from,
                     user_state.data.to,
                 )
-
-                await this.truckDriversWatcher.start(ctx,
+                this.truckDriversWatcher = new TruckDriverWatcher(ctx,
                     this.truckListMessage,
                     this.id.toString(),
                     user_state,
                     this.isVoting,
-                    distanceAndDuration
-                );
+                    distanceAndDuration);
+                await this.truckDriversWatcher.start();
             } else {
                 this.truckTripWatcher = new TripWatcher(ctx, this.id.toString());
                 this.truckTripWatcherMessage = await ctx.chat.sendMessage(

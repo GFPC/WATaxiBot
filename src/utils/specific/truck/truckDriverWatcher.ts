@@ -60,6 +60,7 @@ export class TruckDriverWatcher {
     private isStopped: boolean = false; // Добавляем флаг остановки
 
     private order_form: OrderMachine = {} as OrderMachine;
+    private ctx: Context = {} as Context;
     private isVoting: boolean = false;
     private distanceAndDuration: {
         distance: number;
@@ -72,6 +73,26 @@ export class TruckDriverWatcher {
             priceModel: PriceModel;
         }
     } = {};
+
+    constructor(ctx: Context,
+                msg: Message,
+                b_id: string,
+                order_form: OrderMachine,
+                isVoting?: boolean,
+                distanceAndDuration?: {
+                    distance: number;
+                    duration: number;
+                    calculationType: string;
+                }) {
+        this.message = msg;
+        this.url = ctx.baseURL;
+        this.auth = ctx.auth;
+        this.b_id = b_id;
+        this.order_form = order_form;
+        this.isVoting = isVoting || false;
+        this.distanceAndDuration = distanceAndDuration || {} as {distance: number; duration: number; calculationType: string};
+        this.ctx = ctx;
+    }
 
     private async pollPerformers(
         ctx: Context,
@@ -177,72 +198,111 @@ export class TruckDriverWatcher {
         let counter = 0
 
         const drivers_profiles_formatted = drivers_profiles.data.data.user
-            ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any) => {
-                if(!ctx.constants.data.data.car_classes[cars.data.data.car[drivers_cars_link[x.u_id]].cc_id]){
-                    return 'er-'
+            ? await Promise.all(Object.values(drivers_profiles.data.data.user).map(async (x: any, index: number) => {
+                const driverId = x.u_id;
+                const driverResponse = drivers.find((d: any) => d.u_id === driverId);
+
+                if(driverResponse.c_canceled !== null){
+                    return 'er-';
                 }
 
-                if(!this.driversMap[(counter+1).toString()]) {
-                    this.driversMap[(counter+1).toString()] = {
-                        id: x.u_id,
+                // Проверяем наличие необходимых данных для автомобиля
+                if (!ctx.constants.data.data.car_classes[cars.data.data.car[drivers_cars_link[driverId]]?.cc_id]) {
+                    return 'er-';
+                }
+
+                const driverIndex = (counter + 1).toString();
+
+                // Инициализируем запись в driversMap, если ее нет
+                if (!this.driversMap[driverIndex]) {
+                    this.driversMap[driverIndex] = {
+                        id: driverId,
                         priceModel: {} as PriceModel
-                    }
+                    };
                 }
-                drivers_cars[x.u_id] = x.c_id
-                const car = cars.data.data.car[drivers_cars_link[x.u_id]];
-                console.log(car)
-                const car_model = car.cm_id ? ctx.constants.data.data.car_models[car.cm_id][ctx.user.settings.lang.iso] : '-'
-                const car_mark = car.cm_id ? ctx.constants.data.data.car_makes[ctx.constants.data.data.car_models[car.cm_id].make][ctx.user.settings.lang.iso] : '-';
-                const text = drivers.find((d: any) => d.u_id === x.u_id).c_options.text || 'Текст отклика отсутствует';
-                const price = drivers.find((d: any) => d.u_id === x.u_id).c_options.price || 'Цена не назначена';
+
+                // Дополнительная проверка на всякий случай
+                if (!this.driversMap[driverIndex]) {
+                    console.error(`driversMap[${driverIndex}] is still undefined after initialization`);
+                    return 'er-';
+                }
+
+                drivers_cars[driverId] = x.c_id;
+                const car = cars.data.data.car[drivers_cars_link[driverId]];
+
+                if (!car) {
+                    console.error(`Car not found for driver ${driverId}`);
+                    return 'er-';
+                }
+
+                console.log(car);
+
+                const car_model = car.cm_id
+                    ? ctx.constants.data.data.car_models[car.cm_id]?.[ctx.user.settings.lang.iso]
+                    : '-';
+
+                const car_mark = car.cm_id
+                    ? ctx.constants.data.data.car_makes[ctx.constants.data.data.car_models[car.cm_id]?.make]?.[ctx.user.settings.lang.iso]
+                    : '-';
+
+
+                const text = driverResponse?.c_options?.text || 'Текст отклика отсутствует';
+                const price = driverResponse?.c_options?.price || 'Цена не назначена';
                 const rating = x.u_rating || 'RNS';
-                console.log(drivers.find((d: any) => d.u_id === x.u_id));
-                console.log(x)
 
-                if(!this.order_form.data.truck_floornumber || !this.order_form.data.truck_gross_weight || !this.order_form.data.truck_count){
-                    return
+                console.log('Driver response:', driverResponse);
+                console.log('Driver profile:', x);
+
+                // Проверяем наличие необходимых данных для заказа
+                if (!this.order_form.data.truck_floornumber ||
+                    !this.order_form.data.truck_gross_weight ||
+                    !this.order_form.data.truck_count) {
+                    console.error('Missing order data');
+                    return 'er-';
                 }
 
-                try{
+                try {
                     const estimatedPriceParams = await initPriceModelForTruck(
                         ctx,
-                        drivers_cars_link[x.u_id],
+                        drivers_cars_link[driverId],
                         distanceAndDuration.calculationType,
                         distanceAndDuration.distance,
                         distanceAndDuration.duration,
-                        JSON.parse(
-                            ctx.constants.data.data.site_constants.pricingModels.value,
-                        ).pricing_models,
+                        JSON.parse(ctx.constants.data.data.site_constants.pricingModels.value).pricing_models,
                         this.isVoting,
                         this.order_form.data.additionalOptions,
-                        res.data.data.booking[this.b_id].b_options.submitPrice,
+                        res.data.data.booking[this.b_id]?.b_options?.submitPrice,
                         this.order_form.data.truck_floornumber,
                         this.order_form.data.truck_gross_weight,
                         this.order_form.data.truck_count,
-                    )
-                    this.driversMap[(counter+1).toString()].priceModel = estimatedPriceParams;
+                    );
+
+                    // Теперь это безопасно, так как мы гарантировали существование объекта
+                    this.driversMap[driverIndex].priceModel = estimatedPriceParams;
+
                     console.log('estimatedPriceParams', estimatedPriceParams);
+
                     let estimatedPrice = await getPrice(
                         estimatedPriceParams.formula,
                         estimatedPriceParams.options,
                         distanceAndDuration.calculationType,
                     );
-                    if(distanceAndDuration.calculationType === "incomplete"){
+
+                    if (distanceAndDuration.calculationType === "incomplete") {
                         estimatedPrice += " + ?";
                     }
-                    //console.log('estimatedPrice', estimatedPrice); // return
 
                     const fullText = `${counter+1}.${rating} | ${car_mark || ''} ${car_model || ''} | ${x.u_name || ''} ${x.u_family || ''} ${x.u_phone || ''} | ${estimatedPrice} | ${price}`.trim().replace('  ', ' ');
+
                     counter++;
                     return fullText || '-';
-                } catch (e){
-                    console.log('Error in truckDriverWatcher', e);
-                    return 'er-'
+
+                } catch (e) {
+                    console.log('Error in truckDriverWatcher for driver', driverId, e);
+                    return 'er-';
                 }
-
-
             }))
-            : [getLocalizationText(ctx,localizationNames.truckDriversResponsesNotFound)];
+            : [getLocalizationText(ctx, localizationNames.truckDriversResponsesNotFound)];
 
         const drivers_text = drivers_profiles_formatted.filter(x => x!=='er-').join('\n');
         //console.log(drivers_text);
@@ -257,28 +317,18 @@ export class TruckDriverWatcher {
     }
 
     async start(
-        ctx: Context,
-        msg: Message,
-        b_id: string,
-        order_form: OrderMachine,
-        isVoting?: boolean,
-        distanceAndDuration?: {
-            distance: number;
-            duration: number;
-            calculationType: string;
-        },
     ) {
-        this.isStopped = false; // Сбрасываем флаг при старте
+        /*this.isStopped = false; // Сбрасываем флаг при старте
         this.message = msg;
         this.auth = ctx.auth;
         this.url = ctx.baseURL;
         this.b_id = b_id;
         this.order_form = order_form;
-        this.isVoting = isVoting || false;
+        this.isVoting = isVoting || false;*/
 
         this.stop(); // На всякий случай остановить предыдущий поиск
         this.isStopped = false;
-        await this.pollPerformers(ctx);
+        await this.pollPerformers(this.ctx);
     }
 
     stop() {
