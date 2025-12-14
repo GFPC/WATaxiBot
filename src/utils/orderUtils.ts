@@ -70,7 +70,7 @@ export async function GetTimestamp(
     }
 
     const match = trimmedBody.match(
-        /^({tomorrowMarker}\s+)?(\d{1,2}):(\d{2})$/,
+        new RegExp(`^(${tomorrowMarker}\\s+)?(\\d{1,2}):(\\d{2})$`),
     );
     console.log(match);
     if (match) {
