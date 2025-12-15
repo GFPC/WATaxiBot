@@ -49,7 +49,7 @@ export async function collectionShowAdditionalOptions(
         ) {
             text +=
                 i.toString() +
-                ". " +
+                ". " +(ctx.configName==="children" ? "_" : "")+
                 ctx.constants.data.data.booking_comments[i][
                     ctx.user.settings.lang.iso
                 ] +
@@ -62,7 +62,7 @@ export async function collectionShowAdditionalOptions(
                               .price,
                           ctx.constants.data.default_currency,
                       ) +
-                      " )") + "\n";
+                      " )") + (ctx.configName==="children" ? "_" : "")+"\n";
         }
     }
     await ctx.chat.sendMessage(text);
