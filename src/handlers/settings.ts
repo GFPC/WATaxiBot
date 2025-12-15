@@ -517,7 +517,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         ctx.constants.getPrompt(
                             localizationNames.langSelectedBakingToSettings,
                             ctx.user.settings.lang.api_id,
-                        ),
+                        ).replace("%lang%",user.settings.lang.iso.toUpperCase()),
                     );
                     await ctx.chat.sendMessage(
                         ctx.constants
