@@ -166,7 +166,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                                 // Определяем символ разделителя
                                 const separator = Number(item.id) <= 5 ? "▪︎" : "—";
 
-                                return `${number} ${languageName} ${separator} (*${item.iso}*)_`;
+                                return `   ${number}      ${languageName} ${separator} (*${item.iso}*)_`;
                             })
                             .join("\n")
                     );
