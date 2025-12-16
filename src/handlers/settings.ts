@@ -155,20 +155,37 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         ctx.user.settings.lang.api_id,
                     ),
                 );
-                await ctx.chat.sendMessage(
-                    languages
-                        .map(
-                            (item) =>
-                                item.native +
-                                "(" +
-                                item.iso +
-                                ")" +
-                                " - *" +
-                                item.id +
-                                "*",
-                        )
-                        .join("\n"),
-                );
+                if(ctx.configName==="children"){
+                    await ctx.chat.sendMessage(
+                        languages
+                            .map((item) => {
+                                // Форматируем номер с выравниванием
+                                const number = String(item.id).padStart(2);
+                                // Форматируем название языка
+                                const languageName = item.native.padEnd(11);
+                                // Определяем символ разделителя
+                                const separator = item.id <= 5 ? "▪︎" : "—";
+
+                                return `_*${number}*_ ${languageName} ${separator} (*${item.iso}*)_`;
+                            })
+                            .join("\n")
+                    );
+                } else {
+                    await ctx.chat.sendMessage(
+                        languages
+                            .map(
+                                (item) =>
+                                    item.native +
+                                    "(" +
+                                    item.iso +
+                                    ")" +
+                                    " - *" +
+                                    item.id +
+                                    "*",
+                            )
+                            .join("\n"),
+                    );
+                }
                 state.state = "changeLanguage";
                 await ctx.storage.push(ctx.userID, state);
                 break;
