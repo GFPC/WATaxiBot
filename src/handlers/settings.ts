@@ -160,13 +160,13 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         languages
                             .map((item) => {
                                 // Форматируем номер с выравниванием
-                                const number = String(item.id).padStart(2);
+                                const number = ("_*"+String(item.id)+"*").padStart(2);
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
                                 const separator = Number(item.id) <= 5 ? "▪︎" : "—";
 
-                                return `_*${number}*_ ${languageName} ${separator} (*${item.iso}*)_`;
+                                return `${number} ${languageName} ${separator} (*${item.iso}*)_`;
                             })
                             .join("\n")
                     );
