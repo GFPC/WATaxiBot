@@ -624,7 +624,7 @@ export class Order {
             } else {
                 this.truckTripWatcher = new TripWatcher(ctx, this.id.toString());
                 this.truckTripWatcherMessage = await ctx.chat.sendMessage(
-                    'Список trips:\n'
+                    'Список trips: пусто\n'
                 )
                 await this.truckTripWatcher?.start(this.truckTripWatcherMessage)
             }

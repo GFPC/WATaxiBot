@@ -11,10 +11,15 @@ export default class TripWatcher {
     private b_id: string = '';
     private currentList: string[] = [];
     private trips_list_msg: Message = {} as Message;
+    public tripList: { [key: string]: { [key: string]: any } } = {};
 
     constructor(ctx: Context, b_id: string) {
         this.ctx = ctx;
         this.b_id = b_id;
+    }
+    async stop() {
+        this.isStopped = true;
+        clearTimeout(this.timer);
     }
 
     async start(trips_list_msg:Message) {
@@ -23,7 +28,7 @@ export default class TripWatcher {
     }
 
     private async pollTrips(){
-        console.log("=pollTrips");
+        console.log("[ TruckTripWatcher ] Polling trips...");
         const interval = 5*1000;
 
         const res = await axios.post(`${this.ctx.baseURL}trip`, {
@@ -34,8 +39,16 @@ export default class TripWatcher {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         });
-        console.log(res.data.data);
-        await this.trips_list_msg.edit(Object.keys(res.data.data.trip).join("\n"));
+        console.log('[ TruckTripWatcher ] Trips response:', res.data.data);
+        let text = '';
+        let counter = 0;
+        for(let trip in res.data.data.trip) {
+            counter++;
+            this.tripList[counter] = res.data.data.trip[trip];
+            text += `${counter}. ${this.tripList[counter].u_id}\n`;
+        }
+
+        await this.trips_list_msg.edit('Trips:\n' + text + '\n\nВыберите рейс');
 
         if (!this.isStopped) {
             this.timer = setTimeout(async () => {

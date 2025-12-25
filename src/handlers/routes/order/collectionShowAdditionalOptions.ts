@@ -48,8 +48,8 @@ export async function collectionShowAdditionalOptions(
             !ctx.constants.data.data.booking_comments[i].options.hidden
         ) {
             text +=
-                i.toString() +
-                ". " +(ctx.configName==="children" ? "_" : "")+
+                (ctx.configName==="children" ? "*" : "") +i.toString()+(ctx.configName==="children" ? "*" : "") +
+                (ctx.configName==="children" ? "    " : ". ") +(ctx.configName==="children" ? "_" : "")+
                 ctx.constants.data.data.booking_comments[i][
                     ctx.user.settings.lang.iso
                 ] +

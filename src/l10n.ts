@@ -162,4 +162,5 @@ export const localizationNames = {
     truckContinueSearchDriversResponses: "wab_truckContinueSearchDriversResponse".toLowerCase(),
     kg: "wab_kg".toLowerCase(),
     truckDriverAlreadySelected: "wab_truckdriveralreadyselected".toLowerCase(),
+    youEnterIncorrectCommand: "wab_youenterincorrectcommand".toLowerCase(),
 };

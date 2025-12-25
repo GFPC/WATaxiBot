@@ -33,7 +33,7 @@ export async function formatDriversList(
             json_field = {};
         }
         const age = json_field.age ? ` ${json_field.age}` : "";
-        text += `${i + 1}. ${drivers[i].name}${drivers[i].family ? ` ${drivers[i].family}` : ""}${age}\n`;
+        text += `_*${i + 1}*    ${drivers[i].name}${drivers[i].family ? ` ${drivers[i].family}` : ""}${age}_\n`;
         drivers_map[(i + 1).toString()] = drivers[i].id_user;
     }
     return {

@@ -69,30 +69,43 @@ export async function RideHandler(ctx: Context) {
                         await ctx.storage.push(ctx.userID, state);
                         break;
                     default:
-                        if(state.data.order.truck_driverSelected){
-                            await ctx.chat.sendMessage(
-                                getLocalizationText(ctx, localizationNames.truckDriverAlreadySelected)
-                            )
-                            break
-                        }
-                        const select = ctx.message.body;
-                        if(!state.data.order.truckDriversWatcher.driversMap[select]) {
-                            await ctx.chat.sendMessage(
-                                getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
-                            )
-                            break
-                        }
-                        const estimatedPriceParams = state.data.order.truckDriversWatcher.driversMap[select].priceModel
-                        state.data.order.pricingModel = estimatedPriceParams;
-                        state.data.pricingModel = estimatedPriceParams;
+                        if(state.data.order.truckDriversWatcher){
+                            if(state.data.order.truck_driverSelected){
+                                await ctx.chat.sendMessage(
+                                    getLocalizationText(ctx, localizationNames.truckDriverAlreadySelected)
+                                )
+                                break
+                            }
+                            const select = ctx.message.body;
+                            if(!state.data.order.truckDriversWatcher.driversMap[select]) {
+                                await ctx.chat.sendMessage(
+                                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
+                                )
+                                break
+                            }
+                            const estimatedPriceParams = state.data.order.truckDriversWatcher.driversMap[select].priceModel
+                            state.data.order.pricingModel = estimatedPriceParams;
+                            state.data.pricingModel = estimatedPriceParams;
 
-                        await ctx.chat.sendMessage(
-                            getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
-                        );
-                        state.data.order.truckDriversWatcher?.stop()
-                        state.data.order.truck_driverSelected = true
-                        await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select].id);
-                        break;
+                            await ctx.chat.sendMessage(
+                                getLocalizationText(ctx, localizationNames.truckYourSelectedDriver).replace("%driverNumber%", select)
+                            );
+                            state.data.order.truckDriversWatcher?.stop()
+                            state.data.order.truck_driverSelected = true
+                            await state.data.order.setPerformerAsDriver(state.data.order.truckDriversWatcher.driversMap[select].id);
+                            break;
+                        } else if(state.data.order.truckTripWatcher) {
+                            const select = ctx.message.body;
+                            if(!state.data.order.truckTripWatcher.tripList[select]) {
+                                await ctx.chat.sendMessage(
+                                    getLocalizationText(ctx, localizationNames.truckDriverNumberIncorrect)
+                                )
+                                break
+                            }
+                            state.data.order.truckTripWatcher?.stop()
+                            state.data.order.truck_tripSelected = true
+                            await state.data.order.suggestToTrip(state.data.order.truckTripWatcher.tripList[select].u_id,state.data.order.truckTripWatcher.tripList[select].t_id);
+                        }
                 }
                 break;
             } else {
@@ -117,16 +130,30 @@ export async function RideHandler(ctx: Context) {
                                 ctx.user.settings.lang.api_id,
                             ),
                         };
-                        const reasonContainer =
-                            "\n*1* - " +
-                            text.mistakenlyOrder +
-                            "\n*2* - " +
-                            text.waitingForLonger +
-                            "\n*3* - " +
-                            text.conflictWithRider +
-                            "\n*4* - " +
-                            text.veryExpensive +
-                            "";
+                        let reasonContainer;
+                        if(ctx.configName === "children") {
+                            reasonContainer =
+                                "\n_*1*     " + text.mistakenlyOrder +
+                                "_\n_*2* - " +
+                                text.waitingForLonger +
+                                "_\n_*3* - " +
+                                text.conflictWithRider +
+                                "_\n_*4* - " +
+                                text.veryExpensive +
+                                "_";
+                        } else {
+                            reasonContainer =
+                                "\n*1* - " +
+                                text.mistakenlyOrder +
+                                "\n*2* - " +
+                                text.waitingForLonger +
+                                "\n*3* - " +
+                                text.conflictWithRider +
+                                "\n*4* - " +
+                                text.veryExpensive +
+                                "";
+                        }
+
                         await ctx.chat.sendMessage(
                             ctx.constants
                                 .getPrompt(
@@ -319,19 +346,18 @@ export async function RideHandler(ctx: Context) {
                 );
                 break;
             }
-            if (
-                ctx.message.body.toLowerCase() ===
-                ctx.constants.getPrompt(
-                    localizationNames.answerBackLower,
-                    ctx.user.settings.lang.api_id,
-                )
-            ) {
-                //назад
-                state.state = "searchCar";
-                await ctx.storage.push(ctx.userID, state);
+            if (!ctx.message.body.match(/^[0-5]+$/) && ctx.configName === "children") {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
-                        localizationNames.stateProcessing,
+                        localizationNames.youEnterIncorrectCommand,
+                        ctx.user.settings.lang.api_id,
+                    ),
+                );
+                break;
+            } else if (!ctx.message.body.match(/^[0-5]+$/)) {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.commandNotFound,
                         ctx.user.settings.lang.api_id,
                     ),
                 );
