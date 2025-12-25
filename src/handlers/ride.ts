@@ -134,11 +134,11 @@ export async function RideHandler(ctx: Context) {
                         if(ctx.configName === "children") {
                             reasonContainer =
                                 "\n_*1*     " + text.mistakenlyOrder +
-                                "_\n_*2* - " +
+                                "_\n_*2*     " +
                                 text.waitingForLonger +
-                                "_\n_*3* - " +
+                                "_\n_*3*     " +
                                 text.conflictWithRider +
-                                "_\n_*4* - " +
+                                "_\n_*4*     " +
                                 text.veryExpensive +
                                 "_";
                         } else {
