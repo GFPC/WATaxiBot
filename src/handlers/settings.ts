@@ -223,7 +223,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         sortedLanguages
                             .map((item) => {
                                 // Форматируем номер с выравниванием
-                                const number = ("_*"+String(item.id)+"*").padStart(2);
+                                const number = ((Number(item.id) <= 9 ? " " : "")+"_*"+String(item.id)+"*").padStart(2);
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
@@ -231,7 +231,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
 
                                 const postfix = Number(item.id)<=5 ? "+" : "-";
 
-                                return `   ${number}      ${languageName} ${separator} (*${item.iso}*) ${postfix}_`;
+                                return `${number}      ${languageName} ${separator} (*${item.iso}*) ${postfix}_`;
                             })
                             .join("\n")
                     );
