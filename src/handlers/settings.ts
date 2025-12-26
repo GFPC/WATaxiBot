@@ -228,11 +228,11 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
-                                const separator = "▪︎";
+                                const separator = " ".repeat(19 - `${number}      ${languageName}`.length)+"▪︎";
 
                                 const postfix = Number(item.id)<=5 ? "+" : "-";
 
-                                return `${number}      ${languageName} ${separator} (*${item.iso}*) ${postfix}_`;
+                                return `${number}      ${languageName}${separator} (*${item.iso}*) ${postfix}_`;
                             })
                             .join("\n")
                     );
