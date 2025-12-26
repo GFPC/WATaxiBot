@@ -220,7 +220,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 );
                 if(ctx.configName==="children"){
                     const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
-                    const text = "_-----------------------------------------------------\n" +
+                    const text = "-----------------------------------------------------\n" +
                         "_  1      English   ▪︎ *(en)*_ +\n" +
                         "_  2      Español  ▪︎ *(es)*_ +\n" +
                         "_  3      Italiano   ▪︎ *(it)*_   +\n" +
