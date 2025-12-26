@@ -121,13 +121,13 @@ const ChildrenConfigLanguages: LanguageCodeListData = [
         iso: "dk",
     },
     {
-        id: "8",
+        id: "9",
         native: "Sweden",
         api_id: "9",
         iso: "se",
     },
     {
-        id: "9",
+        id: "10",
         native: "Finland",
         api_id: "10",
         iso: "fi",
