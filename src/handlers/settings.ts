@@ -221,16 +221,16 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 if(ctx.configName==="children"){
                     const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
                     const text = "_-----------------------------------------------------\n" +
-                        "_  1      English   ▪︎ *(en)* +_\n" +
-                        "_  2      Español  ▪︎ *(es)* +_\n" +
-                        "_  3      Italiano   ▪︎ *(it)*   +_\n" +
-                        "_  4      Deutsch  ▪︎ *(de)* +_\n" +
-                        "_  5      Français  ▪︎ *(fr)*  +_\n" +
-                        "_  7      Norway   ▪︎ *(no)* —_\n" +
-                        "_  8      Русский ▪︎ *(ru)*  —_\n" +
-                        "_  9      Denmark ▪︎ *(dk)* —_\n" +
-                        "_10      Sweden   ▪︎ *(se)* —_\n" +
-                        "_11      Finland    ▪︎ *(fi)*   —_";
+                        "_  1      English   ▪︎ *(en)*_ +\n" +
+                        "_  2      Español  ▪︎ *(es)*_ +\n" +
+                        "_  3      Italiano   ▪︎ *(it)*_   +\n" +
+                        "_  4      Deutsch  ▪︎ *(de)*_ +\n" +
+                        "_  5      Français  ▪︎ *(fr)*_  +\n" +
+                        "_  7      Norway   ▪︎ *(no)*_ —\n" +
+                        "_  8      Русский ▪︎ *(ru)*_  —\n" +
+                        "_  9      Denmark ▪︎ *(dk)*_ —\n" +
+                        "_10      Sweden   ▪︎ *(se)*_ —\n" +
+                        "_11      Finland    ▪︎ *(fi)*_   —";
                     await ctx.chat.sendMessage(text);
                     /*await ctx.chat.sendMessage(
                         "-----------------------------------------------------\n" +
