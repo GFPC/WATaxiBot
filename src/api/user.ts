@@ -92,6 +92,14 @@ export async function changeLang(
     adminAuth: AuthData,
     baseURL: string,
 ): Promise<{ status: string; message: string }> {
+    console.log({
+        token: adminAuth.token,
+        u_hash: adminAuth.hash,
+        u_a_phone: phone,
+        data: JSON.stringify({
+            u_lang: lang_id,
+        }),
+    })
     const response = await axios.post(
         `${baseURL}/user`,
         {
