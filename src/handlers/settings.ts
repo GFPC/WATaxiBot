@@ -518,6 +518,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 ctx.message.body,
                 languages.map((item) => item.id),
                 ctx.message.body.toString() in languages.map((item) => item.id),
+                languages.find((item) => item.id == ctx.message.body)
             );
             const userPreload = await ctx.usersList.pull(ctx.userID);
             if (
@@ -600,6 +601,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ctx.auth,
                     ctx.baseURL,
                 );
+                console.log(response);
 
                 if (
                     response.status === "success" ||
