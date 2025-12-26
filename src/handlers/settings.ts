@@ -7,6 +7,7 @@ import axios from "axios";
 import { baseURL, postHeaders } from "../api/general";
 import searchRefCodeByREfID from "../utils/settings";
 import { newSettings } from "../states/machines/settingsMachine";
+import {replace} from "lodash";
 
 type LanguageCodeData = {
     id: string;
@@ -228,7 +229,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
-                                const separator = " ".repeat(19 - `${number}      ${languageName}`.length)+"▪︎";
+                                const separator = " ".repeat(19 - `${number}      ${languageName}`.replace("*","").replace("_","").length)+"▪︎";
 
                                 const postfix = Number(item.id)<=5 ? "+" : "-";
 
