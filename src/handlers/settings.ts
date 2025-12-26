@@ -220,10 +220,11 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 if(ctx.configName==="children"){
                     const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
                     await ctx.chat.sendMessage(
+                        "--------------------------------------------------\n" +
                         sortedLanguages
                             .map((item) => {
                                 // Форматируем номер с выравниванием
-                                const number = ((Number(item.id) <= 9 ? " " : "")+"_*"+String(item.id)+"*").padStart(2);
+                                const number = ((Number(item.id) <= 9 ? "  " : "")+"_*"+String(item.id)+"*").padStart(2);
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
