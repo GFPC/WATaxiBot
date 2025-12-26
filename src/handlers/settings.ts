@@ -71,6 +71,68 @@ const languages: LanguageCodeListData = [
         iso: "ar-Arab"
     }
 ];
+const ChildrenConfigLanguages: LanguageCodeListData = [
+    {
+        id: "8",
+        native: "Русский",
+        api_id: "1",
+        iso: "ru",
+    },
+    {
+        id: "1",
+        native: "English",
+        api_id: "2",
+        iso: "en",
+    },
+    {
+        id: "2",
+        native: "Español",
+        api_id: "3",
+        iso: "es",
+    },
+    {
+        id: "5",
+        native: "Français",
+        api_id: "4",
+        iso: "fr",
+    },
+    {
+        id: "3",
+        native: "Italiano",
+        api_id: "5",
+        iso: "it",
+    },
+    {
+        id: "4",
+        native: "Deutsch",
+        api_id: "6",
+        iso: "de",
+    },
+    {
+        id: "6",
+        native: "Norway",
+        api_id: "7",
+        iso: "no",
+    },
+    {
+        id: "7",
+        native: "Denmark",
+        api_id: "8",
+        iso: "dk",
+    },
+    {
+        id: "8",
+        native: "Sweden",
+        api_id: "9",
+        iso: "se",
+    },
+    {
+        id: "9",
+        native: "Finland",
+        api_id: "10",
+        iso: "fi",
+    },
+];
 async function sendSettingMenu(ctx: Context, user: any) {
     await ctx.chat.sendMessage(
         ctx.constants
@@ -156,17 +218,20 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ),
                 );
                 if(ctx.configName==="children"){
+                    const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
                     await ctx.chat.sendMessage(
-                        languages
+                        sortedLanguages
                             .map((item) => {
                                 // Форматируем номер с выравниванием
                                 const number = ("_*"+String(item.id)+"*").padStart(2);
                                 // Форматируем название языка
                                 const languageName = item.native.padEnd(11);
                                 // Определяем символ разделителя
-                                const separator = Number(item.id) <= 5 ? "▪︎" : "—";
+                                const separator = "▪︎";
 
-                                return `   ${number}      ${languageName} ${separator} (*${item.iso}*)_`;
+                                const postfix = Number(item.id)<=5 ? "+" : "-";
+
+                                return `   ${number}      ${languageName} ${separator} (*${item.iso}*) ${postfix}_`;
                             })
                             .join("\n")
                     );
