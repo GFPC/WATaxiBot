@@ -221,19 +221,29 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 if(ctx.configName==="children"){
                     const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
                     await ctx.chat.sendMessage(
-                        "--------------------------------------------------\n" +
+                        "-----------------------------------------------------\n" +
                         sortedLanguages
                             .map((item) => {
-                                // Форматируем номер с выравниванием
-                                const number = ((Number(item.id) <= 9 ? "  " : "")+"_*"+String(item.id)+"*").padStart(2);
-                                // Форматируем название языка
-                                const languageName = item.native.padEnd(11);
-                                // Определяем символ разделителя
-                                const separator = " ".repeat(19 - `${number}      ${languageName}`.replace("*","").replace("_","").length)+"▪︎";
+                                // Номер с выравниванием (жирный)
+                                const number = `*${item.id}*`.padStart(3);
 
-                                const postfix = Number(item.id)<=5 ? "+" : "-";
+                                // Название языка (без форматирования для расчёта длины)
+                                const rawLanguageName = item.native;
+                                const displayLanguageName = rawLanguageName.padEnd(11);
 
-                                return `${number}      ${languageName}${separator} (*${item.iso}*) ${postfix}_`;
+                                // Определяем реальную длину строки без разметки WhatsApp
+                                // (разметка WhatsApp не влияет на физическую длину символов)
+                                const rawTextLength = `${item.id}      ${rawLanguageName}`.length;
+
+                                // Вычисляем сколько нужно пробелов после названия языка
+                                // 19 - позиция, где должен начинаться разделитель "▪︎"
+                                const spacesNeeded = Math.max(1, 19 - rawTextLength);
+                                const spacing = " ".repeat(spacesNeeded);
+
+                                const separator = "▪︎";
+                                const postfix = Number(item.id) <= 5 ? "+" : "-";
+
+                                return `${number}      ${displayLanguageName}${spacing}${separator} (*${item.iso}*) ${postfix}`;
                             })
                             .join("\n")
                     );
