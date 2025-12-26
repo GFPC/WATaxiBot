@@ -606,7 +606,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
 
                 if (
                     response.status === "success" ||
-                    response.message === ("user or modified data not found" || "allowed data not found")
+                    response.message === ("user or modified data not found" | "allowed data not found")
                 ) {
                     state.state = "settings";
                     await ctx.storage.push(ctx.userID, state);
