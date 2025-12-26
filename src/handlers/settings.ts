@@ -563,7 +563,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             if (languages.map((item) => item.id).includes(ctx.message.body)) {
                 if (ctx.message.body !== "1" && ctx.configName !== "gruzvill") {
                     await ctx.chat.sendMessage(
-                        "TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *1* )",
+                        `TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *${ctx.configName==="children"?"8":"1"}* )`,
                     );
                     state.state = "changeLanguage";
                     await ctx.storage.push(ctx.userID, state);
