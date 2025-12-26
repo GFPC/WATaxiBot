@@ -561,7 +561,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 break;
             }
             if (languages.map((item) => item.id).includes(ctx.message.body)) {
-                if (ctx.message.body !== "1" && ctx.configName !== "gruzvill") {
+                if (ctx.message.body !== (ctx.configName==="children"?"8":"1") && ctx.configName !== "gruzvill") {
                     await ctx.chat.sendMessage(
                         `TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *${ctx.configName==="children"?"8":"1"}* )`,
                     );
