@@ -514,11 +514,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
     const user = await ctx.usersList.pull(ctx.userID);
     switch (state.state) {
         case "changeLanguage":
+            let langs_data = ctx.configName === "children" ? ChildrenConfigLanguages : languages;
             console.log(
                 ctx.message.body,
-                languages.map((item) => item.id),
-                ctx.message.body.toString() in languages.map((item) => item.id),
-                languages.find((item) => item.id == ctx.message.body)
+                langs_data.map((item) => item.id),
+                ctx.message.body.toString() in langs_data.map((item) => item.id),
+                langs_data.find((item) => item.id == ctx.message.body)
             );
             const userPreload = await ctx.usersList.pull(ctx.userID);
             if (
@@ -585,7 +586,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 );
                 break;
             }
-            if (languages.map((item) => item.id).includes(ctx.message.body)) {
+            if (langs_data.map((item) => item.id).includes(ctx.message.body)) {
                 if (ctx.message.body !== (ctx.configName==="children"?"8":"1") && ctx.configName !== "gruzvill") {
                     await ctx.chat.sendMessage(
                         `TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *${ctx.configName==="children"?"8":"1"}* )`,
@@ -596,7 +597,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 }
                 const response = await changeLang(
                     ctx.userID.split("@")[0],
-                    languages.find((item) => item.id == ctx.message.body)
+                    langs_data.find((item) => item.id == ctx.message.body)
                         ?.api_id ?? "-1",
                     ctx.auth,
                     ctx.baseURL,
@@ -610,7 +611,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     state.state = "settings";
                     await ctx.storage.push(ctx.userID, state);
 
-                    const selectedLang = languages.find(
+                    const selectedLang = langs_data.find(
                         (item) => item.id == ctx.message.body,
                     );
 
