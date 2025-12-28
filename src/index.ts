@@ -377,6 +377,7 @@ async function createBot(botId: string) {
     });
 
     client.on("message", async (msg) => {
+        console.log(`[ check ] Received message from ${msg.from}`);
         const filter = "c.us";
 
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
