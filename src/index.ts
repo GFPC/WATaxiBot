@@ -378,8 +378,6 @@ async function createBot(botId: string) {
 
     client.on("message", async (msg) => {
         console.log(`[ check ] Received message from ${msg.from}`);
-        const filter = "c.us";
-
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
         if (blackList.includes(msg.from)) {
             return;
@@ -389,7 +387,7 @@ async function createBot(botId: string) {
         if (Object.values(ServiceMap).includes(userId)) {
             return;
         } // hide messages from other bots
-        if (!userId.endsWith(filter)) {
+        if (!userId.endsWith("@c.us") && !userId.endsWith("@lid")) {
             return;
         }
 
