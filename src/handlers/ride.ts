@@ -166,6 +166,15 @@ export async function RideHandler(ctx: Context) {
                         await ctx.storage.push(ctx.userID, state);
                         break;
                     case "2":
+                        if(ctx.configName === "children") {
+                            await ctx.chat.sendMessage(
+                                ctx.constants.getPrompt(
+                                    localizationNames.commandNotFound,
+                                    ctx.user.settings.lang.api_id,
+                                ),
+                            );
+                            break;
+                        }
                         await ctx.chat.sendMessage(
                             ctx.constants.getPrompt(
                                 localizationNames.enterStartPriceSum,
