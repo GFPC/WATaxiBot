@@ -898,13 +898,12 @@ export class Order {
             this.ctx?.user.settings.lang.api_id,
         );
         if (driver.data.data.user[driver_u_id].u_details?.carMark) {
-
             let rootLang: string | undefined = undefined;
             if(this.ctx?.constants.data.data.langs){
-                for(let i in Object.keys(this.ctx?.constants.data.data.langs)){
-                    if(this.ctx?.constants.data.data.langs[i].iso==="en"){
-                        rootLang = i
-                        break
+                for(let key in this.ctx?.constants.data.data.langs){
+                    if(this.ctx?.constants.data.data.langs[key]?.iso === "en"){
+                        rootLang = key;  // key будет '2' для английского языка
+                        break;
                     }
                 }
             }
