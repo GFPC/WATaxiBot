@@ -187,16 +187,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
     const state = await ctx.storage.pull(ctx.userID);
 
     if (
-        (ctx.message.body ===
-            ctx.constants.getPrompt(
-                localizationNames.cancelDigital,
-                ctx.user.settings.lang.api_id,
-            ) ||
-            ctx.message.body ===
-                ctx.constants.getPrompt(
-                    localizationNames.cancelLower,
-                    ctx.user.settings.lang.api_id,
-                )) &&
+        (ctx.message.body.trim() === "0") &&
         (state.state === "settings" || state.state === "" || !state.state)
     ) {
         await ctx.chat.sendMessage(
