@@ -10,4 +10,5 @@ node_modules
 start.sh
 sessions
 package-lock.json
-src/core
+
+./src/core
