@@ -181,6 +181,7 @@ async function fetchUserData(
         );
 
         if (userData.data.status === "error") {
+            console.error("Failed to fetch user data: ", userData.data, " Admin Creds: ", adminAuth);
             return null;
         }
 
