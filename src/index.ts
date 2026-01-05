@@ -122,7 +122,7 @@ async function router(
 
         if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
             const userData = await fetchUserData(ctx, adminAuth);
-            //console.log("USER DATA", userData);
+            console.log("USER DATA", userData);
             if (!userData) {
                 return RegisterHandler;
             }
