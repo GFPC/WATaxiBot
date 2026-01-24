@@ -2,7 +2,6 @@ import WAWebJS, { Chat, Client, LocalAuth, Message } from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
 import { RegisterHandler } from "./handlers/register";
 import dotenv from "dotenv";
-import { Storage } from "./storage/storage";
 import { AuthData, postHeaders } from "./api/general";
 import { OrderHandler } from "./handlers/order";
 import winston, { Logger } from "winston";
@@ -29,7 +28,6 @@ import { ChildrenProfileHandler } from "./handlers/childrenProfile";
 import {Context} from "./types/Context";
 import {UserSettings} from "./types/User/UserSettings";
 import {getCurrentVersion} from "./api/main";
-import {AdminWebSocketServer} from "./backend/websocket/WSManager";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -82,7 +80,6 @@ const API_CONSTANTS = ConstantsStorage(urlManager);
 
 const GFPWAQRClientInstance = new GFPWAQRClient(GFPWAQRHubURL);
 
-const AdminWebSocket = new AdminWebSocketServer(8081)
 
 interface UserData {
     api_u_id: string;
@@ -378,7 +375,6 @@ async function createBot(botId: string) {
     });
 
     client.on("message", async (msg) => {
-        //await AdminWebSocket.onUserMessage(msg);
         console.log(`[ check ] Received message from ${msg.from}`);
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
         if (blackList.includes(msg.from)) {
