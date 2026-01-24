@@ -32,6 +32,15 @@ export class GFPTaxiBotConstants {
 export class Constants {
     data: {
         data: {
+            cities: {
+                [key: string]: {
+                    country: string;
+                    zone: string;
+                    ru: string;
+                    en: string;
+                    [key: string]: any
+                }
+            },
             car_colors: any[];
             car_models: any[];
             lang_vls: {
@@ -54,13 +63,18 @@ export class Constants {
                 type_weight: {
                     value: string;
                 };
+                bot_legal_docs?: {
+                    value: string
+                }
             };
             langs: { [key: string]: any },
         };
         default_lang: string;
         default_currency: string
+        version: string
     } = {
         data: {
+            cities: {},
             car_colors: [],
             car_models: [],
             langs: {},
@@ -93,6 +107,7 @@ export class Constants {
         },
         default_lang: "2",
         default_currency: "GHS",
+        version: "0",
     };
     localization_prefix = "wab_";
     constructor() {}

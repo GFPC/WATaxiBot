@@ -3,7 +3,7 @@ import axios from "axios";
 import * as geoTz from "geo-tz";
 import { DateTime } from "luxon";
 
-export async function getCityByDriveStartLoc(
+export async function getCitiesByDriveStartLoc(
     adminAuth: AuthData,
     baseURL: string,
     geo: {
@@ -27,6 +27,7 @@ export async function getCityByDriveStartLoc(
             data: JSON.stringify({
                 ":drive_latitude": geo.latitude.toString(),
                 ":drive_longitude": geo.longitude.toString(),
+                ":max_distance": 100, //TODO: make it from constants
             }),
         },
         {
@@ -39,7 +40,7 @@ export async function getCityByDriveStartLoc(
 export async function getDriversForCity(
     adminAuth: AuthData,
     baseURL: string,
-    city_id: string,
+    city_id_list: string[],
 ): Promise<{
     status: string;
     code: string;
@@ -58,7 +59,7 @@ export async function getDriversForCity(
             token: adminAuth.token,
             u_hash: adminAuth.hash,
             data: JSON.stringify({
-                ":city_id": city_id,
+                ":city_id_list": city_id_list.join(","),
             }),
         },
         {
@@ -71,7 +72,7 @@ export async function getDriversForCity(
 export async function getDriversForCityNight(
     adminAuth: AuthData,
     baseURL: string,
-    city_id: string,
+    city_id_list: string[],
     client_id: string,
 ): Promise<{
     status: string;
@@ -90,7 +91,7 @@ export async function getDriversForCityNight(
             token: adminAuth.token,
             u_hash: adminAuth.hash,
             data: JSON.stringify({
-                ":city_id": city_id,
+                ":city_id_list": city_id_list.join(","),
                 ":client_id": client_id,
             }),
         },
@@ -98,7 +99,7 @@ export async function getDriversForCityNight(
             headers: postHeaders,
         },
     );
-    console.log(response.data,city_id,client_id);
+    console.log(response.data,city_id_list,client_id);
     return response.data;
 }
 export async function isNightTime(lat: number, lng: number): Promise<boolean> {

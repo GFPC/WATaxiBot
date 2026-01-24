@@ -1,5 +1,6 @@
 import axios from "axios";
 import { AuthData, postHeaders, createForm } from "./general";
+import {Context} from "../types/Context";
 
 export interface User {
     phone: string;
@@ -151,6 +152,31 @@ export async function changeReferralCode(
     console.log("CHANGE REF RESPONSE: ", response.data);
     if (response.status != 200)
         throw `POINT->changeReferralCode: API Error: ${response.data.message}`;
+
+    return {
+        status: response.data.status,
+        message: response.data.message,
+    };
+}
+
+export async function editUser(
+    u_id: string,
+    data: any,
+    adminAuth: AuthData,
+    baseURL: string,
+): Promise<{ status: string; message: string }> {
+    const response = await axios.post(
+        `${baseURL}user`,
+        {
+            token: adminAuth.token,
+            u_hash: adminAuth.hash,
+            data: JSON.stringify(data),
+            u_a_phone: u_id,
+        },
+        { headers: postHeaders },
+    );
+    if (response.status != 200)
+        throw `API Error: ${response.data.message}`;
 
     return {
         status: response.data.status,

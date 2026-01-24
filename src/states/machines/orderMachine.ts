@@ -16,12 +16,18 @@ export interface OrderMachine extends StateMachine {
         | "collectionAdditionalOptions"
         | "collectionShowCarClass"
         | "collectionCarClass"
+
         | "aiQuestion"
         | "aiAnswer"
+
         | "children_collectionTime"
         | "children_collectionChildrenCount"
         | "children_collectionSelectBabySisterRange"
-        | "children_collectionSelectBabySister";
+        | "children_collectionSelectBabySister"
+
+        | "children_docs_collectionPrivacyPolicy"
+        | "children_docs_collectionPublicOffer"
+        | "children_docs_collectionLegalInformation";
     data: {
         handbookActive: boolean;
         topPlacesActive: boolean;
@@ -57,6 +63,20 @@ export interface OrderMachine extends StateMachine {
             gender: string;
             details: string;
         }> | string;
+        children_docs?: {
+            privacy_policy: {
+                version: string;
+                accepted: string;
+            };
+            public_offer: {
+                version: string;
+                accepted: string;
+            }
+            legal_information: {
+                version: string;
+                accepted: string;
+            }
+        },
         preferredDriversList?: string[];
         driversMap?: { [key: string]: string };
         selectedDrivers?: string[];

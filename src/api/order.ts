@@ -11,6 +11,7 @@ import {TruckDriverWatcher} from "../utils/specific/truck/truckDriverWatcher";
 import {getLocalizationText} from "../utils/textUtils";
 import {getDistanceAndDuration} from "../utils/specific/truck/priceUtils";
 import TripWatcher from "../utils/specific/truck/TripWatcher";
+import {RideMachine} from "../states/machines/rideMachine";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -539,6 +540,11 @@ export class Order {
         if (user_state.data.childrenProfiles) {
             data.b_options.childrenProfiles = user_state.data.childrenProfiles;
         }
+        if(ctx.configName === "truck") {
+            if (user_state.data.truck_flags?.isTripMode) {
+                data.b_options.mode = "trip"
+            }
+        }
 
         const form = createForm(
             {
@@ -627,6 +633,10 @@ export class Order {
                     'Список trips: пусто\n'
                 )
                 await this.truckTripWatcher?.start(this.truckTripWatcherMessage)
+                const state: RideMachine = await ctx.storage.pull(ctx.userID);
+                state.state = 'truck_selectTrip';
+                await ctx.storage.push(ctx.userID, state);
+                return
             }
 
         }
@@ -844,7 +854,7 @@ export class Order {
             headers: postHeaders,
         });
         if (response.status != 200 || response.data.status != "success")
-            throw `API Error: ${response.data}`;
+            throw `API Error: ${JSON.stringify(response.data)}`;
     }
 
     async getDriverAndCar(): Promise<{

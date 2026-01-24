@@ -423,6 +423,57 @@ export async function RideHandler(ctx: Context) {
                 ),
             );
             break;
+
+        case "truck_selectTrip":
+            if(ctx.message.body === "отмена"){
+                state.data.isCollectionReason = true;
+                const text = {
+                    mistakenlyOrder: ctx.constants.getPrompt(
+                        "mistakenly_ordered",
+                        ctx.user.settings.lang.api_id,
+                    ),
+                    waitingForLonger: ctx.constants.getPrompt(
+                        "waiting_for_long",
+                        ctx.user.settings.lang.api_id,
+                    ),
+                    conflictWithRider: ctx.constants.getPrompt(
+                        "conflict_with_rider",
+                        ctx.user.settings.lang.api_id,
+                    ),
+                    veryExpensive: ctx.constants.getPrompt(
+                        "very_expensive",
+                        ctx.user.settings.lang.api_id,
+                    ),
+                };
+                const reasonContainer =
+                    "\n*1* - " +
+                    text.mistakenlyOrder +
+                    "\n*2* - " +
+                    text.waitingForLonger +
+                    "\n*3* - " +
+                    text.conflictWithRider +
+                    "\n*4* - " +
+                    text.veryExpensive +
+                    "";
+                await ctx.chat.sendMessage(
+                    ctx.constants
+                        .getPrompt(
+                            localizationNames.collectionCancelReason,
+                            ctx.user.settings.lang.api_id,
+                        )
+                        .replace("%reasons%", reasonContainer),
+                );
+                state.state = "cancelReason";
+                await ctx.storage.push(ctx.userID, state);
+                break;
+            }
+            const tripNumber = ctx.message.body.trim()
+            const trip = state.data.order.truckTripWatcher.tripList[tripNumber]
+            await state.data.order.truckTripWatcher.stop()
+            console.log('selected trip: ',trip)
+            await ctx.chat.sendMessage('Рейс выбран, ожидайте ответа от водителя, Для отмена заказа введите ( *0* )')
+            await state.data.order.suggestToTrip(trip.u_id,trip.t_id)
+            break
         default:
             console.log("GFP POINT 0x02, state: ", state.state);
             await ctx.chat.sendMessage("RIDE HANDLER -> GFP POINT 0x02");

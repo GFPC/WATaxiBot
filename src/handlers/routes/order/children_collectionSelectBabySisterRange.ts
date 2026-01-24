@@ -7,7 +7,6 @@ import { formatString } from "../../../utils/formatter";
 import { OrderMachine } from "../../../states/machines/orderMachine";
 import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
-//TODO здесь еще над оценить и сделать алгоритм договоров при ночном времени
 export async function children_collectionSelectBabySisterRange(
     ctx: Context,
     state: OrderMachine,

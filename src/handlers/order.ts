@@ -38,6 +38,12 @@ import {getLocalizationText} from "../utils/textUtils";
 import {getPriceParams} from "../utils/getCarPriceParams";
 import PriceModel from "../types/Price/PriceModel";
 import PriceCalculationParams from "../types/Price/PriceCalculationParams";
+import {getCurrentVersion} from "../api/main";
+import {User} from "../api/user";
+import {BotLegalDocs, getLegalDocsVersionsMap} from "../types/api/LegalDoc";
+import {children_docs_collectionPrivacyPolicy} from "./routes/order/children_docs_collectionPrivacyPolicy";
+import {children_docs_collectionPublicOffer} from "./routes/order/children_docs_collectionPublicOffer";
+import {children_docs_collectionLegalInformation} from "./routes/order/children_docs_collectionLegalInformation";
 
 
 
@@ -414,9 +420,6 @@ export async function formatOrderConfirmation(
             .join(ctx.configName === "children" ? '\n' : ', ')
         : (ctx.configName === "children" ? '' : getLocalizationText(ctx,localizationNames.noAdditionalOptions))
 
-    if(ctx.configName === "children" && state.data.additionalOptions.length == 0){
-        template = template.replace(/###START###[\s\S]*?###END###/g, '')
-    }
     return formatString(
         template,
         {
@@ -495,9 +498,11 @@ export async function OrderHandler(ctx: Context) {
     let state: OrderMachine | null = await ctx.storage.pull(ctx.userID);
 
     if (state === null) {
+
         // Если состояния нет, создаем новое
         state = newEmptyOrder();
     }
+
     const exitAvailableStates = [
         "collectionFrom",
         "collectionTo",
@@ -621,6 +626,17 @@ export async function OrderHandler(ctx: Context) {
         case "collectionTo":
             if (await handleRoute(collectionTo, ctx, state, logger)) break;
             else break;
+
+        case "children_docs_collectionPrivacyPolicy":
+            if (await handleRoute(children_docs_collectionPrivacyPolicy, ctx, state, logger)) break;
+            else break;
+        case "children_docs_collectionPublicOffer":
+            if (await handleRoute(children_docs_collectionPublicOffer, ctx, state, logger)) break;
+            else break;
+        case "children_docs_collectionLegalInformation":
+            if (await handleRoute(children_docs_collectionLegalInformation, ctx, state, logger)) break;
+            else break;
+
         default:
             if (await handleRoute(collectionFrom, ctx, state, logger)) break;
             else break;

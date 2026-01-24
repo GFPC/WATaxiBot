@@ -18,6 +18,7 @@ export default class TripWatcher {
         this.b_id = b_id;
     }
     async stop() {
+        console.log("[ TruckTripWatcher ]  CALLED STOP")
         this.isStopped = true;
         clearTimeout(this.timer);
     }
@@ -39,13 +40,35 @@ export default class TripWatcher {
                 'Content-Type': 'application/x-www-form-urlencoded',
             }
         });
-        console.log('[ TruckTripWatcher ] Trips response:', res.data.data);
+
+        const driversIds: (string | number)[] = [];
+
+        if (res.data.data.trip) {
+            Object.values(res.data.data.trip).forEach((trip: any) => {
+                if (trip.u_id && !driversIds.includes(trip.u_id)) {
+                    driversIds.push(trip.u_id);
+                }
+            });
+        }
+
+        const drivers_res = await axios.post(`${this.ctx.baseURL}user/${driversIds.join(',')}`, {
+            token: this.ctx.auth.token,
+            u_hash: this.ctx.auth.hash,
+        }, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        });
+
+        console.log('[ TruckTripWatcher ] Drivers:', driversIds);
         let text = '';
         let counter = 0;
         for(let trip in res.data.data.trip) {
             counter++;
             this.tripList[counter] = res.data.data.trip[trip];
-            text += `${counter}. ${this.tripList[counter].u_id}\n`;
+            text += `${counter}. ${res.data.data.trip[trip].t_start_datetime.split('+')[0]} ${drivers_res.data.data.user[res.data.data.trip[trip].u_id].u_name}`
+            +`${res.data.data.trip[trip].t_options ? res.data.data.trip[trip].t_options.price + ' ' + res.data.data.trip[trip].currency: ''}`
+            + ` MNS RNS\n`;
         }
 
         await this.trips_list_msg.edit('Trips:\n' + text + '\n\nВыберите рейс');

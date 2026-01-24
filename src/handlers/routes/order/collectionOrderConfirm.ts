@@ -22,6 +22,7 @@ export async function formatDriversList(
         name: string;
         [key: string]: any;
     }[],
+    ctx: Context
 ) {
     let text = "";
     let drivers_map: { [key: string]: string } = {};
@@ -33,7 +34,7 @@ export async function formatDriversList(
             json_field = {};
         }
         const age = json_field.age ? ` ${json_field.age}` : "";
-        text += `_*${i + 1}*    ${drivers[i].name}${drivers[i].family ? ` ${drivers[i].family}` : ""}${age}_\n`;
+        text += `_*${i + 1}*    ${drivers[i].name}${drivers[i].family ? ` ${drivers[i].family}` : ""}${age}  ${drivers[i].distance}${drivers[i].distance? ' '+ctx.constants.getPrompt(localizationNames.km, ctx.user.settings.lang.api_id) : ""}_\n`;
         drivers_map[(i + 1).toString()] = drivers[i].id_user;
     }
     return {
@@ -303,6 +304,7 @@ async function truckFlow(ctx: Context, state: OrderMachine): Promise<HandlerRout
                     error: "when is undefined",
                 },
             };
+
         await order.new(
             state.data.from,
             state.data.to,
@@ -333,6 +335,7 @@ async function truckFlow(ctx: Context, state: OrderMachine): Promise<HandlerRout
         return SuccessResponse;
     }
     const newState = newRide(order);
+    newState.state = "truck_selectTrip";
     await ctx.storage.push(ctx.userID, newState);
     await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
     /*await orderMsg.edit(

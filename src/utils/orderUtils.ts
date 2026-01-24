@@ -6,7 +6,7 @@ import { localizationNames } from "../l10n";
 import { constants } from "../constants";
 import { readQRCodeFromImage } from "./qr";
 import {
-    getCityByDriveStartLoc,
+    getCitiesByDriveStartLoc,
     getDriversForCity,
     getDriversForCityNight,
     isNightTime,
@@ -149,7 +149,7 @@ export async function getDriverList(
         },
     ]
 > {
-    const city = await getCityByDriveStartLoc(ctx.auth, ctx.baseURL, {
+    const city = await getCitiesByDriveStartLoc(ctx.auth, ctx.baseURL, {
         latitude: latitude,
         longitude: longitude,
     });
@@ -158,7 +158,7 @@ export async function getDriverList(
         throw new Error("CITY NOT FOUND");
     }
     if(test_message){
-        await ctx.chat.sendMessage(`TEST POINT: Looking drivers for city '${city.data[0].name_ru}' id='${city.data[0].id_city}'`);
+        await ctx.chat.sendMessage(`TEST POINT: Looking drivers for cities '${city.data.map((item) => item.name_ru)}' id='${city.data.map((item) => item.id_city)}'`);
     }
     let drivers;
     const user = await ctx.usersList.pull(ctx.userID);
@@ -166,17 +166,24 @@ export async function getDriverList(
         drivers = await getDriversForCityNight(
             ctx.auth,
             ctx.baseURL,
-            city.data[0].id_city,
+            city.data.map((item) => item.id_city),
             user.api_u_id,
         );
     } else {
         drivers = await getDriversForCity(
             ctx.auth,
             ctx.baseURL,
-            city.data[0].id_city,
-
+            city.data.map((item) => item.id_city),
         );
     }
+    if(drivers.data && city.data){
+        drivers.data.forEach((item) => {
+            if (city.data) {
+                item.distance = city.data.map((item) => item).find((city) => city.id_city === item.id_city)?.distance_km;
+            }
+        })
+    }
+
     if (!drivers.data) {
         throw new Error("DRIVERS NOT FOUND");
     }
@@ -348,7 +355,6 @@ export class DriverSearchManager {
         if(attempts===0){
             await ctx.chat.sendMessage("TEST POINT: INTERVAL: " + interval + " TIME DELTA: " + (Date.now() - (freshState.data.when ? freshState.data.when.getTime() : Date.now())) + " MAX ATTEMPTS: " + maxAttempts);
         }
-
         if (
             !freshState ||
             !freshState.data ||
@@ -373,25 +379,45 @@ export class DriverSearchManager {
             attempts == 0,
         );
         if (driverList && driverList.length > 0) {
-            const formattedDriversList = await formatDriversList(driverList);
+            const formattedDriversList = await formatDriversList(driverList,ctx);
             freshState.data.driversMap = formattedDriversList.drivers_map;
             const text = getLocalizationText(
                 ctx,
                 localizationNames.selectBabySisterRange,
-            ).replace(
-                "%driversList%",
-                formattedDriversList.text ||
+            )
+            await searchMsg.edit(text);
+            searchMsg = await ctx.chat.sendMessage(
+                getLocalizationText(ctx, localizationNames.selectBabySisterRangeList).replace(
+                    "%driversList%",
+                    formattedDriversList.text ||
                     getLocalizationText(ctx, localizationNames.noDrivers),
-            );
+                )
+            )
             freshState.state = "children_collectionSelectBabySister";
             freshState.data.nextStateForAI =
                 "children_collectionSelectBabySister";
             freshState.data.nextMessageForAI = text;
             freshState.data.waitingForDrivers = false;
             await ctx.storage.push(ctx.userID, freshState);
-            await searchMsg.edit(text);
+
             this.timers.delete(ctx.userID);
             return;
+        } else {
+            const text = getLocalizationText(
+                ctx,
+                localizationNames.noDriversFoundOrderCancelled,
+            )
+            await ctx.chat.sendMessage(
+                getLocalizationText(ctx,localizationNames.defaultPrompt)
+            )
+            await ctx.storage.delete(ctx.userID);
+            await searchMsg.edit(text);
+            this.timers.delete(ctx.userID);
+            if (this.timers.has(ctx.userID)) {
+                clearTimeout(this.timers.get(ctx.userID));
+                this.timers.delete(ctx.userID);
+            }
+            return
         }
 
         if (attempts + 1 >= maxAttempts) {

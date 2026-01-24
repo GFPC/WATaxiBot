@@ -11,12 +11,6 @@ import {
     ChildProfileMachine,
     newChildProfile,
 } from "../../../states/machines/childrenProfile";
-import {
-    getCityByDriveStartLoc,
-    getDriversForCity,
-    getDriversForCityNight,
-    isNightTime,
-} from "../../../api/sql_templates";
 import { getLocalizationText } from "../../../utils/textUtils";
 import * as readline from "readline";
 

@@ -28,6 +28,8 @@ import { createHash } from "crypto";
 import { ChildrenProfileHandler } from "./handlers/childrenProfile";
 import {Context} from "./types/Context";
 import {UserSettings} from "./types/User/UserSettings";
+import {getCurrentVersion} from "./api/main";
+import {AdminWebSocketServer} from "./backend/websocket/WSManager";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -80,7 +82,7 @@ const API_CONSTANTS = ConstantsStorage(urlManager);
 
 const GFPWAQRClientInstance = new GFPWAQRClient(GFPWAQRHubURL);
 
-
+const AdminWebSocket = new AdminWebSocketServer(8081)
 
 interface UserData {
     api_u_id: string;
@@ -89,9 +91,6 @@ interface UserData {
     u_details: any | null;
     ref_code: string | null;
 }
-
-
-
 
 
 export type Handler = (ctx: Context) => Promise<void>;
@@ -307,6 +306,7 @@ async function createBot(botId: string) {
         },
     });
 
+
     const botInfo = {
         id: "",
         name: "Taxi MultiConfig Bot config=" + ServiceMap[botId],
@@ -378,13 +378,14 @@ async function createBot(botId: string) {
     });
 
     client.on("message", async (msg) => {
+        //await AdminWebSocket.onUserMessage(msg);
         console.log(`[ check ] Received message from ${msg.from}`);
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
         if (blackList.includes(msg.from)) {
             return;
         }
         let userId = msg.from;
-        //userId="3532523513515213465134513@c.us";
+        //userId="111636349131@c.us";
         if (Object.values(ServiceMap).includes(userId)) {
             return;
         } // hide messages from other bots
@@ -394,10 +395,23 @@ async function createBot(botId: string) {
 
         logger.info(`Received message from ${userId} messageType=${msg.type}`);
 
-        const defaultLang =
+        const chat = await msg.getChat();
+        await chat.sendStateTyping();
+
+        const currentVersionAPI = await getCurrentVersion(urlManager[botId]);
+        if (currentVersionAPI["cache version"] !== API_CONSTANTS[botId].data.version) {
+            console.log(`[ main ] Updating to ${currentVersionAPI["cache version"]}`);
+            await API_CONSTANTS[botId].getData(urlManager[botId])
+        }
+
+        let defaultLang =
             API_CONSTANTS[botId].data.data.langs[
                 API_CONSTANTS[botId].data.default_lang
             ];
+        if(ServiceMap[botId]==="children"){
+            API_CONSTANTS[botId].data.default_lang = '1'
+            defaultLang = API_CONSTANTS[botId].data.data.langs['1'];
+        }
 
         // Создаём контекст
         const ctx: Context = {

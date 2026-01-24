@@ -10,7 +10,10 @@ export interface SettingsMachine extends StateMachine {
         | "collectionPublicOffers"
         | "collectionPrivacyPolicy"
         | "collectionLegalInformation"
-        | "deleteAccount";
+        | "deleteAccount"
+        | "children_collectionFullNameAndBirthYear"
+        | "children_collectionPhone"
+        | "children_collectionCity";
     data: {
         docs: {
             publicOffersMessage: Message | null;

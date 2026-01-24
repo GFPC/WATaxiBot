@@ -12,8 +12,33 @@ export interface RegistrationMachine extends StateMachine {
         | "collectionRefCode"
         | "collectionLanguage"
         | "previouslyDeleted"
-        | "recoverAccount";
+        | "recoverAccount"
+
+        | "children_collectionCity"
+        | "children_docs_collectionPublicOffer"
+        | "children_docs_collectionPrivacyPolicy"
+        | "children_docs_collectionLegalInformation"
+        | "children_collectionPhone";
     data: {
+        birthYear?: string;
+        city?: string;
+        role?: string;
+        phone?: string;
+        childrenDocs?: {
+            public_offer: {
+                accepted: string;
+                version: string;
+            },
+            privacy_policy: {
+                accepted: string;
+                version: string;
+            },
+            legal_information: {
+                accepted: string;
+                version: string;
+            }
+        }
+
         fullName: string;
         refCode?: string;
         lang: {
@@ -40,18 +65,18 @@ export async function createEmptyRegistration(
     ctx: Context,
 ): Promise<RegistrationMachine> {
     return {
-        id: "register",
+    id: "register",
         state: "collectionPublicOffers",
         data: {
-            fullName: "",
+        fullName: "",
             lang: {
-                api_id: ctx.constants.data.default_lang,
+            api_id: ctx.constants.data.default_lang,
                 iso: ctx.constants.data.data.langs[
-                    ctx.constants.data.default_lang
+                ctx.constants.data.default_lang
                 ].iso,
-            },
-            docs: {
-                publicOffersMessage: null,
+        },
+        docs: {
+            publicOffersMessage: null,
                 privacyPolicyMessage: null,
                 legalInformationMessage: null,
 
@@ -62,7 +87,8 @@ export async function createEmptyRegistration(
                 publicOffersAcceptAvailable: false,
                 privacyPolicyAcceptAvailable: false,
                 legalInformationAcceptAvailable: false,
-            },
         },
-    };
+    },
+}
+
 }

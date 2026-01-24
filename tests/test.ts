@@ -26,6 +26,8 @@ import { AuthData, baseURL, postHeaders} from "../src/api/general";
 import { StateMachine } from "../src/states/types";
 import { localizationNames } from "../src/l10n";
 import {getPerformersList} from "../src/utils/specific/truck/truckDriverWatcher";
+import {getDriverList} from "../src/utils/orderUtils";
+import {getCitiesByDriveStartLoc} from "../src/api/sql_templates";
 
 // Interfaces
 interface UserSettings {
@@ -166,7 +168,7 @@ export function loadTestContext(filePath: string): TestContext {
 
 async function createWorkingConstants(savedConstants: any, baseURL: string): Promise<any> {
     const res = await axios.get(`${baseURL}/data`)
-    console.log(Object.keys(res.data.data))
+    console.log(Object.keys(res.data.data), baseURL)
     return {
         data: res.data.data,
         localization_prefix: savedConstants.localization_prefix || "wab_",
@@ -208,6 +210,8 @@ async function router(
 
         if (user?.api_u_id === "-1" || !user || user?.reloadFromApi) {
             const userData = await fetchUserData(ctx, adminAuth);
+            console.log("USER DATA", userData);
+            console.log('adminAuth', adminAuth)
             if (!userData) {
                 return RegisterHandler;
             }
@@ -295,6 +299,7 @@ async function fetchUserData(
         );
 
         if (userData.data.status === "error") {
+            console.log("[ API ] Failed to fetch /user", userData.data, " Admin Creds: ", adminAuth);
             return null;
         }
 
@@ -385,19 +390,19 @@ async function initializeTestContext(): Promise<{ ctx: TestContext; usersList: U
     const ctx = loadTestContext('./tests/data/ctx.json');
 
     const usersList = new UsersStorage();
-    await usersList.push("79135550015", {
+    /*await usersList.push("79135550015", {
         api_u_id: '837',
         settings: { lang: { iso: 'ru', api_id: '1', native: 'Русский' } },
         referrer_u_id: '666',
         u_details: null,
         ref_code: 'uid837'
-    });
+    });*/
 
     // Configure context
-    ctx.botID = '79999183175'
-    ctx.userID = '79135550015';
-    ctx.configName = 'truck';
-    ctx.baseURL = 'https://ibronevik.ru/taxi/c/truck/api/v1/';
+    ctx.botID = '212778382140'
+    ctx.userID = '16253452645276361@lid';
+    ctx.configName = 'children';
+    ctx.baseURL = `https://ibronevik.ru/taxi/c/${ctx.configName}/api/v1/`; //geoblinker
     ctx.usersList = usersList;
     ctx.auth = {
         token: 'e6c2c1f2907d51061e1abf362d6d9ff2',
@@ -417,6 +422,7 @@ async function initializeTestContext(): Promise<{ ctx: TestContext; usersList: U
             maxPeoplesCount: 5
         }
     }
+    ctx.aiStorage = new AIStorage()
     // Setup test user
 
 
@@ -428,7 +434,13 @@ async function initializeTestContext(): Promise<{ ctx: TestContext; usersList: U
 async function botTestingLoop() {
     const { ctx, usersList } = await initializeTestContext();
     const aiStorage = new AIStorage();
-    const adminAuth = { token: '', hash: '' } as AuthData;
+    const adminAuth = ctx.auth as AuthData;
+
+    const city = await getCitiesByDriveStartLoc(ctx.auth, ctx.baseURL, {
+        latitude: 37.128,
+        longitude: -4.3166,
+    })
+    console.log(city)
 
     const rl = readline.createInterface({
         input: process.stdin,

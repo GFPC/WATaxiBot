@@ -1,6 +1,6 @@
 import { localizationNames } from "../l10n";
 import { Context } from "../types/Context";
-import { changeLang, changeReferralCode } from "../api/user";
+import {changeLang, changeReferralCode, editUser} from "../api/user";
 import { UsersStorage } from "../storage/usersStorage";
 import { REFCODES } from "../api/constants";
 import axios from "axios";
@@ -210,18 +210,17 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ),
                 );
                 if(ctx.configName==="children"){
-                    const sortedLanguages = ChildrenConfigLanguages.sort((a, b) => Number(a.id) - Number(b.id));
                     const text = "-----------------------------------------------------\n" +
                         "  _1      English   ▪︎ *(en)*_ +\n" +
                         "  _2      Español  ▪︎ *(es)*_ +\n" +
                         "  _3      Italiano   ▪︎ *(it)*_   +\n" +
                         "  _4      Deutsch  ▪︎ *(de)*_ +\n" +
                         "  _5      Français  ▪︎ *(fr)*_  +\n" +
-                        "  _7      Norway   ▪︎ *(no)*_ —\n" +
+                        "  _6      Norway   ▪︎ *(no)*_ —\n" +
+                        "  _7      Denmark ▪︎ *(dk)*_ —\n" +
                         "  _8      Русский ▪︎ *(ru)*_  —\n" +
-                        "  _9      Denmark ▪︎ *(dk)*_ —\n" +
-                        "_10      Sweden   ▪︎ *(se)*_ —\n" +
-                        "_11      Finland    ▪︎ *(fi)*_   —";
+                        "  _9      Sweden   ▪︎ *(se)*_ —\n" +
+                        "_10      Finland    ▪︎ *(fi)*_   —";
                     await ctx.chat.sendMessage(text);
                     /*await ctx.chat.sendMessage(
                         "-----------------------------------------------------\n" +
@@ -440,6 +439,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.storage.push(ctx.userID, state);
                 break;
             case "5":
+                if(ctx.configName === "children") {
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterFirstNameLastNameAndBirthYear, ctx.user.settings.lang.api_id));
+                    state.state = "children_collectionFullNameAndBirthYear";
+                    await ctx.storage.push(ctx.userID, state);
+                    break
+                }
                 state.data.docs.privacyPolicyMessage =
                     await ctx.chat.sendMessage(
                         ctx.constants
@@ -466,6 +471,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.storage.push(ctx.userID, state);
                 break;
             case "6":
+                if(ctx.configName === "children") {
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterPhoneNumber, ctx.user.settings.lang.api_id));
+                    state.state = "children_collectionPhone";
+                    await ctx.storage.push(ctx.userID, state);
+                    break
+                }
                 state.data.docs.publicOffersMessage =
                     await ctx.chat.sendMessage(
                         ctx.constants
@@ -491,6 +502,15 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 state.state = "collectionPublicOffers";
                 await ctx.storage.push(ctx.userID, state);
                 break;
+            case "7":
+                if(ctx.configName === "children") {
+                    await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.enterCity, ctx.user.settings.lang.api_id));
+                    state.state = "children_collectionCity";
+                    await ctx.storage.push(ctx.userID, state);
+                    break
+                }
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.commandNotFound, ctx.user.settings.lang.api_id))
+                break
             default:
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
@@ -514,16 +534,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             );
             const userPreload = await ctx.usersList.pull(ctx.userID);
             if (
-                ctx.message.body ===
-                    ctx.constants.getPrompt(
-                        localizationNames.cancelLower,
-                        ctx.user.settings.lang.api_id,
-                    ) ||
-                ctx.message.body ===
-                    ctx.constants.getPrompt(
-                        localizationNames.cancelDigital,
-                        ctx.user.settings.lang.api_id,
-                    )
+                ctx.message.body.trim() === "0"
             ) {
                 state.state = "settings";
                 await ctx.storage.push(ctx.userID, state);
@@ -1279,8 +1290,120 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             }
 
             break;
+
+        case "children_collectionFullNameAndBirthYear":
+            const body = ctx.message.body.split(" ");
+            if(body.length != 3){
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.enterFirstNameLastNameAndBirthYearError,
+                        state.data.lang.api_id,
+                    )
+                );
+                break;
+            }
+            if (!body[2].trim().match(/^[0-9]{4}$/)) {  // age not specified in 4 digits
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.enterFirstNameLastNameAndBirthYearError,
+                        ctx.user.settings.lang.api_id,
+                    )
+                );
+                break;
+            }
+            if( new Date().getFullYear() - Number(body[2].trim()) < 18 ) {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(
+                        localizationNames.enterFirstNameLastNameAndBirthYearError,
+                        ctx.user.settings.lang.api_id,
+                    )
+                )
+                return
+            }
+
+            state.data.fullName = `${body[0]} ${body[1]}`;
+            state.data.birthYear = body[2].trim();
+
+            const res_name_and_year = await editUser(
+                ctx.userID.split("@")[0],
+                {
+                    u_name: state.data.fullName,
+                    u_details: [
+                        ['=',['birthYear'],state.data.birthYear]
+                    ]
+                },
+                ctx.auth,
+                ctx.baseURL
+            )
+            if(res_name_and_year.status === "success") {
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                state.state = "settings"
+                await ctx.storage.push(ctx.userID, state)
+                break
+            } else {
+                await ctx.chat.sendMessage("Error, dump: " + JSON.stringify(res_name_and_year));
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id))
+                console.log('Cannot change user name+age, dump:', JSON.stringify(res_name_and_year))
+                await ctx.storage.delete(ctx.userID)
+            }
+            break;
+        case "children_collectionCity":
+            const city = ctx.message.body
+            const res_city = await editUser(
+                ctx.userID.split("@")[0],
+                {
+                    u_details: [
+                        ['=',['cityString'],city]
+                    ]
+                },
+                ctx.auth,
+                ctx.baseURL
+            )
+            if(res_city.status === "success") {
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                state.state = "settings"
+                await ctx.storage.push(ctx.userID, state)
+                break
+            } else {
+                await ctx.chat.sendMessage("Error, dump: " + JSON.stringify(res_city));
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id))
+                console.log('Cannot change user city, dump:',JSON.stringify(res_city))
+                await ctx.storage.delete(ctx.userID)
+
+            }
+            break
+        case "children_collectionPhone":
+            const phone = ctx.message.body.trim()
+            if(phone==="0"){
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                state.state = "settings"
+                await ctx.storage.push(ctx.userID, state)
+                break
+            }
+            const res_phone = await editUser(
+                ctx.userID.split("@")[0],
+                {
+                    u_details: [
+                        ['=',['phone'],phone]
+                    ]
+                },
+                ctx.auth,
+                ctx.baseURL
+            )
+            if(res_phone.status === "success") {
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                state.state = "settings"
+                await ctx.storage.push(ctx.userID, state)
+                break
+            } else {
+                await ctx.chat.sendMessage("Error, dump: " + JSON.stringify(res_phone));
+                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id))
+                console.log('Cannot change user phone, dump:',JSON.stringify(res_phone))
+                await ctx.storage.delete(ctx.userID)
+            }
+            break
         default:
-            await ctx.chat.sendMessage("Not Implemented: SettingsHandler");
+            await ctx.chat.sendMessage("Not Implemented: SettingsHandler state: " + state.state);
             break;
     }
 }

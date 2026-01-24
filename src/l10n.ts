@@ -134,6 +134,7 @@ export const localizationNames = {
     enterChildName: "wab_enterChildName".toLowerCase(),
     enterChildDetails: "wab_enterChildDetails".toLowerCase(),
     selectBabySisterRange: "wab_selectBabySisterRange".toLowerCase(),
+    selectBabySisterRangeList: "wab_selectBabySisterRangeList".toLowerCase(),
     noDrivers: "wab_noDrivers".toLowerCase(),
     childrenInfoShortedVariant: "wab_childrenInfoShortedVariant".toLowerCase(),
 
@@ -163,4 +164,19 @@ export const localizationNames = {
     kg: "wab_kg".toLowerCase(),
     truckDriverAlreadySelected: "wab_truckdriveralreadyselected".toLowerCase(),
     youEnterIncorrectCommand: "wab_youenterincorrectcommand".toLowerCase(),
+
+    needToAcceptNewDocs: "wab_needToAcceptNewDocs".toLowerCase(),
+    docsDeclinedCanNotUseOrder: "wab_docsDeclinedCanNotUseOrder".toLowerCase(),
+    docsDeclinedCanNotUseRegistration: "wab_docsDeclinedCanNotUseRegistration".toLowerCase(),
+    enterFirstNameLastNameAndBirthYear: "wab_enterFirstNameLastNameAndBirthYear".toLowerCase(),
+    enterFirstNameLastNameAndBirthYearError: "wab_enterFirstNameLastNameAndBirthYearError".toLowerCase(),
+    enterPhoneNumber: "wab_enterPhoneNumber".toLowerCase(),
+    cityNoSuggestionsFoundTryEnterBigger: "wab_cityNoSuggestionsFoundTryEnterBigger".toLowerCase(),
+    cityNotFoundButHaveSuggestions: "wab_cityNotFoundButHaveSuggestions".toLowerCase(),
+    enterCity: "wab_enterCity".toLowerCase(),
+    underEighteenCanNotUse: "wab_underEighteenCanNotUse".toLowerCase(),
+    km: "wab_km".toLowerCase(),
+
+    childrenDocsActionContinueRegistration: "wab_childrenDocsActionContinueRegistration".toLowerCase(),
+    childrenDocsActionContinueOrder: "wab_childrenDocsActionContinueOrder".toLowerCase(),
 };

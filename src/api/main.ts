@@ -16,3 +16,8 @@ export async function getCar(auth: AuthData, baseURL: string, c_id: string | str
     );
     return response.data;
 }
+
+export async function getCurrentVersion(baseURL: string) {
+    const response = await axios.get(`${baseURL}/?cv=`);
+    return response.data;
+}

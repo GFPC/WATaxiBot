@@ -6,7 +6,7 @@ import { calculateOrderPrice, formatOrderConfirmation } from "../../order";
 import { GetTimestamp } from "../../../utils/orderUtils";
 import { getLocalizationText } from "../../../utils/textUtils";
 import {
-    getCityByDriveStartLoc,
+    getCitiesByDriveStartLoc,
     getDriversForCity,
     getDriversForCityNight,
     isNightTime,
@@ -39,7 +39,7 @@ export async function collectionWhen(
         )
         return SuccessResponse;
     }
-    if (ctx.message.body === "3"&& ctx.configName !== "truck") {
+    if (ctx.message.body === "3" && ctx.configName !== "truck") {
         const pricingModels = JSON.parse(
             ctx.constants.data.data.site_constants.pricingModels.value,
         ).pricing_models;
@@ -105,13 +105,7 @@ export async function collectionWhen(
     state.data.when = timestamp;
     state.state = "collectionOrderConfirm";
 
-    if(ctx.configName === "truck") {
-        state.data.nextMessageForAI = await truck_formatOrderConfirmation(ctx,state);
-        state.data.nextStateForAI = "collectionOrderConfirm";
-        await ctx.chat.sendMessage(await truck_formatOrderConfirmation(ctx,state));
-        await ctx.storage.push(ctx.userID, state);
-        return SuccessResponse;
-    }
+
 
     const pricingModels = JSON.parse(
         ctx.constants.data.data.site_constants.pricingModels.value,
@@ -129,6 +123,13 @@ export async function collectionWhen(
         state.data.truck_gross_weight,
         state.data.truck_count
     );
+    if(ctx.configName === "truck") {
+        state.data.nextMessageForAI = await truck_formatOrderConfirmation(ctx,state);
+        state.data.nextStateForAI = "collectionOrderConfirm";
+        await ctx.chat.sendMessage(await truck_formatOrderConfirmation(ctx,state));
+        await ctx.storage.push(ctx.userID, state);
+        return SuccessResponse;
+    }
 
     const response = await formatOrderConfirmation(
         ctx,
