@@ -7,7 +7,7 @@ export async function collectionAdditionalOptions(
     ctx: Context,
     state: OrderMachine,
 ): Promise<HandlerRouteResponse> {
-    if (ctx.message.body === "00") {
+    if (ctx.message.body === "0") {
         state.state = "collectionWhen";
         state.data.nextMessageForAI = ctx.constants.getPrompt(
             localizationNames.collectionWhen,

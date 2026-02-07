@@ -370,12 +370,13 @@ async function createBot(botId: string) {
         console.log("[ main ]", response);
     });
 
-    client.on("ready", () => {
+    client.on("ready", async () => {
         console.log(`[ main ] 🟢 Бот ${botId} готов к работе!`);
     });
 
     client.on("message", async (msg) => {
         console.log(`[ check ] Received message from ${msg.from}`);
+
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
         if (blackList.includes(msg.from)) {
             return;

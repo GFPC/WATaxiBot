@@ -317,6 +317,7 @@ export class TruckDriverWatcher {
     }
 
     async start(
+        msg?: Message
     ) {
         /*this.isStopped = false; // Сбрасываем флаг при старте
         this.message = msg;
@@ -325,6 +326,9 @@ export class TruckDriverWatcher {
         this.b_id = b_id;
         this.order_form = order_form;
         this.isVoting = isVoting || false;*/
+        if (msg) {
+            this.message = msg;
+        }
 
         this.stop(); // На всякий случай остановить предыдущий поиск
         this.isStopped = false;

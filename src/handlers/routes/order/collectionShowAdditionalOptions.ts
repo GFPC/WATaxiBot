@@ -37,11 +37,7 @@ export async function collectionShowAdditionalOptions(
     }
 
     const MAX_BOOKING_COMMENT_ID = 20;
-    var text =
-        ctx.constants.getPrompt(
-            localizationNames.selectAdditionalOptions,
-            ctx.user.settings.lang.api_id,
-        ) + "\n";
+    var text = ''
     for (let i in ctx.constants.data.data.booking_comments) {
         if (
             Number(i) < MAX_BOOKING_COMMENT_ID &&
@@ -62,9 +58,13 @@ export async function collectionShowAdditionalOptions(
                               .price,
                           ctx.constants.data.default_currency,
                       ) +
-                      " )") + (ctx.configName==="children" ? "_" : "")+"\n";
+                      " )") + (ctx.configName==="children" ? "_" : "")+"\n\n";
         }
     }
-    await ctx.chat.sendMessage(text);
+    text = text.slice(0, -1)
+    await ctx.chat.sendMessage(ctx.constants.getPrompt(
+        localizationNames.selectAdditionalOptions,
+        ctx.user.settings.lang.api_id,
+    ).replace('%options%',text));
     return SuccessResponse;
 }

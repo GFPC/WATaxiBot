@@ -850,9 +850,11 @@ export class Order {
             },
             this.adminAuth,
         );
+        console.log("suggestToTrip form:", form);
         const response = await axios.post(`${this.ctx?.baseURL}/drive/get/${this.id}`, form, {
             headers: postHeaders,
         });
+        console.log("suggestToTrip response:", response.data);
         if (response.status != 200 || response.data.status != "success")
             throw `API Error: ${JSON.stringify(response.data)}`;
     }

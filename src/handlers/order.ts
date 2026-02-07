@@ -511,7 +511,6 @@ export async function OrderHandler(ctx: Context) {
         "collectionOrderConfirm",
         "collectionCarCode",
         "collectionShowAdditionalOptions",
-        "collectionAdditionalOptions",
         "collectionCarClass",
         "collectionOrderConfirm",
         "children_collectionSelectBabySister",

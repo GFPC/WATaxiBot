@@ -218,16 +218,22 @@ export class OrderObserverCallback {
                     );
                     break;
                 case BookingState.DriverCanceled:
-                    if(order.ctx?.configName === "truck") {
-                        console.log("Driver canceled, updating list")
-                        await order.truckDriversWatcher?.start()
-                    }
                     await chat.sendMessage(
                         this.constants.getPrompt(
                             localizationNames.driverCanceled,
                             this.lang,
                         ),
                     );
+                    if(order.ctx?.configName === "truck") {
+                        console.log("Driver canceled, updating list")
+                        const truckListMessage = await chat.sendMessage(
+                            this.constants.getPrompt(
+                                localizationNames.truckDriversList,
+                                this.lang
+                            )
+                        )
+                        await order.truckDriversWatcher?.start(truckListMessage)
+                    }
                     break;
                 case BookingState.Canceled:
                     //await chat.sendMessage(this.constants.getPrompt(localizationNames.orderClosedByAPI, this.lang) + this.constants.getPrompt(localizationNames.defaultPrompt, this.lang));
