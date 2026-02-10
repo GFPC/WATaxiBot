@@ -1,30 +1,30 @@
-import WAWebJS, { Chat, Client, LocalAuth, Message } from "whatsapp-web.js";
+import WAWebJS, {Client, LocalAuth, MessageTypes} from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
-import { RegisterHandler } from "./handlers/register";
+import {RegisterHandler} from "./handlers/register";
 import dotenv from "dotenv";
-import { AuthData, postHeaders } from "./api/general";
-import { OrderHandler } from "./handlers/order";
-import winston, { Logger } from "winston";
-import { localizationNames } from "./l10n";
-import { StateMachine } from "./states/types";
-import { RideHandler } from "./handlers/ride";
-import { MemoryStorage } from "./storage/mem";
-import axios, { AxiosError } from "axios";
-import { UsersStorage } from "./storage/usersStorage";
-import { VotingHandler } from "./handlers/voting";
-import {Constants, ConstantsStorage, GFPTaxiBotConstants} from "./api/constants";
-import { SettingsHandler } from "./handlers/settings";
-import { DefaultHandler } from "./handlers/default";
-import { HelpHandler } from "./handlers/help";
+import {AuthData, postHeaders} from "./api/general";
+import {OrderHandler} from "./handlers/order";
+import winston from "winston";
+import {localizationNames} from "./l10n";
+import {StateMachine} from "./states/types";
+import {RideHandler} from "./handlers/ride";
+import {MemoryStorage} from "./storage/mem";
+import axios, {AxiosError} from "axios";
+import {UsersStorage} from "./storage/usersStorage";
+import {VotingHandler} from "./handlers/voting";
+import {ConstantsStorage, GFPTaxiBotConstants} from "./api/constants";
+import {SettingsHandler} from "./handlers/settings";
+import {DefaultHandler} from "./handlers/default";
+import {HelpHandler} from "./handlers/help";
 import * as fs from "fs";
-import { ConfigsMap, ServiceMap } from "./ServiceMap";
-import { URLManager } from "./managers/URLManager";
-import { ConfigManager } from "./managers/ConfigManager";
-import { AIStorage } from "./storage/AIStorage";
-import { AIHandler } from "./handlers/ai";
-import { GFPWAQRClient } from "./GFPWaQRHubConfig";
-import { createHash } from "crypto";
-import { ChildrenProfileHandler } from "./handlers/childrenProfile";
+import {ConfigsMap, ServiceMap} from "./ServiceMap";
+import {URLManager} from "./managers/URLManager";
+import {ConfigManager} from "./managers/ConfigManager";
+import {AIStorage} from "./storage/AIStorage";
+import {AIHandler} from "./handlers/ai";
+import {GFPWAQRClient} from "./GFPWaQRHubConfig";
+import {createHash} from "crypto";
+import {ChildrenProfileHandler} from "./handlers/childrenProfile";
 import {Context} from "./types/Context";
 import {UserSettings} from "./types/User/UserSettings";
 import {getCurrentVersion} from "./api/main";
@@ -388,6 +388,10 @@ async function createBot(botId: string) {
         } // hide messages from other bots
         if (!userId.endsWith("@c.us") && !userId.endsWith("@lid")) {
             return;
+        }
+        if (msg.type === MessageTypes.E2E_NOTIFICATION || msg.type === MessageTypes.NOTIFICATION_TEMPLATE) {
+            console.log('Unknown messages type, content', msg)
+            return
         }
 
         logger.info(`Received message from ${userId} messageType=${msg.type}`);
