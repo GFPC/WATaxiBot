@@ -30,13 +30,14 @@ export async function children_docs_collectionPrivacyPolicy(
     //const currentVersions = getLegalDocsVersionsMap(botLegalDocs);
 
     const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
-    legal_information_parts.parts.forEach(async (part: {[lang: string]: string}) => {
+    for (const part of legal_information_parts.parts) {
         await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id].replace('%action%',
             ctx.constants.getPrompt(
                 localizationNames.childrenDocsActionContinueOrder,
                 ctx.user.settings.lang.api_id
-            )))
-    })
+            )));
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
     if(state.data.children_docs?.privacy_policy) {
         state.data.children_docs.privacy_policy.accepted = (new Date()).toUTCString();
     }

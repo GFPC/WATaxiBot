@@ -28,9 +28,10 @@ export async function children_docs_collectionPublicOffer(
 
     const privacy_policy_parts = pickMaxVersion(botLegalDocs.privacy_policy.content)
 
-    privacy_policy_parts.parts.forEach(async (part: {[lang: string]: string}) => {
-        await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id])
-    })
+    for (const part of privacy_policy_parts.parts) {
+        await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id]);
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
     state.state = "children_docs_collectionPrivacyPolicy";
 
     const public_offer_parts = pickMaxVersion(botLegalDocs.public_offer.content)

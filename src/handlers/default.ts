@@ -47,9 +47,10 @@ export async function DefaultHandler(ctx: Context): Promise<void> {
 
                         const public_offer_parts = pickMaxVersion(botLegalDocs.public_offer.content)
 
-                        public_offer_parts.parts.forEach(async (part: {[lang: string]: string}) => {
-                            await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id])
-                        })
+                        for (const part of public_offer_parts.parts) {
+                            await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id]);
+                            await new Promise(resolve => setTimeout(resolve, 300));
+                        }
                         const freshState = newEmptyOrder();
                         freshState.state = "children_docs_collectionPublicOffer";
                         await ctx.storage.push(ctx.userID, freshState);
