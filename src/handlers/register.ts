@@ -567,10 +567,10 @@ export async function RegisterHandler(ctx: Context) {
             if (ctx.message.body === "1") {
                 const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
                 const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
-                legal_information_parts.parts.forEach(async (part: {[lang: string]: string}) => {
-                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"].replace('%action%',
-                        ctx.constants.getPrompt(localizationNames.childrenDocsActionContinueRegistration,state?.data.lang.api_id)))
-                })
+                for (const part of legal_information_parts.parts) {
+                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
                 state.state = "children_docs_collectionLegalInformation";
                 if(state.data.childrenDocs?.privacy_policy) {
                     state.data.childrenDocs.privacy_policy.accepted = (new Date()).toUTCString();
@@ -587,9 +587,10 @@ export async function RegisterHandler(ctx: Context) {
             if (ctx.message.body === "1") {
                 const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
                 const privacy_policy_parts = pickMaxVersion(botLegalDocs.privacy_policy.content)
-                privacy_policy_parts.parts.forEach(async (part: {[lang: string]: string}) => {
-                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"])
-                })
+                for (const part of privacy_policy_parts.parts) {
+                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
                 state.state = "children_docs_collectionPrivacyPolicy";
                 if(state.data.childrenDocs?.public_offer) {
                     state.data.childrenDocs.public_offer.accepted = (new Date()).toUTCString();
@@ -651,9 +652,10 @@ export async function RegisterHandler(ctx: Context) {
                         }
                     }
 
-                    public_offer_parts.parts.forEach(async (part: {[lang: string]: string}) => {
-                        await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"])
-                    })
+                    for (const part of public_offer_parts.parts) {
+                        await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
                     state.state = "children_docs_collectionPublicOffer";
                     await ctx.storage.push(ctx.userID, state);
                     return
