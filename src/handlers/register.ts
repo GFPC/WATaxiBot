@@ -568,7 +568,8 @@ export async function RegisterHandler(ctx: Context) {
                 const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
                 const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
                 for (const part of legal_information_parts.parts) {
-                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
+                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"].replace('%action%',
+                        ctx.constants.getPrompt(localizationNames.childrenDocsActionContinueRegistration,state?.data.lang.api_id)));
                     await new Promise(resolve => setTimeout(resolve, 300));
                 }
                 state.state = "children_docs_collectionLegalInformation";
