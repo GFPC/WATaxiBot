@@ -8,7 +8,7 @@ import { OrderMachine } from "../../../states/machines/orderMachine";
 import { Context } from "../../../types/Context";
 import { HandlerRouteResponse, SuccessResponse } from "../format";
 import { OrderObserverCallback } from "../../../observer/order";
-import { Order } from "../../../api/order";
+import {Order, OrderCreationResponse} from "../../../api/order";
 import { constants } from "../../../constants";
 import { newRide } from "../../../states/machines/rideMachine";
 import { getLocalizationText } from "../../../utils/textUtils";
@@ -99,6 +99,7 @@ export async function children_collectionSelectBabySister(
         observer.callback.bind(observer),
         async () => {},
     );
+    let orderCreationResp: OrderCreationResponse
     try {
         if (state.data.when === undefined)
             return {
@@ -113,7 +114,7 @@ export async function children_collectionSelectBabySister(
                 },
             };
         console.log('Creating drive with b_waiting='+ctx.gfp_constants.data.maxDefaultDriveWaiting)
-        await order.new(
+        orderCreationResp = await order.new(
             state.data.from,
             state.data.to,
             state.data.when,
@@ -139,13 +140,24 @@ export async function children_collectionSelectBabySister(
         );
         return SuccessResponse;
     }
+    if(orderCreationResp.status){
 
-    await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
-    await orderMsg.edit(
-        ctx.constants.getPrompt(
-            localizationNames.orderCreated,
-            ctx.user.settings.lang.api_id,
-        ),
-    );
+        await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
+        await orderMsg.edit(
+            ctx.constants.getPrompt(
+                localizationNames.orderCreated,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+    } else {
+        await new Promise((f) => setTimeout(f, constants.orderMessageDelay));
+        await orderMsg.edit(
+            ctx.constants.getPrompt(
+                localizationNames.errorOnOrder,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        await ctx.storage.delete(ctx.userID);
+    }
     return SuccessResponse;
 }

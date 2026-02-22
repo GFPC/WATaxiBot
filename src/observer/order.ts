@@ -224,6 +224,17 @@ export class OrderObserverCallback {
                             this.lang,
                         ),
                     );
+                    if(order.ctx?.configName === "children") {
+                        await chat.sendMessage(
+                            this.constants.getPrompt(
+                                localizationNames.defaultPrompt,
+                                this.lang
+                            )
+                        )
+                        await this.storage.delete(this.userId)
+                        break
+                    }
+
                     if(order.ctx?.configName === "truck") {
                         console.log("Driver canceled, updating list")
                         const truckListMessage = await chat.sendMessage(

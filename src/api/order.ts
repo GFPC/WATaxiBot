@@ -12,6 +12,7 @@ import {getLocalizationText} from "../utils/textUtils";
 import {getDistanceAndDuration} from "../utils/specific/truck/priceUtils";
 import TripWatcher from "../utils/specific/truck/TripWatcher";
 import {RideMachine} from "../states/machines/rideMachine";
+import {stubFalse} from "lodash";
 
 export function formatDateAPI(date: Date): string {
     /* Возвращает Date в виде строки формата "год-месяц-день час:минуты:секунды±часы:минуты" */
@@ -40,14 +41,17 @@ type StateCallback = (
     newState: BookingState,
 ) => Promise<void>;
 
+export type OrderCreationResponse = {
+    status: boolean,
+    message: string,
+    data?:any
+}
+
 // Функция, которая вызывается классом Order при получении нового сообщения в чате
 type ChatCallback = (order: Order, message: string) => Promise<void>;
 
 async function CriticalErrorHandler(ctx: Context | undefined, error: any) {
-    await ctx?.chat.sendMessage(
-        "Ошибка обращения к апи, откат на дефолтное состояние.\nДанные: " +
-            error.toString(),
-    );
+    //await ctx?.chat.sendMessage(ctx?.constants.getPrompt(localizationNames.errorOnOrder,ctx?.user.settings.lang.api_id));
     await ctx?.storage.delete(ctx?.userID ? ctx.userID : "");
     await ctx?.chat?.sendMessage(
         ctx?.constants.getPrompt(
@@ -90,6 +94,8 @@ export class Order {
     truckTripWatcher?: TripWatcher;
     truckTripWatcherMessage?: Message;
     truck_driverSelected?: boolean;
+
+    children_preferredDriversList?: string[];
 
     constructor(
         clientTg: string,
@@ -468,7 +474,7 @@ export class Order {
         b_comments: number[],
         pricingModel: PricingModel,
         truck_TripWatcher?: TripWatcher,
-    ) {
+    ): Promise<OrderCreationResponse> {
         /* Создание нового заказа */
         if (this.id) throw "The order has already been created";
         if (this.isVoting) {
@@ -565,7 +571,7 @@ export class Order {
             });
         } catch (e) {
             await CriticalErrorHandler(this.ctx, e);
-            return false;
+            return {status:false, message: 'Error creating order'};
         }
         console.log("CREATING DRIVE RES: ", response.data);
         if (this.isVoting) {
@@ -597,7 +603,7 @@ export class Order {
                 console.log("CONFIRMING DRIVE RES: ", confirmResponse.data);
             } catch (e) {
                 await CriticalErrorHandler(this.ctx, e);
-                return false;
+                return {status: false, message: 'Error set_confirm_state on voting'};
             }
         }
 
@@ -636,17 +642,19 @@ export class Order {
                 const state: RideMachine = await ctx.storage.pull(ctx.userID);
                 state.state = 'truck_selectTrip';
                 await ctx.storage.push(ctx.userID, state);
-                return
+                return {status: true, message:'ok'}
             }
 
         }
 
-        if (this.isVoting) return b_driver_code;
+        if (this.isVoting) return {status:true,message:'ok', data: {b_driver_code}};
         if (user_state.data.preferredDriversList) {
+            this.children_preferredDriversList = user_state.data.preferredDriversList
             await this.addOffer(user_state.data.preferredDriversList);
             console.log("ADDED OFFER");
         }
 
+        return {status:true,message:'ok'}
     }
 
     async addOffer(driverList: string[]) {

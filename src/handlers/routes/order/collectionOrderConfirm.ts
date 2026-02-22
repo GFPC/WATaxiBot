@@ -132,7 +132,7 @@ export async function collectionOrderConfirm(
             return SuccessResponse;
         }
 
-        const b_driver_code = await order.new(
+        const orderCreationResponse = await order.new(
             state.data.from,
             state.data.to,
             timestamp,
@@ -158,7 +158,7 @@ export async function collectionOrderConfirm(
                     localizationNames.votingVerificationCode,
                     ctx.user.settings.lang.api_id,
                 )
-                .replace("%code%", b_driver_code),
+                .replace("%code%", orderCreationResponse.data.b_driver_code),
         );
         const newState = newVote(order);
 
@@ -250,7 +250,7 @@ async function truckFlow(ctx: Context, state: OrderMachine): Promise<HandlerRout
             return SuccessResponse;
         }
 
-        const b_driver_code = await order.new(
+        const orderCreationResponse = await order.new(
             state.data.from,
             state.data.to,
             timestamp,
@@ -276,7 +276,7 @@ async function truckFlow(ctx: Context, state: OrderMachine): Promise<HandlerRout
                     localizationNames.votingVerificationCode,
                     ctx.user.settings.lang.api_id,
                 )
-                .replace("%code%", b_driver_code),
+                .replace("%code%", orderCreationResponse.data.b_driver_code),
         );
         const newState = newVote(order);
 

@@ -10,14 +10,11 @@ import {initPriceModelForTruck} from "../utils/specific/truck/priceUtils";
 export async function RideHandler(ctx: Context) {
     var state  = await ctx.storage.pull(ctx.userID);
     console.log("RIDE HANDLER: ", ctx.message.body, state.state);
-    if (ctx.message.body.toLowerCase() === "0") {
-        ctx.message.body = "отмена";
-    }
     switch (state.state) {
         case "searchCar":
             if(ctx.configName === "truck") {
                 switch (ctx.message.body.toLowerCase()) {
-                    case "отмена":
+                    case "0":
                         state.data.isCollectionReason = true;
                         const text = {
                             mistakenlyOrder: ctx.constants.getPrompt(
@@ -110,7 +107,7 @@ export async function RideHandler(ctx: Context) {
                 break;
             } else {
                 switch (ctx.message.body.toLowerCase()) {
-                    case "отмена":
+                    case "0":
                         state.data.isCollectionReason = true;
                         const text = {
                             mistakenlyOrder: ctx.constants.getPrompt(
@@ -244,14 +241,7 @@ export async function RideHandler(ctx: Context) {
             await ctx.storage.push(ctx.userID, state);
             break;
         case "cancelReason":
-            if (
-                ctx.message.body.toLowerCase() ===
-                    ctx.constants.getPrompt(
-                        localizationNames.answerBackLower,
-                        ctx.user.settings.lang.api_id,
-                    ) ||
-                ctx.message.body.trim() === "01"
-            ) {
+            if (ctx.message.body.trim() === "01") {
                 //назад
                 if (state.data.order.isVoting) {
                     state.id = "voting";
@@ -275,19 +265,16 @@ export async function RideHandler(ctx: Context) {
                 );
                 break;
             }
-            if (
-                ctx.message.body.toLowerCase() ===
+            if (ctx.message.body.toLowerCase() === "0" && ctx.configName==="children"){
+                await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
-                        localizationNames.cancelLower,
+                        localizationNames.commandNotFound,
                         ctx.user.settings.lang.api_id,
-                    ) ||
-                ctx.message.body.toLowerCase() ===
-                    ctx.constants.getPrompt(
-                        localizationNames.cancelDigital,
-                        ctx.user.settings.lang.api_id,
-                    ) ||
-                ctx.message.body.toLowerCase() === "отмена"
-            ) {
+                    ),
+                );
+                break
+            }
+            if (ctx.message.body.toLowerCase() === "0") {
                 await state.data.order.cancel("");
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
@@ -345,7 +332,7 @@ export async function RideHandler(ctx: Context) {
             }
             break;
         case "rate":
-            if (ctx.message.body == "отмена") {
+            if (ctx.message.body == "0") {
                 await ctx.storage.delete(ctx.userID);
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
@@ -355,7 +342,7 @@ export async function RideHandler(ctx: Context) {
                 );
                 break;
             }
-            if (!ctx.message.body.match(/^[0-5]+$/) && ctx.configName === "children") {
+            if (!['1','2','3','4','5'].includes(ctx.message.body.trim()) && ctx.configName === "children") {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.youEnterIncorrectCommand,
@@ -363,7 +350,7 @@ export async function RideHandler(ctx: Context) {
                     ),
                 );
                 break;
-            } else if (!ctx.message.body.match(/^[0-5]+$/)) {
+            } else if (!['1','2','3','4','5'].includes(ctx.message.body.trim())) {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.commandNotFound,
@@ -372,6 +359,7 @@ export async function RideHandler(ctx: Context) {
                 );
                 break;
             }
+
             state.state = "comment";
             await ctx.storage.push(ctx.userID, state);
             await ctx.chat.sendMessage(
@@ -382,7 +370,7 @@ export async function RideHandler(ctx: Context) {
             );
             break;
         case "comment":
-            if (ctx.message.body == "отмена") {
+            if (ctx.message.body == "0") {
                 await ctx.storage.delete(ctx.userID);
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
@@ -425,7 +413,7 @@ export async function RideHandler(ctx: Context) {
             break;
 
         case "truck_selectTrip":
-            if(ctx.message.body === "отмена"){
+            if(ctx.message.body === "0"){
                 state.data.isCollectionReason = true;
                 const text = {
                     mistakenlyOrder: ctx.constants.getPrompt(

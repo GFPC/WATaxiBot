@@ -13,10 +13,16 @@ export async function children_docs_collectionLegalInformation(
     ctx: Context,
     state: OrderMachine,
 ): Promise<HandlerRouteResponse> {
-
-    await ctx.chat.sendMessage(
-        "Документы приняты, можете продолжать создание заказа"
-    )
+    if(ctx.message.body === "1") {}
+    else {
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.commandNotFound,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        return SuccessResponse;
+    }
     await ctx.chat.sendMessage(
         ctx.constants.getPrompt(
             localizationNames.enterStartPoint,

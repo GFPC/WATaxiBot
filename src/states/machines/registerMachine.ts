@@ -14,12 +14,14 @@ export interface RegistrationMachine extends StateMachine {
         | "previouslyDeleted"
         | "recoverAccount"
 
+        | "children_welcome"
         | "children_collectionCity"
         | "children_docs_collectionPublicOffer"
         | "children_docs_collectionPrivacyPolicy"
         | "children_docs_collectionLegalInformation"
         | "children_collectionPhone";
     data: {
+        previouslyDeleted?: boolean;
         birthYear?: string;
         city?: string;
         role?: string;

@@ -8,6 +8,8 @@ import { baseURL, postHeaders } from "../api/general";
 import searchRefCodeByREfID from "../utils/settings";
 import { newSettings } from "../states/machines/settingsMachine";
 import {replace} from "lodash";
+import {pickMaxVersion} from "../types/api/LegalDoc";
+import {getLocalizationText} from "../utils/textUtils";
 
 type LanguageCodeData = {
     id: string;
@@ -210,17 +212,17 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                     ),
                 );
                 if(ctx.configName==="children"){
-                    const text = "-----------------------------------------------------\n" +
-                        "  _1      English   ▪︎ *(en)*_ +\n" +
-                        "  _2      Español  ▪︎ *(es)*_ +\n" +
-                        "  _3      Italiano   ▪︎ *(it)*_   +\n" +
-                        "  _4      Deutsch  ▪︎ *(de)*_ +\n" +
-                        "  _5      Français  ▪︎ *(fr)*_  +\n" +
-                        "  _6      Norway   ▪︎ *(no)*_ —\n" +
-                        "  _7      Denmark ▪︎ *(dk)*_ —\n" +
-                        "  _8      Русский ▪︎ *(ru)*_  —\n" +
-                        "  _9      Sweden   ▪︎ *(se)*_ —\n" +
-                        "_10      Finland    ▪︎ *(fi)*_   —";
+                    const text = "--------------------------------------------------\n" +
+                        "  _*1*        English ............ 🇺🇸 (en)_ +\n" +
+                        "  _*2*        Español ........... 🇪🇸 (es)_ +\n" +
+                        "  _*3*        Italiano ............ 🇮🇹  (it)_  +\n" +
+                        "  _*4*        Deutsch ........... 🇩🇪 (de)_ +\n" +
+                        "  _*5*        Français ........... 🇫🇷  (fr)_ +\n" +
+                        "  _*6*        Norsk ............... 🇳🇴 (nb)_ –\n" +
+                        "  _*7*        Dansk ............... 🇩🇰 (da)_ –\n" +
+                        "  _*8*        Русский ........... 🇷🇺 (ru)_  +\n" +
+                        "  _*9*        Svenska ............ 🇸🇪 (sv)_ –\n" +
+                        "_*10*        Suomi ............... 🇫🇮  (fi)_  –";
                     await ctx.chat.sendMessage(text);
                     /*await ctx.chat.sendMessage(
                         "-----------------------------------------------------\n" +
@@ -276,6 +278,18 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.storage.push(ctx.userID, state);
                 break;*/
             case "2":
+                if (ctx.configName === "children") {
+                    const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
+                    const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
+                    for (const part of legal_information_parts.parts) {
+                        await ctx.chat.sendMessage(part[ctx.user.settings.lang.api_id].replace('%action%',
+                            ctx.constants.getPrompt(localizationNames.childrenDocsActionContinue,ctx.user.settings.lang.api_id)));
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                    }
+                    state.state = "collectionLegalInformation";
+                    await ctx.storage.push(ctx.userID, state);
+                    break
+                }
                 state.data.docs.legalInformationMessage =
                     await ctx.chat.sendMessage(
                         ctx.constants
@@ -591,7 +605,10 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
             if (langs_data.map((item) => item.id).includes(ctx.message.body)) {
                 if (ctx.message.body !== (ctx.configName==="children"?"8":"1") && ctx.configName !== "gruzvill") {
                     await ctx.chat.sendMessage(
-                        `TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *${ctx.configName==="children"?"8":"1"}* )`,
+                        ctx.constants.getPrompt(
+                            localizationNames.commandNotFound,
+                            ctx.user.settings.lang.api_id,
+                        ),
                     );
                     state.state = "changeLanguage";
                     await ctx.storage.push(ctx.userID, state);
@@ -779,9 +796,9 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         )
                         .replace(
                             "%language%",
-                            user.settings.lang.native +
+                            ctx.user.settings.lang.native +
                                 "(" +
-                                user.settings.lang.iso +
+                            ctx.user.settings.lang.iso +
                                 ")",
                         )
                         .replace(
@@ -1037,12 +1054,26 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 break;
             }
         case "collectionLegalInformation":
+            if(ctx.configName === "children") {
+                if(ctx.message.body === "1") {
+                    await sendSettingMenu(ctx,user)
+                    state.state = "settings";
+                    await ctx.storage.push(ctx.userID, state);
+                }
+                else {
+                    await ctx.chat.sendMessage(getLocalizationText(ctx,localizationNames.commandNotFound))
+                    break
+                }
+                break
+            }
+
             if (ctx.message.body === "1") {
                 await sendSettingMenu(ctx,user);
 
                 await ctx.storage.push(ctx.userID, newSettings());
                 break;
-            } else if (ctx.message.body === "3") {
+            }
+            else if (ctx.message.body === "3") {
                 state.data.docs.legalInformationExpanded =
                     !state.data.docs.legalInformationExpanded;
 
@@ -1219,6 +1250,28 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                         ctx.user.settings.lang.api_id,
                     ),
                 );
+                if(ctx.configName==="children"){
+                    const res = await editUser(
+                        ctx.userID.split("@")[0],
+                        {
+                            u_details: [
+                                ['-', ["birthYear"]],
+                                ['-', ['phone']],
+                                ['-', ['cityString']],
+                                ['=', ["deleted"], '1']
+                            ],
+                            u_name: state.data.fullName,
+                        },
+                        ctx.auth,
+                        ctx.baseURL
+                    )
+                    console.log('Deleting user: ', res)
+                    await ctx.usersList.delete(ctx.userID)
+                    await ctx.storage.delete(ctx.userID);
+                    return
+
+
+                }
                 state.id = "register";
                 state.state = "previouslyDeleted";
                 await ctx.storage.push(ctx.userID, state);
@@ -1297,7 +1350,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
                         localizationNames.enterFirstNameLastNameAndBirthYearError,
-                        state.data.lang.api_id,
+                        ctx.user.settings.lang.api_id,
                     )
                 );
                 break;
@@ -1336,7 +1389,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 ctx.baseURL
             )
             if(res_name_and_year.status === "success") {
-                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                await sendSettingMenu(ctx,user)
                 state.state = "settings"
                 await ctx.storage.push(ctx.userID, state)
                 break
@@ -1360,7 +1413,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 ctx.baseURL
             )
             if(res_city.status === "success") {
-                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                await sendSettingMenu(ctx,user)
                 state.state = "settings"
                 await ctx.storage.push(ctx.userID, state)
                 break
@@ -1369,13 +1422,12 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.defaultPrompt, ctx.user.settings.lang.api_id))
                 console.log('Cannot change user city, dump:',JSON.stringify(res_city))
                 await ctx.storage.delete(ctx.userID)
-
             }
             break
         case "children_collectionPhone":
             const phone = ctx.message.body.trim()
             if(phone==="0"){
-                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                await sendSettingMenu(ctx,user)
                 state.state = "settings"
                 await ctx.storage.push(ctx.userID, state)
                 break
@@ -1391,7 +1443,7 @@ export async function SettingsHandler(ctx: Context): Promise<void> {
                 ctx.baseURL
             )
             if(res_phone.status === "success") {
-                await ctx.chat.sendMessage(ctx.constants.getPrompt(localizationNames.settingsMenu, ctx.user.settings.lang.api_id))
+                await sendSettingMenu(ctx,user)
                 state.state = "settings"
                 await ctx.storage.push(ctx.userID, state)
                 break

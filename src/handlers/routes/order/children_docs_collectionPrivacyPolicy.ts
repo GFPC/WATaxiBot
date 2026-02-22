@@ -14,12 +14,20 @@ export async function children_docs_collectionPrivacyPolicy(
     ctx: Context,
     state: OrderMachine,
 ): Promise<HandlerRouteResponse> {
-    console.log('dcs', JSON.stringify(state.data, null, 2))
-
-    if(ctx.message.body !== "1") {
+    if(ctx.message.body === "1") {}
+    else if(ctx.message.body === "2") {
         await ctx.chat.sendMessage(
             ctx.constants.getPrompt(
                 localizationNames.docsDeclinedCanNotUseOrder,
+                ctx.user.settings.lang.api_id,
+            ),
+        );
+        return SuccessResponse;
+    }
+    else {
+        await ctx.chat.sendMessage(
+            ctx.constants.getPrompt(
+                localizationNames.commandNotFound,
                 ctx.user.settings.lang.api_id,
             ),
         );

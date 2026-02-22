@@ -556,10 +556,7 @@ export async function RegisterHandler(ctx: Context) {
                 await ctx.storage.push(ctx.userID, state);
             } else {
                 await ctx.chat.sendMessage(
-                    ctx.constants.getPrompt(
-                        localizationNames.commandNotFound,
-                        state.data.lang.api_id,
-                    ),
+                    ctx.constants.getPrompt(localizationNames.commandNotFound,state.data.lang.api_id)
                 );
             }
             break
@@ -578,9 +575,13 @@ export async function RegisterHandler(ctx: Context) {
                 }
                 await ctx.storage.push(ctx.userID, state);
                 return
-            } else {
+            } else if(ctx.message.body === "2") {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(localizationNames.docsDeclinedCanNotUseRegistration,state.data.lang.api_id)
+                );
+            } else {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(localizationNames.commandNotFound,state.data.lang.api_id)
                 );
             }
             break
@@ -598,9 +599,13 @@ export async function RegisterHandler(ctx: Context) {
                 }
                 await ctx.storage.push(ctx.userID, state);
                 return
-            }  else {
+            }  else if(ctx.message.body === "2") {
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(localizationNames.docsDeclinedCanNotUseRegistration,state.data.lang.api_id)
+                );
+            } else {
+                await ctx.chat.sendMessage(
+                    ctx.constants.getPrompt(localizationNames.commandNotFound,state.data.lang.api_id)
                 );
             }
             break
@@ -614,7 +619,10 @@ export async function RegisterHandler(ctx: Context) {
                 );
                 if (ctx.message.body !== (ctx.configName==="children"?"8":"1") && ctx.configName !== "gruzvill") {
                     await ctx.chat.sendMessage(
-                        `TEST POINT: На данный момент доступен только русский язык, выберите его, введя ( *${ctx.configName==="children"?"8":"1"}* )`,
+                        ctx.constants.getPrompt(
+                            localizationNames.commandNotFound,
+                            ctx.gfp_constants.data.defaultLangID,
+                        ),
                     );
                     break;
                 }
@@ -631,33 +639,14 @@ export async function RegisterHandler(ctx: Context) {
                     );
                 }
                 else if(ctx.configName === "children") {
-                    const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
-
-                    const public_offer_parts = pickMaxVersion(botLegalDocs.public_offer.content)
-                    const privacy_policy_parts = pickMaxVersion(botLegalDocs.privacy_policy.content)
-                    const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
-                    if(!state.data.childrenDocs) {
-                        state.data.childrenDocs = {
-                            public_offer: {
-                                version: public_offer_parts.version.toString(),
-                                accepted: ""
-                            },
-                            privacy_policy: {
-                                version: privacy_policy_parts.version.toString(),
-                                accepted: ""
-                            },
-                            legal_information: {
-                                version: legal_information_parts.version.toString(),
-                                accepted: ""
-                            }
-                        }
-                    }
-
-                    for (const part of public_offer_parts.parts) {
-                        await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
-                        await new Promise(resolve => setTimeout(resolve, 300));
-                    }
-                    state.state = "children_docs_collectionPublicOffer";
+                    // Возвращаем приветственные сообщения
+                    await ctx.chat.sendMessage(
+                        ctx.constants.getPrompt(
+                            localizationNames.welcome,
+                            ctx.constants.data.default_lang,
+                        ),
+                    );
+                    state.state = "children_welcome"
                     await ctx.storage.push(ctx.userID, state);
                     return
                 }
@@ -684,10 +673,11 @@ export async function RegisterHandler(ctx: Context) {
                 await ctx.storage.push(ctx.userID, state);
                 break;
             } else {
+
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
-                        localizationNames.invalid_language,
-                        state.data.lang.api_id,
+                        localizationNames.commandNotFound,
+                        ctx.gfp_constants.data.defaultLangID,
                     ),
                 );
             }
@@ -720,54 +710,40 @@ export async function RegisterHandler(ctx: Context) {
         case "children_collectionCity":
             let city = ctx.message.body.trim()
             state.data.city = city
+            console.log("TEST POINT: ", state.data)
 
-            // reg
-            // edit
-
-            console.log("TEST POINT: ", state.data);
-            try {
-                await register(
-                    {
-                        whatsappId: ctx.userID,
-                        name: state.data.fullName,
-                        phone: ctx.userID.split("@")[0],
-                        lang: state.data.lang.api_id,
-                        refCode:
-                            state.data.refCode !== "0"
-                                ? state.data.refCode
-                                : undefined,
-                        u_details: {
-                            refCodeBackup: "",
+            if(state.data.previouslyDeleted === false) {
+                try {
+                    await register(
+                        {
+                            whatsappId: ctx.userID,
+                            name: state.data.fullName,
+                            phone: ctx.userID.split("@")[0],
+                            lang: state.data.lang.api_id,
+                            refCode:
+                                state.data.refCode !== "0"
+                                    ? state.data.refCode
+                                    : undefined,
+                            u_details: {
+                                refCodeBackup: "",
+                            },
                         },
-                    },
-                    ctx.auth,
-                    ctx.baseURL,
-                );
-            } catch (e: any) {
-                if (String(e).includes("wrong ref_code")) {
-                    await ctx.chat.sendMessage(
-                        ctx.constants.getPrompt(
-                            localizationNames.refCodeInvalid,
-                            state.data.lang.api_id,
-                        ),
+                        ctx.auth,
+                        ctx.baseURL,
                     );
-                    break;
-                }
-                ctx.logger.error(
-                    `RegisterHandler: Error during user registration: ${e}`,
-                );
-                await ctx.chat.sendMessage(
-                    formatString(
+                } catch (e: any) {
+                    ctx.logger.error(
+                        `RegisterHandler: Error during user registration: ${e}`,
+                    );
+                    await ctx.chat.sendMessage(
                         ctx.constants.getPrompt(
                             localizationNames.registrationError,
                             state.data.lang.api_id,
-                        ),
-                        {
-                            "%error%": String(e),
-                        },
-                    ),
-                );
-                return;
+                        )
+                    );
+                    await ctx.storage.delete(ctx.userID);
+                    return;
+                }
             }
 
             const res = await editUser(
@@ -783,19 +759,28 @@ export async function RegisterHandler(ctx: Context) {
                         ['=', ["birthYear"], state.data.birthYear],
                         ['=', ['phone'], state.data.phone],
                         ['=', ['cityString'], state.data.city],
+                        ['=',['deleted'], '0']
                     ],
                     u_name: state.data.fullName,
                 },
                 ctx.auth,
                 ctx.baseURL
             )
+            const user = await ctx.usersList.pull(ctx.userID);
+            user.reloadFromApi = true;
+            await ctx.usersList.push(ctx.userID,user)
             if(res.status !== "success") {
                 ctx.logger.info(
                     `RegisterHandler: Failed to edit user ${ctx.userID} msg: ${res.message}`,
                 )
                 await ctx.chat.sendMessage(
-                    "Something went wrong.Log: " + JSON.stringify(res)
-                )
+                    ctx.constants.getPrompt(
+                            localizationNames.registrationError,
+                            state.data.lang.api_id,
+                        )
+                );
+                await ctx.storage.delete(ctx.userID);
+                return;
             }
             await ctx.chat.sendMessage(
                 ctx.constants.getPrompt(
@@ -819,76 +804,75 @@ export async function RegisterHandler(ctx: Context) {
             state.state = "children_collectionCity"
             await ctx.storage.push(ctx.userID, state);
             break
-        /*case "children_collectionRole":
-            state.data.role = ctx.message.body.trim()
 
-            ctx.logger.info(
-                `RegisterHandler: New user ${ctx.userID} registered`,
-            );
-            //api fill profile
-            const res = await editUser(
-                ctx.api_u_id,
-                {
-                    u_details:{
-                        ...state.data
-                    },
+        case "children_welcome":
+            if(ctx.message.body.trim() === "1") {
+                const botLegalDocs = JSON.parse(ctx.constants.data.data.site_constants.bot_legal_docs?.value || '{}')
 
-                },
-                ctx.auth,
-                ctx.baseURL
-            )
+                const public_offer_parts = pickMaxVersion(botLegalDocs.public_offer.content)
+                const privacy_policy_parts = pickMaxVersion(botLegalDocs.privacy_policy.content)
+                const legal_information_parts = pickMaxVersion(botLegalDocs.legal_information.content)
+                if(!state.data.childrenDocs) {
+                    state.data.childrenDocs = {
+                        public_offer: {
+                            version: public_offer_parts.version.toString(),
+                            accepted: ""
+                        },
+                        privacy_policy: {
+                            version: privacy_policy_parts.version.toString(),
+                            accepted: ""
+                        },
+                        legal_information: {
+                            version: legal_information_parts.version.toString(),
+                            accepted: ""
+                        }
+                    }
+                }
 
-            if(res.status !== "200") {
-                ctx.logger.info(
-                    `RegisterHandler: Failed to edit user ${ctx.userID}`,
-                );
+                for (const part of public_offer_parts.parts) {
+                    await ctx.chat.sendMessage(part[state?.data.lang.api_id || "2"]);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+                state.state = "children_docs_collectionPublicOffer";
+                await ctx.storage.push(ctx.userID, state);
+            } else {
                 await ctx.chat.sendMessage(
-                    "Something went wrong.Log: " + JSON.stringify(res)
-                )
-                break
+                    ctx.constants.getPrompt(
+                        localizationNames.commandNotFound,
+                        ctx.constants.data.default_lang,
+                    ),
+                );
             }
-
-            await ctx.storage.delete(ctx.userID);
-            await ctx.storage.delete("reg:" + ctx.userID);
-            await ctx.chat.sendMessage(
-                getLocalizationText(
-                    ctx,
-                    localizationNames.registrationSuccessful
-                )
-            )
             break
-            */
-
 
         default:
             // Создаём новое состояние
             state = await createEmptyRegistration(ctx);
             await ctx.storage.push(ctx.userID, state);
-            // Возвращаем приветственные сообщения
-            await ctx.chat.sendMessage(
-                ctx.constants.getPrompt(
-                    localizationNames.welcome,
-                    ctx.constants.data.default_lang,
-                ),
-            );
+
             await ctx.chat.sendMessage(
                 ctx.constants.getPrompt(
                     localizationNames.selectLanguage,
-                    ctx.constants.data.default_lang,
+                    ctx.gfp_constants.data.defaultLangID,
                 ),
             );
             if(ctx.configName==="children"){
-                const text = "-----------------------------------------------------\n" +
-                "  _1      English   ▪︎ *(en)*_ +\n" +
-                "  _2      Español  ▪︎ *(es)*_ +\n" +
-                "  _3      Italiano   ▪︎ *(it)*_   +\n" +
-                "  _4      Deutsch  ▪︎ *(de)*_ +\n" +
-                "  _5      Français  ▪︎ *(fr)*_  +\n" +
-                "  _6      Norway   ▪︎ *(no)*_ —\n" +
-                "  _7      Denmark ▪︎ *(dk)*_ —\n" +
-                "  _8      Русский ▪︎ *(ru)*_  —\n" +
-                "  _9      Sweden   ▪︎ *(se)*_ —\n" +
-                "_10      Finland    ▪︎ *(fi)*_   —";
+                if(ctx.user?.u_details?.deleted === "1") {
+                    state.data.previouslyDeleted = true;
+                }
+
+
+                const text = "--------------------------------------------------\n" +
+                    "  _*1*        English ............ 🇺🇸 (en)_ +\n" +
+                    "  _*2*        Español ........... 🇪🇸 (es)_ +\n" +
+                    "  _*3*        Italiano ............ 🇮🇹  (it)_  +\n" +
+                    "  _*4*        Deutsch ........... 🇩🇪 (de)_ +\n" +
+                    "  _*5*        Français ........... 🇫🇷  (fr)_ +\n" +
+                    "  _*6*        Norsk ............... 🇳🇴 (nb)_ –\n" +
+                    "  _*7*        Dansk ............... 🇩🇰 (da)_ –\n" +
+                    "  _*8*        Русский ........... 🇷🇺 (ru)_  +\n" +
+                    "  _*9*        Svenska ............ 🇸🇪 (sv)_ –\n" +
+                    "_*10*        Suomi ............... 🇫🇮  (fi)_  –"
                 await ctx.chat.sendMessage(text);
             } else {
                 await ctx.chat.sendMessage(

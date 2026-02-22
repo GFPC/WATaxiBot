@@ -179,4 +179,7 @@ export const localizationNames = {
 
     childrenDocsActionContinueRegistration: "wab_childrenDocsActionContinueRegistration".toLowerCase(),
     childrenDocsActionContinueOrder: "wab_childrenDocsActionContinueOrder".toLowerCase(),
+    errorOnOrder: "wab_errorOnOrder".toLowerCase(),
+    childrenDocsActionContinue: "wab_childrenDocsActionContinue".toLowerCase(),
+    allDriversCancelled: "wab_allDriversCancelled".toLowerCase(),
 };

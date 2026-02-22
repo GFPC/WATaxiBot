@@ -23,6 +23,7 @@ export interface Context {
     aiStorage: AIStorage;
     user: {
         settings: UserSettings;
+        u_details?: any
     };
     botID: string;
     baseURL: string;

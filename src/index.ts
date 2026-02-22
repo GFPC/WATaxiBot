@@ -24,10 +24,11 @@ import {AIStorage} from "./storage/AIStorage";
 import {AIHandler} from "./handlers/ai";
 import {GFPWAQRClient} from "./GFPWaQRHubConfig";
 import {createHash} from "crypto";
-import {ChildrenProfileHandler} from "./handlers/childrenProfile";
 import {Context} from "./types/Context";
 import {UserSettings} from "./types/User/UserSettings";
 import {getCurrentVersion} from "./api/main";
+import {ChildrenProfileHandler} from "./handlers/childrenProfile";
+import {getLocalizationText} from "./utils/textUtils";
 
 const SESSION_DIR = "./sessions";
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -130,6 +131,12 @@ async function router(
         ctx.user = await userList.pull(ctx.userID);
         const state: StateMachine | null = await ctx.storage.pull(ctx.userID);
 
+
+        console.log(ctx.user.u_details,ctx.user.u_details?.deleted === '1')
+        if (ctx.user.u_details?.deleted === '1') {
+            return RegisterHandler;
+        }
+
         if (
             ctx.message.body === "9" &&
             state?.id === "order" &&
@@ -138,7 +145,7 @@ async function router(
         ) {
             return HelpHandler;
         } else if (
-            (ctx.message.body === "9" && state?.id === "order") ||
+            (ctx.message.body === "9" && state?.id === "order" && ctx.configName!=="children") ||
             state?.state === "aiQuestion" ||
             state?.state === "aiAnswer"
         ) {
@@ -377,12 +384,12 @@ async function createBot(botId: string) {
     client.on("message", async (msg) => {
         console.log(`[ check ] Received message from ${msg.from}`);
 
+
         const blackList: string[] = ["79999183175@c.us", "34614478119@c.us", "212778382140@c.us"];
         if (blackList.includes(msg.from)) {
             return;
         }
         let userId = msg.from;
-        //userId="111636349131@c.us";
         if (Object.values(ServiceMap).includes(userId)) {
             return;
         } // hide messages from other bots
