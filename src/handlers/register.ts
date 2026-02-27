@@ -712,7 +712,7 @@ export async function RegisterHandler(ctx: Context) {
             state.data.city = city
             console.log("TEST POINT: ", state.data)
 
-            if(state.data.previouslyDeleted === false) {
+            if(state.data.previouslyDeleted === false || !state.data.previouslyDeleted) {
                 try {
                     await register(
                         {
@@ -731,6 +731,7 @@ export async function RegisterHandler(ctx: Context) {
                         ctx.auth,
                         ctx.baseURL,
                     );
+                    console.log(`successfully registered ${ctx.userID}`)
                 } catch (e: any) {
                     ctx.logger.error(
                         `RegisterHandler: Error during user registration: ${e}`,
@@ -766,12 +767,12 @@ export async function RegisterHandler(ctx: Context) {
                 ctx.auth,
                 ctx.baseURL
             )
-            const user = await ctx.usersList.pull(ctx.userID);
-            user.reloadFromApi = true;
-            await ctx.usersList.push(ctx.userID,user)
+            ///const user = await ctx.usersList.pull(ctx.userID);
+            ///user.reloadFromApi = true;
+            ///await ctx.usersList.push(ctx.userID,user)
             if(res.status !== "success") {
                 ctx.logger.info(
-                    `RegisterHandler: Failed to edit user ${ctx.userID} msg: ${res.message}`,
+                    `RegisterHandler: Failed to edit user ${ctx.userID} msg: ${JSON.stringify(res.message)}`,
                 )
                 await ctx.chat.sendMessage(
                     ctx.constants.getPrompt(
